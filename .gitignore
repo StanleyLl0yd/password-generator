@@ -1,0 +1,51 @@
+# OS junk
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE files (Android Studio / IntelliJ)
+.idea/
+*.iml
+out/
+
+# Gradle
+.gradle/
+**/build/
+local.properties
+.kotlin/
+
+# Native / NDK build
+.cxx/
+.externalNativeBuild/
+
+# Logs and memory dumps
+*.log
+*.hprof
+hs_err_pid*
+replay_pid*
+
+# Java / Kotlin compiled files
+*.class
+*.ctxt
+
+# Java packages / archives
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Android build outputs
+*.apk
+*.ap_
+*.aab
+*.aar
+*.dex
+captures/
+
+# Keystore files (signing keys - do not commit)
+*.jks
+*.keystore
+*.keystore.jks

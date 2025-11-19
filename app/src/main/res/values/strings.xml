@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">Password Generator</string>
+
+    <string name="password_title">Сгенерированный пароль</string>
+    <string name="password_label">Пароль</string>
+    <string name="copy_button">Копировать</string>
+    <string name="generate_button">Сгенерировать</string>
+
+    <string name="length_title">Длина: %1$d символов</string>
+    <string name="charsets_title">Наборы символов и опции</string>
+    <string name="lowercase_label">Строчные буквы (a–z)</string>
+    <string name="uppercase_label">Заглавные буквы (A–Z)</string>
+    <string name="digits_label">Цифры (0–9)</string>
+    <string name="symbols_label">Спецсимволы (!@#...)</string>
+
+    <string name="exclude_duplicates_label">Исключать повторяющиеся символы</string>
+    <string name="exclude_similar_label">Исключать похожие символы (i I 1 l o O 0)</string>
+
+    <string name="strength_title">Надёжность пароля</string>
+    <string name="strength_very_weak">Очень слабый пароль</string>
+    <string name="strength_weak">Слабый пароль</string>
+    <string name="strength_medium">Средний пароль</string>
+    <string name="strength_strong">Сильный пароль</string>
+    <string name="strength_very_strong">Очень сильный пароль</string>
+
+    <string name="error_no_charsets">Выбери хотя бы один набор символов</string>
+    <string name="error_no_enough_unique_chars">
+        Невозможно сгенерировать пароль без повторов с такой длиной и выбранными наборами символов
+    </string>
+    <string name="copied_to_clipboard">Пароль скопирован в буфер обмена</string>
+</resources>

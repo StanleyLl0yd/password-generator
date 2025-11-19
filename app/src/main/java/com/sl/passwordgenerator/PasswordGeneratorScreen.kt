@@ -1,0 +1,708 @@
+package com.sl.passwordgenerator
+
+import android.content.Context
+import android.widget.Toast
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
+import java.security.SecureRandom
+import kotlin.math.ln
+import kotlin.math.roundToInt
+import com.sl.passwordgenerator.R
+
+// Диапазон длины пароля
+private const val MIN_LENGTH = 4
+private const val MAX_LENGTH = 64
+
+// Константы для расчёта "силы" пароля
+private const val FULL_CHARSPACE = 95.0              // примерно 26+26+10+33
+private const val REF_LENGTH_FOR_MAX_SCORE = 20.0    // 20 символов из полного набора ≈ 100 баллов
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PasswordGeneratorScreen() {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+
+    var password by remember { mutableStateOf("") }
+    var length by remember { mutableFloatStateOf(16f) }
+
+    // ВСЕ опции включены по умолчанию
+    var useLowercase by remember { mutableStateOf(true) }
+    var useUppercase by remember { mutableStateOf(true) }
+    var useDigits by remember { mutableStateOf(true) }
+    var useSymbols by remember { mutableStateOf(true) }
+
+    var excludeDuplicates by remember { mutableStateOf(true) }
+    var excludeSimilar by remember { mutableStateOf(true) }
+
+    var strengthScore by remember { mutableStateOf(0) }
+
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        text = context.getString(R.string.app_name),
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            )
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+    ) { innerPadding ->
+        PasswordGeneratorContent(
+            innerPadding = innerPadding,
+            password = password,
+            onPasswordChange = { new ->
+                password = new
+                strengthScore = estimatePasswordScore(new)
+            },
+            length = length,
+            onLengthChange = { length = it },
+            useLowercase = useLowercase,
+            onUseLowercaseChange = { useLowercase = it },
+            useUppercase = useUppercase,
+            onUseUppercaseChange = { useUppercase = it },
+            useDigits = useDigits,
+            onUseDigitsChange = { useDigits = it },
+            useSymbols = useSymbols,
+            onUseSymbolsChange = { useSymbols = it },
+            excludeDuplicates = excludeDuplicates,
+            onExcludeDuplicatesChange = { excludeDuplicates = it },
+            excludeSimilar = excludeSimilar,
+            onExcludeSimilarChange = { excludeSimilar = it },
+            strengthScore = strengthScore,
+            onGenerateClick = {
+                if (!useLowercase && !useUppercase && !useDigits && !useSymbols) {
+                    scope.launch {
+                        snackbarHostState.showSnackbar(
+                            message = context.getString(R.string.error_no_charsets)
+                        )
+                    }
+                } else {
+                    val pool = buildCharPool(
+                        useLowercase = useLowercase,
+                        useUppercase = useUppercase,
+                        useDigits = useDigits,
+                        useSymbols = useSymbols,
+                        excludeSimilar = excludeSimilar
+                    )
+
+                    if (pool.allChars.isEmpty()) {
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                message = context.getString(R.string.error_no_charsets)
+                            )
+                        }
+                        return@PasswordGeneratorContent
+                    }
+
+                    val distinctCount = pool.allChars.toSet().size
+                    val targetLength = length.toInt()
+
+                    if (excludeDuplicates && targetLength > distinctCount) {
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                message = context.getString(R.string.error_no_enough_unique_chars)
+                            )
+                        }
+                    } else {
+                        val result = generatePassword(
+                            length = targetLength,
+                            pool = pool,
+                            excludeDuplicates = excludeDuplicates
+                        )
+                        password = result
+                        strengthScore = estimatePasswordScore(result)
+                    }
+                }
+            },
+            onCopyClick = {
+                if (password.isNotEmpty()) {
+                    clipboardManager.setText(AnnotatedString(password))
+                    showToast(context, context.getString(R.string.copied_to_clipboard))
+                }
+            }
+        )
+    }
+
+    LaunchedEffect(Unit) {
+        val pool = buildCharPool(
+            useLowercase = useLowercase,
+            useUppercase = useUppercase,
+            useDigits = useDigits,
+            useSymbols = useSymbols,
+            excludeSimilar = excludeSimilar
+        )
+        if (pool.allChars.isNotEmpty()) {
+            val result = generatePassword(
+                length = length.toInt(),
+                pool = pool,
+                excludeDuplicates = excludeDuplicates
+            )
+            password = result
+            strengthScore = estimatePasswordScore(result)
+        }
+    }
+}
+
+@Composable
+private fun PasswordGeneratorContent(
+    innerPadding: PaddingValues,
+    password: String,
+    onPasswordChange: (String) -> Unit,
+    length: Float,
+    onLengthChange: (Float) -> Unit,
+    useLowercase: Boolean,
+    onUseLowercaseChange: (Boolean) -> Unit,
+    useUppercase: Boolean,
+    onUseUppercaseChange: (Boolean) -> Unit,
+    useDigits: Boolean,
+    onUseDigitsChange: (Boolean) -> Unit,
+    useSymbols: Boolean,
+    onUseSymbolsChange: (Boolean) -> Unit,
+    excludeDuplicates: Boolean,
+    onExcludeDuplicatesChange: (Boolean) -> Unit,
+    excludeSimilar: Boolean,
+    onExcludeSimilarChange: (Boolean) -> Unit,
+    strengthScore: Int,
+    onGenerateClick: () -> Unit,
+    onCopyClick: () -> Unit
+) {
+    val scrollState = rememberScrollState()
+    val context = LocalContext.current
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(scrollState),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            // 1. Наборы символов и опции
+            Text(
+                text = context.getString(R.string.charsets_title),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            CharsetCheckboxRow(
+                checked = useLowercase,
+                onCheckedChange = onUseLowercaseChange,
+                text = context.getString(R.string.lowercase_label)
+            )
+            CharsetCheckboxRow(
+                checked = useUppercase,
+                onCheckedChange = onUseUppercaseChange,
+                text = context.getString(R.string.uppercase_label)
+            )
+            CharsetCheckboxRow(
+                checked = useDigits,
+                onCheckedChange = onUseDigitsChange,
+                text = context.getString(R.string.digits_label)
+            )
+            CharsetCheckboxRow(
+                checked = useSymbols,
+                onCheckedChange = onUseSymbolsChange,
+                text = context.getString(R.string.symbols_label)
+            )
+
+            CharsetCheckboxRow(
+                checked = excludeDuplicates,
+                onCheckedChange = onExcludeDuplicatesChange,
+                text = context.getString(R.string.exclude_duplicates_label)
+            )
+            CharsetCheckboxRow(
+                checked = excludeSimilar,
+                onCheckedChange = onExcludeSimilarChange,
+                text = context.getString(R.string.exclude_similar_label)
+            )
+
+            // 2. Длина пароля
+            Text(
+                text = context.getString(R.string.length_title, length.toInt()),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(top = 2.dp, bottom = 0.dp)
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    LengthSlider(
+                        length = length,
+                        onLengthChange = onLengthChange
+                    )
+                }
+            }
+
+            // 3. Пароль + кнопки
+            Text(
+                text = context.getString(R.string.password_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 4.dp, bottom = 0.dp)
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { onPasswordChange(it) },
+                        label = { Text(text = context.getString(R.string.password_label)) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 52.dp),
+                        singleLine = false,
+                        textStyle = MaterialTheme.typography.bodyMedium
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 2.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextButton(onClick = onCopyClick) {
+                            Text(text = context.getString(R.string.copy_button))
+                        }
+                        Button(onClick = onGenerateClick) {
+                            Text(text = context.getString(R.string.generate_button))
+                        }
+                    }
+                }
+            }
+        }
+
+        // 4. Надёжность пароля
+        StrengthSection(strengthScore = strengthScore)
+    }
+}
+
+/**
+ * Слайдер длины пароля:
+ * слева — MIN, справа — MAX, по центру — текущее значение length.
+ */
+@Composable
+private fun LengthSlider(
+    length: Float,
+    onLengthChange: (Float) -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = MIN_LENGTH.toString(),
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Start
+            )
+            Text(
+                text = length.toInt().toString(),
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = MAX_LENGTH.toString(),
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.End
+            )
+        }
+
+        Slider(
+            value = length,
+            onValueChange = { new ->
+                val clamped = new
+                    .coerceIn(MIN_LENGTH.toFloat(), MAX_LENGTH.toFloat())
+                    .roundToInt()
+                    .toFloat()
+                onLengthChange(clamped)
+            },
+            valueRange = MIN_LENGTH.toFloat()..MAX_LENGTH.toFloat(),
+            steps = (MAX_LENGTH - MIN_LENGTH - 1),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 0.dp),
+            colors = SliderDefaults.colors(
+                activeTrackColor = MaterialTheme.colorScheme.primary,
+                inactiveTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                thumbColor = MaterialTheme.colorScheme.surface,
+                activeTickColor = Color.Transparent,
+                inactiveTickColor = Color.Transparent
+            )
+        )
+    }
+}
+
+@Composable
+private fun CharsetCheckboxRow(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    text: String
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 0.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = onCheckedChange
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }
+}
+
+@Composable
+private fun StrengthSection(strengthScore: Int) {
+    val context = LocalContext.current
+
+    val scoreClamped = strengthScore.coerceIn(0, 100)
+    val strength = getPasswordStrength(scoreClamped)
+
+    val strengthLabel = when (strength) {
+        PasswordStrength.VERY_WEAK -> context.getString(R.string.strength_very_weak)
+        PasswordStrength.WEAK -> context.getString(R.string.strength_weak)
+        PasswordStrength.MEDIUM -> context.getString(R.string.strength_medium)
+        PasswordStrength.STRONG -> context.getString(R.string.strength_strong)
+        PasswordStrength.VERY_STRONG -> context.getString(R.string.strength_very_strong)
+    }
+
+    val fraction = scoreClamped / 100f
+
+    val red = Color(0xFFD32F2F)
+    val yellow = Color(0xFFFBC02D)
+    val green = Color(0xFF388E3C)
+
+    val baseColor = when {
+        fraction <= 0.5f -> lerp(red, yellow, fraction / 0.5f)
+        else -> lerp(yellow, green, (fraction - 0.5f) / 0.5f)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 2.dp, bottom = 2.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        Text(
+            text = context.getString(R.string.strength_title),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+
+        LinearProgressIndicator(
+            progress = { fraction },
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 6.dp),
+            color = baseColor,
+            trackColor = baseColor.copy(alpha = 0.2f)
+        )
+
+        Text(
+            text = strengthLabel,
+            style = MaterialTheme.typography.bodySmall,
+            textAlign = TextAlign.Start,
+            color = baseColor
+        )
+    }
+}
+
+// ---------------------
+// Пул символов
+// ---------------------
+
+private data class CharPool(
+    val groups: List<String>,
+    val allChars: String
+)
+
+private fun buildCharPool(
+    useLowercase: Boolean,
+    useUppercase: Boolean,
+    useDigits: Boolean,
+    useSymbols: Boolean,
+    excludeSimilar: Boolean
+): CharPool {
+    val lowercaseChars = "abcdefghijklmnopqrstuvwxyz"
+    val uppercaseChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    val digitChars = "0123456789"
+    val symbolChars = "!@#\$%^&*()-_=+[]{};:,.<>?/|"
+
+    val similarChars = "iIl1oO0"
+    fun String.applySimilar(): String =
+        if (!excludeSimilar) this else this.filter { it !in similarChars }
+
+    val groups = mutableListOf<String>()
+    if (useLowercase) groups += lowercaseChars.applySimilar()
+    if (useUppercase) groups += uppercaseChars.applySimilar()
+    if (useDigits) groups += digitChars.applySimilar()
+    if (useSymbols) groups += symbolChars.applySimilar()
+
+    val nonEmptyGroups = groups.filter { it.isNotEmpty() }
+    if (nonEmptyGroups.isEmpty()) {
+        return CharPool(emptyList(), "")
+    }
+
+    val allChars = nonEmptyGroups.joinToString("")
+    return CharPool(
+        groups = nonEmptyGroups,
+        allChars = allChars
+    )
+}
+
+// ---------------------
+// Генерация пароля
+// ---------------------
+
+private fun generatePassword(
+    length: Int,
+    pool: CharPool,
+    excludeDuplicates: Boolean
+): String {
+    if (pool.groups.isEmpty() || pool.allChars.isEmpty() || length <= 0) return ""
+
+    val random = SecureRandom()
+    val result = StringBuilder(length)
+    val usedChars: MutableSet<Char>? = if (excludeDuplicates) mutableSetOf() else null
+
+    // минимум по одному символу из каждой выбранной группы
+    for (group in pool.groups) {
+        if (result.length >= length) break
+        val candidateChars = if (excludeDuplicates) {
+            group.filter { it !in usedChars!! }
+        } else {
+            group
+        }
+        if (candidateChars.isEmpty()) continue
+        val ch = candidateChars[random.nextInt(candidateChars.length)]
+        result.append(ch)
+        usedChars?.add(ch)
+    }
+
+    // остальные символы
+    while (result.length < length) {
+        val source = if (excludeDuplicates) {
+            val remaining = pool.allChars.filter { it !in usedChars!! }
+            if (remaining.isEmpty()) pool.allChars else remaining
+        } else {
+            pool.allChars
+        }
+        val ch = source[random.nextInt(source.length)]
+        result.append(ch)
+        usedChars?.add(ch)
+    }
+
+    return result.toList().shuffled(random).joinToString("")
+}
+
+// ---------------------
+// Оценка надёжности
+// ---------------------
+
+private enum class PasswordStrength {
+    VERY_WEAK,
+    WEAK,
+    MEDIUM,
+    STRONG,
+    VERY_STRONG
+}
+
+/**
+ * Новый алгоритм оценки "силы" пароля:
+ * - нормировка на энтропию пароля длиной 20 символов из полного набора (~95 символов),
+ * - затем штрафы за длину, только цифры, последовательности и повторы.
+ */
+private fun estimatePasswordScore(password: String): Int {
+    if (password.isEmpty()) return 0
+
+    val length = password.length
+
+    var hasLower = false
+    var hasUpper = false
+    var hasDigit = false
+    var hasSymbol = false
+
+    for (ch in password) {
+        when {
+            ch.isLowerCase() -> hasLower = true
+            ch.isUpperCase() -> hasUpper = true
+            ch.isDigit() -> hasDigit = true
+            else -> hasSymbol = true
+        }
+    }
+
+    var charSpace = 0
+    if (hasLower) charSpace += 26
+    if (hasUpper) charSpace += 26
+    if (hasDigit) charSpace += 10
+    if (hasSymbol) charSpace += 33
+    if (charSpace == 0) charSpace = 1
+
+    // Энтропия в битах
+    val entropyBits = length * (ln(charSpace.toDouble()) / ln(2.0))
+
+    // Максимальная "референтная" энтропия — 20 символов из полного набора (~95)
+    val maxEntropy = REF_LENGTH_FOR_MAX_SCORE * (ln(FULL_CHARSPACE) / ln(2.0))
+
+    // Нормируем на 0–100
+    var score = (entropyBits * 100.0 / maxEntropy).toInt()
+
+    // Штрафы по длине: 4–5 очень плохо, 6–7 всё ещё плохо
+    if (length < 8) {
+        score -= 25
+        if (length < 6) {
+            score -= 10
+        }
+    }
+
+    // Только цифры и короткая длина
+    if (length < 10 && hasDigit && !hasLower && !hasUpper && !hasSymbol) {
+        score -= 15
+    }
+
+    // Простая последовательность
+    if (isSequential(password)) {
+        score -= 20
+    }
+
+    // Много повторов
+    if (hasManyRepeats(password)) {
+        score -= 10
+    }
+
+    // Все символы одинаковые
+    if (password.toSet().size == 1 && length >= 3) {
+        score -= 10
+    }
+
+    if (score < 0) score = 0
+    if (score > 100) score = 100
+
+    return score
+}
+
+private fun getPasswordStrength(score: Int): PasswordStrength {
+    return when {
+        score < 20 -> PasswordStrength.VERY_WEAK    // 0–19
+        score < 40 -> PasswordStrength.WEAK         // 20–39
+        score < 60 -> PasswordStrength.MEDIUM       // 40–59
+        score < 80 -> PasswordStrength.STRONG       // 60–79
+        else -> PasswordStrength.VERY_STRONG        // 80–100
+    }
+}
+
+private fun isSequential(password: String): Boolean {
+    if (password.length < 3) return false
+
+    var ascending = true
+    var descending = true
+
+    for (i in 1 until password.length) {
+        val diff = password[i] - password[i - 1]
+        if (diff != 1) ascending = false
+        if (diff != -1) descending = false
+    }
+
+    return ascending || descending
+}
+
+private fun hasManyRepeats(password: String): Boolean {
+    if (password.length < 4) return false
+    val distinct = password.toSet().size
+    val ratio = distinct.toDouble() / password.length.toDouble()
+    return ratio < 0.5
+}
+
+private fun showToast(context: Context, message: String) {
+    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+}
