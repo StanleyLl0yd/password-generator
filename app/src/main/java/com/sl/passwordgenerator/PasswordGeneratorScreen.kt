@@ -432,6 +432,7 @@ private fun LengthSlider(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Composable
 private fun CharsetCheckboxRow(
