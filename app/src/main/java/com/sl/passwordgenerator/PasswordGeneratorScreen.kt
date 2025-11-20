@@ -69,6 +69,27 @@ private const val SIMILAR_CHARS = "iIl1oO0"
 
 private val secureRandom = SecureRandom()
 
+private data class PasswordGeneratorUiState(
+    val password: String = "",
+    val length: Float = 16f,
+    val useLowercase: Boolean = true,
+    val useUppercase: Boolean = true,
+    val useDigits: Boolean = true,
+    val useSymbols: Boolean = true,
+    val excludeDuplicates: Boolean = true,
+    val excludeSimilar: Boolean = true
+)
+
+private data class PasswordGenerationConfig(
+    val length: Int,
+    val useLowercase: Boolean,
+    val useUppercase: Boolean,
+    val useDigits: Boolean,
+    val useSymbols: Boolean,
+    val excludeSimilar: Boolean,
+    val excludeDuplicates: Boolean
+)
+
 @Composable
 fun PasswordGeneratorScreen() {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -77,20 +98,10 @@ fun PasswordGeneratorScreen() {
     val context = LocalContext.current
     val settingsRepository = remember { SettingsRepository(context) }
 
-    var password by remember { mutableStateOf("") }
-    var length by remember { mutableFloatStateOf(16f) }
-
-    var useLowercase by remember { mutableStateOf(true) }
-    var useUppercase by remember { mutableStateOf(true) }
-    var useDigits by remember { mutableStateOf(true) }
-    var useSymbols by remember { mutableStateOf(true) }
-
-    var excludeDuplicates by remember { mutableStateOf(true) }
-    var excludeSimilar by remember { mutableStateOf(true) }
-
+    var uiState by remember { mutableStateOf(PasswordGeneratorUiState()) }
     var isInitialized by remember { mutableStateOf(false) }
 
-    val strengthScore = remember(password) { estimatePasswordScore(password) }
+    val strengthScore = remember(uiState.password) { estimatePasswordScore(uiState.password) }
 
     Scaffold(
         topBar = {
@@ -116,32 +127,13 @@ fun PasswordGeneratorScreen() {
     ) { innerPadding ->
         PasswordGeneratorContent(
             innerPadding = innerPadding,
-            password = password,
-            onPasswordChange = { password = it },
-            length = length,
-            onLengthChange = { length = it },
-            useLowercase = useLowercase,
-            onUseLowercaseChange = { useLowercase = it },
-            useUppercase = useUppercase,
-            onUseUppercaseChange = { useUppercase = it },
-            useDigits = useDigits,
-            onUseDigitsChange = { useDigits = it },
-            useSymbols = useSymbols,
-            onUseSymbolsChange = { useSymbols = it },
-            excludeDuplicates = excludeDuplicates,
-            onExcludeDuplicatesChange = { excludeDuplicates = it },
-            excludeSimilar = excludeSimilar,
-            onExcludeSimilarChange = { excludeSimilar = it },
+            state = uiState,
             strengthScore = strengthScore,
+            onStateChange = { uiState = it },
             onGenerateClick = {
+                val config = uiState.toGenerationConfig()
                 val result = generatePasswordWithValidation(
-                    length = length.toInt(),
-                    useLowercase = useLowercase,
-                    useUppercase = useUppercase,
-                    useDigits = useDigits,
-                    useSymbols = useSymbols,
-                    excludeSimilar = excludeSimilar,
-                    excludeDuplicates = excludeDuplicates,
+                    config = config,
                     context = context,
                     onError = { errorMessage ->
                         scope.launch {
@@ -150,12 +142,12 @@ fun PasswordGeneratorScreen() {
                     }
                 )
                 if (result != null) {
-                    password = result
+                    uiState = uiState.copy(password = result)
                 }
             },
             onCopyClick = {
-                if (password.isNotEmpty()) {
-                    clipboardManager.setText(AnnotatedString(password))
+                if (uiState.password.isNotEmpty()) {
+                    clipboardManager.setText(AnnotatedString(uiState.password))
                     showToast(context, context.getString(R.string.copied_to_clipboard))
                 }
             }
@@ -164,84 +156,67 @@ fun PasswordGeneratorScreen() {
 
     LaunchedEffect(Unit) {
         val storedPreferences = settingsRepository.preferencesFlow.first()
-        password = storedPreferences.password
-        length = storedPreferences.length.coerceIn(MIN_LENGTH.toFloat(), MAX_LENGTH.toFloat())
-        useLowercase = storedPreferences.useLowercase
-        useUppercase = storedPreferences.useUppercase
-        useDigits = storedPreferences.useDigits
-        useSymbols = storedPreferences.useSymbols
-        excludeDuplicates = storedPreferences.excludeDuplicates
-        excludeSimilar = storedPreferences.excludeSimilar
+        uiState = uiState.copy(
+            password = storedPreferences.password,
+            length = storedPreferences.length.coerceIn(MIN_LENGTH.toFloat(), MAX_LENGTH.toFloat()),
+            useLowercase = storedPreferences.useLowercase,
+            useUppercase = storedPreferences.useUppercase,
+            useDigits = storedPreferences.useDigits,
+            useSymbols = storedPreferences.useSymbols,
+            excludeDuplicates = storedPreferences.excludeDuplicates,
+            excludeSimilar = storedPreferences.excludeSimilar
+        )
         isInitialized = true
     }
 
-    LaunchedEffect(
-        length,
-        useLowercase,
-        useUppercase,
-        useDigits,
-        useSymbols,
-        excludeDuplicates,
-        excludeSimilar,
-        password,
-        isInitialized
-    ) {
+    LaunchedEffect(uiState, isInitialized) {
         if (isInitialized) {
             settingsRepository.savePreferences(
                 GeneratorPreferences(
-                    password = password,
-                    length = length,
-                    useLowercase = useLowercase,
-                    useUppercase = useUppercase,
-                    useDigits = useDigits,
-                    useSymbols = useSymbols,
-                    excludeDuplicates = excludeDuplicates,
-                    excludeSimilar = excludeSimilar
+                    password = uiState.password,
+                    length = uiState.length,
+                    useLowercase = uiState.useLowercase,
+                    useUppercase = uiState.useUppercase,
+                    useDigits = uiState.useDigits,
+                    useSymbols = uiState.useSymbols,
+                    excludeDuplicates = uiState.excludeDuplicates,
+                    excludeSimilar = uiState.excludeSimilar
                 )
             )
         }
     }
 
     LaunchedEffect(isInitialized) {
-        if (!isInitialized || password.isNotEmpty()) return@LaunchedEffect
+        if (!isInitialized || uiState.password.isNotEmpty()) return@LaunchedEffect
 
         val initialPassword = generatePasswordWithValidation(
-            length = length.toInt(),
-            useLowercase = useLowercase,
-            useUppercase = useUppercase,
-            useDigits = useDigits,
-            useSymbols = useSymbols,
-            excludeSimilar = excludeSimilar,
-            excludeDuplicates = excludeDuplicates,
+            config = uiState.toGenerationConfig(),
             context = context,
             onError = {}
         )
         if (initialPassword != null) {
-            password = initialPassword
+            uiState = uiState.copy(password = initialPassword)
         }
     }
 }
 
+private fun PasswordGeneratorUiState.toGenerationConfig(): PasswordGenerationConfig =
+    PasswordGenerationConfig(
+        length = length.toInt(),
+        useLowercase = useLowercase,
+        useUppercase = useUppercase,
+        useDigits = useDigits,
+        useSymbols = useSymbols,
+        excludeSimilar = excludeSimilar,
+        excludeDuplicates = excludeDuplicates
+    )
+
 @Composable
 private fun PasswordGeneratorContent(
     innerPadding: PaddingValues,
-    password: String,
-    onPasswordChange: (String) -> Unit,
-    length: Float,
-    onLengthChange: (Float) -> Unit,
-    useLowercase: Boolean,
-    onUseLowercaseChange: (Boolean) -> Unit,
-    useUppercase: Boolean,
-    onUseUppercaseChange: (Boolean) -> Unit,
-    useDigits: Boolean,
-    onUseDigitsChange: (Boolean) -> Unit,
-    useSymbols: Boolean,
-    onUseSymbolsChange: (Boolean) -> Unit,
-    excludeDuplicates: Boolean,
-    onExcludeDuplicatesChange: (Boolean) -> Unit,
-    excludeSimilar: Boolean,
-    onExcludeSimilarChange: (Boolean) -> Unit,
+    state: PasswordGeneratorUiState,
     strengthScore: Int,
+    onStateChange: (PasswordGeneratorUiState) -> Unit,
     onGenerateClick: () -> Unit,
     onCopyClick: () -> Unit
 ) {
@@ -268,44 +243,44 @@ private fun PasswordGeneratorContent(
             )
 
             CharsetCheckboxRow(
-                checked = useLowercase,
-                onCheckedChange = onUseLowercaseChange,
+                checked = state.useLowercase,
+                onCheckedChange = { onStateChange(state.copy(useLowercase = it)) },
                 text = context.getString(R.string.lowercase_label),
                 tooltipText = context.getString(R.string.lowercase_hint)
             )
             CharsetCheckboxRow(
-                checked = useUppercase,
-                onCheckedChange = onUseUppercaseChange,
+                checked = state.useUppercase,
+                onCheckedChange = { onStateChange(state.copy(useUppercase = it)) },
                 text = context.getString(R.string.uppercase_label),
                 tooltipText = context.getString(R.string.uppercase_hint)
             )
             CharsetCheckboxRow(
-                checked = useDigits,
-                onCheckedChange = onUseDigitsChange,
+                checked = state.useDigits,
+                onCheckedChange = { onStateChange(state.copy(useDigits = it)) },
                 text = context.getString(R.string.digits_label),
                 tooltipText = context.getString(R.string.digits_hint)
             )
             CharsetCheckboxRow(
-                checked = useSymbols,
-                onCheckedChange = onUseSymbolsChange,
+                checked = state.useSymbols,
+                onCheckedChange = { onStateChange(state.copy(useSymbols = it)) },
                 text = context.getString(R.string.symbols_label),
                 tooltipText = context.getString(R.string.symbols_hint)
             )
             CharsetCheckboxRow(
-                checked = excludeDuplicates,
-                onCheckedChange = onExcludeDuplicatesChange,
+                checked = state.excludeDuplicates,
+                onCheckedChange = { onStateChange(state.copy(excludeDuplicates = it)) },
                 text = context.getString(R.string.exclude_duplicates_label),
                 tooltipText = context.getString(R.string.exclude_duplicates_hint)
             )
             CharsetCheckboxRow(
-                checked = excludeSimilar,
-                onCheckedChange = onExcludeSimilarChange,
+                checked = state.excludeSimilar,
+                onCheckedChange = { onStateChange(state.copy(excludeSimilar = it)) },
                 text = context.getString(R.string.exclude_similar_label),
                 tooltipText = context.getString(R.string.exclude_similar_hint)
             )
 
             Text(
-                text = context.getString(R.string.length_title, length.toInt()),
+                text = context.getString(R.string.length_title, state.length.toInt()),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(top = 2.dp)
@@ -325,8 +300,17 @@ private fun PasswordGeneratorContent(
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     LengthSlider(
-                        length = length,
-                        onLengthChange = onLengthChange
+                        length = state.length,
+                        onLengthChange = { newLength ->
+                            onStateChange(
+                                state.copy(
+                                    length = newLength.coerceIn(
+                                        MIN_LENGTH.toFloat(),
+                                        MAX_LENGTH.toFloat()
+                                    )
+                                )
+                            )
+                        }
                     )
                 }
             }
@@ -349,8 +333,8 @@ private fun PasswordGeneratorContent(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     OutlinedTextField(
-                        value = password,
-                        onValueChange = onPasswordChange,
+                        value = state.password,
+                        onValueChange = { onStateChange(state.copy(password = it)) },
                         label = { Text(text = context.getString(R.string.password_label)) },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -603,16 +587,13 @@ private fun buildCharPool(
 }
 
 private fun generatePasswordWithValidation(
-    length: Int,
-    useLowercase: Boolean,
-    useUppercase: Boolean,
-    useDigits: Boolean,
-    useSymbols: Boolean,
-    excludeSimilar: Boolean,
-    excludeDuplicates: Boolean,
+    config: PasswordGenerationConfig,
     context: Context,
     onError: (String) -> Unit
 ): String? {
+    val (length, useLowercase, useUppercase, useDigits, useSymbols, excludeSimilar, excludeDuplicates) =
+        config
+
     if (!useLowercase && !useUppercase && !useDigits && !useSymbols) {
         onError(context.getString(R.string.error_no_charsets))
         return null
@@ -697,33 +678,52 @@ private fun estimatePasswordScore(password: String): Int {
     if (password.isEmpty()) return 0
 
     val length = password.length
+    val charSpace = calculateCharSpace(password)
+    val entropyScore = calculateEntropyScore(length, charSpace)
+    val penalty = calculatePasswordPenalty(password, length)
+
+    return (entropyScore + penalty).coerceIn(0, 100)
+}
+
+private fun calculateCharSpace(password: String): Int {
     var charSpace = 0
 
-    val hasLower = password.any { it.isLowerCase() }.also { if (it) charSpace += 26 }
-    val hasUpper = password.any { it.isUpperCase() }.also { if (it) charSpace += 26 }
-    val hasDigit = password.any { it.isDigit() }.also { if (it) charSpace += 10 }
-    val hasSymbol = password.any { !it.isLetterOrDigit() }.also { if (it) charSpace += 33 }
+    if (password.any { it.isLowerCase() }) charSpace += 26
+    if (password.any { it.isUpperCase() }) charSpace += 26
+    if (password.any { it.isDigit() }) charSpace += 10
+    if (password.any { !it.isLetterOrDigit() }) charSpace += 33
 
-    if (charSpace == 0) charSpace = 1
+    return if (charSpace == 0) 1 else charSpace
+}
 
+private fun calculateEntropyScore(length: Int, charSpace: Int): Int {
     val entropyBits = length * (ln(charSpace.toDouble()) / ln(2.0))
     val maxEntropy = REF_LENGTH_FOR_MAX_SCORE * (ln(FULL_CHARSPACE) / ln(2.0))
-    var score = (entropyBits * 100.0 / maxEntropy).toInt()
+    return (entropyBits * 100.0 / maxEntropy).toInt()
+}
+
+private fun calculatePasswordPenalty(password: String, length: Int): Int {
+    var scoreAdjustment = 0
 
     if (length < 8) {
-        score -= 25
-        if (length < 6) score -= 10
+        scoreAdjustment -= 25
+        if (length < 6) scoreAdjustment -= 10
     }
+
+    val hasLower = password.any { it.isLowerCase() }
+    val hasUpper = password.any { it.isUpperCase() }
+    val hasDigit = password.any { it.isDigit() }
+    val hasSymbol = password.any { !it.isLetterOrDigit() }
 
     if (length < 10 && hasDigit && !hasLower && !hasUpper && !hasSymbol) {
-        score -= 15
+        scoreAdjustment -= 15
     }
 
-    if (isSequential(password)) score -= 20
-    if (hasManyRepeats(password)) score -= 10
-    if (password.toSet().size == 1 && length >= 3) score -= 10
+    if (isSequential(password)) scoreAdjustment -= 20
+    if (hasManyRepeats(password)) scoreAdjustment -= 10
+    if (password.toSet().size == 1 && length >= 3) scoreAdjustment -= 10
 
-    return score.coerceIn(0, 100)
+    return scoreAdjustment
 }
 
 private fun getPasswordStrength(score: Int): PasswordStrength = when {
