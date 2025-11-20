@@ -57,7 +57,8 @@ private const val MAX_LENGTH = 64
 private const val FULL_CHARSPACE = 95.0
 private const val REF_LENGTH_FOR_MAX_SCORE = 20.0
 private const val SIMILAR_CHARS = "iIl1oO0"
-private val LN_2 = ln(2.0)
+
+private val secureRandom = SecureRandom()
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,7 +79,7 @@ fun PasswordGeneratorScreen() {
     var excludeDuplicates by remember { mutableStateOf(true) }
     var excludeSimilar by remember { mutableStateOf(true) }
 
-    var strengthScore by remember { mutableStateOf(0) }
+    val strengthScore = remember(password) { estimatePasswordScore(password) }
 
     Scaffold(
         topBar = {
@@ -100,10 +101,7 @@ fun PasswordGeneratorScreen() {
         PasswordGeneratorContent(
             innerPadding = innerPadding,
             password = password,
-            onPasswordChange = { new ->
-                password = new
-                strengthScore = estimatePasswordScore(new)
-            },
+            onPasswordChange = { password = it },
             length = length,
             onLengthChange = { length = it },
             useLowercase = useLowercase,
@@ -120,48 +118,23 @@ fun PasswordGeneratorScreen() {
             onExcludeSimilarChange = { excludeSimilar = it },
             strengthScore = strengthScore,
             onGenerateClick = {
-                if (!useLowercase && !useUppercase && !useDigits && !useSymbols) {
-                    scope.launch {
-                        snackbarHostState.showSnackbar(
-                            message = context.getString(R.string.error_no_charsets)
-                        )
-                    }
-                } else {
-                    val pool = buildCharPool(
-                        useLowercase = useLowercase,
-                        useUppercase = useUppercase,
-                        useDigits = useDigits,
-                        useSymbols = useSymbols,
-                        excludeSimilar = excludeSimilar
-                    )
-
-                    if (pool.allChars.isEmpty()) {
+                val result = generatePasswordWithValidation(
+                    length = length.toInt(),
+                    useLowercase = useLowercase,
+                    useUppercase = useUppercase,
+                    useDigits = useDigits,
+                    useSymbols = useSymbols,
+                    excludeSimilar = excludeSimilar,
+                    excludeDuplicates = excludeDuplicates,
+                    context = context,
+                    onError = { errorMessage ->
                         scope.launch {
-                            snackbarHostState.showSnackbar(
-                                message = context.getString(R.string.error_no_charsets)
-                            )
+                            snackbarHostState.showSnackbar(message = errorMessage)
                         }
-                        return@PasswordGeneratorContent
                     }
-
-                    val distinctCount = pool.allChars.toSet().size
-                    val targetLength = length.toInt()
-
-                    if (excludeDuplicates && targetLength > distinctCount) {
-                        scope.launch {
-                            snackbarHostState.showSnackbar(
-                                message = context.getString(R.string.error_no_enough_unique_chars)
-                            )
-                        }
-                    } else {
-                        val result = generatePassword(
-                            length = targetLength,
-                            pool = pool,
-                            excludeDuplicates = excludeDuplicates
-                        )
-                        password = result
-                        strengthScore = estimatePasswordScore(result)
-                    }
+                )
+                if (result != null) {
+                    password = result
                 }
             },
             onCopyClick = {
@@ -174,21 +147,19 @@ fun PasswordGeneratorScreen() {
     }
 
     LaunchedEffect(Unit) {
-        val pool = buildCharPool(
+        val initialPassword = generatePasswordWithValidation(
+            length = length.toInt(),
             useLowercase = useLowercase,
             useUppercase = useUppercase,
             useDigits = useDigits,
             useSymbols = useSymbols,
-            excludeSimilar = excludeSimilar
+            excludeSimilar = excludeSimilar,
+            excludeDuplicates = excludeDuplicates,
+            context = context,
+            onError = {}
         )
-        if (pool.allChars.isNotEmpty()) {
-            val result = generatePassword(
-                length = length.toInt(),
-                pool = pool,
-                excludeDuplicates = excludeDuplicates
-            )
-            password = result
-            strengthScore = estimatePasswordScore(result)
+        if (initialPassword != null) {
+            password = initialPassword
         }
     }
 }
@@ -273,7 +244,7 @@ private fun PasswordGeneratorContent(
                 text = context.getString(R.string.length_title, length.toInt()),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(top = 2.dp, bottom = 0.dp)
+                modifier = Modifier.padding(top = 2.dp)
             )
 
             Card(
@@ -300,7 +271,7 @@ private fun PasswordGeneratorContent(
                 text = context.getString(R.string.password_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 4.dp, bottom = 0.dp)
+                modifier = Modifier.padding(top = 4.dp)
             )
 
             Card(
@@ -315,7 +286,7 @@ private fun PasswordGeneratorContent(
                 ) {
                     OutlinedTextField(
                         value = password,
-                        onValueChange = { onPasswordChange(it) },
+                        onValueChange = onPasswordChange,
                         label = { Text(text = context.getString(R.string.password_label)) },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -390,10 +361,8 @@ private fun LengthSlider(
                 onLengthChange(clamped)
             },
             valueRange = MIN_LENGTH.toFloat()..MAX_LENGTH.toFloat(),
-            steps = (MAX_LENGTH - MIN_LENGTH - 1),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 0.dp),
+            steps = MAX_LENGTH - MIN_LENGTH - 1,
+            modifier = Modifier.fillMaxWidth(),
             colors = SliderDefaults.colors(
                 activeTrackColor = MaterialTheme.colorScheme.primary,
                 inactiveTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
@@ -412,9 +381,7 @@ private fun CharsetCheckboxRow(
     text: String
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 0.dp),
+        modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Checkbox(
@@ -457,7 +424,7 @@ private fun StrengthSection(strengthScore: Int) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 2.dp, bottom = 2.dp),
+            .padding(vertical = 2.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         Text(
@@ -499,24 +466,61 @@ private fun buildCharPool(
     val digitChars = "0123456789"
     val symbolChars = "!@#\$%^&*()-_=+[]{};:,.<>?/|"
 
-    fun String.applySimilar(): String =
-        if (!excludeSimilar) this else this.filter { it !in SIMILAR_CHARS }
+    fun String.filterSimilar(): String =
+        if (excludeSimilar) filterNot { it in SIMILAR_CHARS } else this
 
-    val groups = mutableListOf<String>()
-    if (useLowercase) groups += lowercaseChars.applySimilar()
-    if (useUppercase) groups += uppercaseChars.applySimilar()
-    if (useDigits) groups += digitChars.applySimilar()
-    if (useSymbols) groups += symbolChars.applySimilar()
+    val groups = buildList {
+        if (useLowercase) add(lowercaseChars.filterSimilar())
+        if (useUppercase) add(uppercaseChars.filterSimilar())
+        if (useDigits) add(digitChars.filterSimilar())
+        if (useSymbols) add(symbolChars.filterSimilar())
+    }.filter { it.isNotEmpty() }
 
-    val nonEmptyGroups = groups.filter { it.isNotEmpty() }
-    if (nonEmptyGroups.isEmpty()) {
-        return CharPool(emptyList(), "")
+    return CharPool(
+        groups = groups,
+        allChars = groups.joinToString("")
+    )
+}
+
+private fun generatePasswordWithValidation(
+    length: Int,
+    useLowercase: Boolean,
+    useUppercase: Boolean,
+    useDigits: Boolean,
+    useSymbols: Boolean,
+    excludeSimilar: Boolean,
+    excludeDuplicates: Boolean,
+    context: Context,
+    onError: (String) -> Unit
+): String? {
+    if (!useLowercase && !useUppercase && !useDigits && !useSymbols) {
+        onError(context.getString(R.string.error_no_charsets))
+        return null
     }
 
-    val allChars = nonEmptyGroups.joinToString("")
-    return CharPool(
-        groups = nonEmptyGroups,
-        allChars = allChars
+    val pool = buildCharPool(
+        useLowercase = useLowercase,
+        useUppercase = useUppercase,
+        useDigits = useDigits,
+        useSymbols = useSymbols,
+        excludeSimilar = excludeSimilar
+    )
+
+    if (pool.allChars.isEmpty()) {
+        onError(context.getString(R.string.error_no_charsets))
+        return null
+    }
+
+    val distinctCount = pool.allChars.toSet().size
+    if (excludeDuplicates && length > distinctCount) {
+        onError(context.getString(R.string.error_no_enough_unique_chars))
+        return null
+    }
+
+    return generatePassword(
+        length = length,
+        pool = pool,
+        excludeDuplicates = excludeDuplicates
     )
 }
 
@@ -527,36 +531,38 @@ private fun generatePassword(
 ): String {
     if (pool.groups.isEmpty() || pool.allChars.isEmpty() || length <= 0) return ""
 
-    val random = SecureRandom()
     val result = StringBuilder(length)
-    val usedChars: MutableSet<Char>? = if (excludeDuplicates) mutableSetOf() else null
+    val usedChars = if (excludeDuplicates) mutableSetOf<Char>() else null
 
     for (group in pool.groups) {
         if (result.length >= length) break
-        val candidateChars = if (excludeDuplicates) {
-            group.filter { it !in usedChars!! }
+
+        val availableChars = if (excludeDuplicates) {
+            group.filterNot { it in usedChars!! }
         } else {
             group
         }
-        if (candidateChars.isEmpty()) continue
-        val ch = candidateChars[random.nextInt(candidateChars.length)]
+
+        if (availableChars.isEmpty()) continue
+
+        val ch = availableChars[secureRandom.nextInt(availableChars.length)]
         result.append(ch)
         usedChars?.add(ch)
     }
 
     while (result.length < length) {
-        val source = if (excludeDuplicates) {
-            val remaining = pool.allChars.filter { it !in usedChars!! }
-            if (remaining.isEmpty()) pool.allChars else remaining
+        val availableChars = if (excludeDuplicates) {
+            pool.allChars.filterNot { it in usedChars!! }.ifEmpty { pool.allChars }
         } else {
             pool.allChars
         }
-        val ch = source[random.nextInt(source.length)]
+
+        val ch = availableChars[secureRandom.nextInt(availableChars.length)]
         result.append(ch)
         usedChars?.add(ch)
     }
 
-    return result.toList().shuffled(random).joinToString("")
+    return result.toList().shuffled(secureRandom).joinToString("")
 }
 
 private enum class PasswordStrength {
@@ -571,69 +577,41 @@ private fun estimatePasswordScore(password: String): Int {
     if (password.isEmpty()) return 0
 
     val length = password.length
-
-    var hasLower = false
-    var hasUpper = false
-    var hasDigit = false
-    var hasSymbol = false
-
-    for (ch in password) {
-        when {
-            ch.isLowerCase() -> hasLower = true
-            ch.isUpperCase() -> hasUpper = true
-            ch.isDigit() -> hasDigit = true
-            else -> hasSymbol = true
-        }
-    }
-
     var charSpace = 0
-    if (hasLower) charSpace += 26
-    if (hasUpper) charSpace += 26
-    if (hasDigit) charSpace += 10
-    if (hasSymbol) charSpace += 33
+
+    val hasLower = password.any { it.isLowerCase() }.also { if (it) charSpace += 26 }
+    val hasUpper = password.any { it.isUpperCase() }.also { if (it) charSpace += 26 }
+    val hasDigit = password.any { it.isDigit() }.also { if (it) charSpace += 10 }
+    val hasSymbol = password.any { !it.isLetterOrDigit() }.also { if (it) charSpace += 33 }
+
     if (charSpace == 0) charSpace = 1
 
-    val entropyBits = length * (ln(charSpace.toDouble()) / LN_2)
-    val maxEntropy = REF_LENGTH_FOR_MAX_SCORE * (ln(FULL_CHARSPACE) / LN_2)
+    val entropyBits = length * (ln(charSpace.toDouble()) / ln(2.0))
+    val maxEntropy = REF_LENGTH_FOR_MAX_SCORE * (ln(FULL_CHARSPACE) / ln(2.0))
     var score = (entropyBits * 100.0 / maxEntropy).toInt()
 
     if (length < 8) {
         score -= 25
-        if (length < 6) {
-            score -= 10
-        }
+        if (length < 6) score -= 10
     }
 
     if (length < 10 && hasDigit && !hasLower && !hasUpper && !hasSymbol) {
         score -= 15
     }
 
-    if (isSequential(password)) {
-        score -= 20
-    }
+    if (isSequential(password)) score -= 20
+    if (hasManyRepeats(password)) score -= 10
+    if (password.toSet().size == 1 && length >= 3) score -= 10
 
-    if (hasManyRepeats(password)) {
-        score -= 10
-    }
-
-    if (password.toSet().size == 1 && length >= 3) {
-        score -= 10
-    }
-
-    if (score < 0) score = 0
-    if (score > 100) score = 100
-
-    return score
+    return score.coerceIn(0, 100)
 }
 
-private fun getPasswordStrength(score: Int): PasswordStrength {
-    return when {
-        score < 20 -> PasswordStrength.VERY_WEAK
-        score < 40 -> PasswordStrength.WEAK
-        score < 60 -> PasswordStrength.MEDIUM
-        score < 80 -> PasswordStrength.STRONG
-        else -> PasswordStrength.VERY_STRONG
-    }
+private fun getPasswordStrength(score: Int): PasswordStrength = when {
+    score < 20 -> PasswordStrength.VERY_WEAK
+    score < 40 -> PasswordStrength.WEAK
+    score < 60 -> PasswordStrength.MEDIUM
+    score < 80 -> PasswordStrength.STRONG
+    else -> PasswordStrength.VERY_STRONG
 }
 
 private fun isSequential(password: String): Boolean {
@@ -646,6 +624,7 @@ private fun isSequential(password: String): Boolean {
         val diff = password[i] - password[i - 1]
         if (diff != 1) ascending = false
         if (diff != -1) descending = false
+        if (!ascending && !descending) break
     }
 
     return ascending || descending
@@ -653,8 +632,7 @@ private fun isSequential(password: String): Boolean {
 
 private fun hasManyRepeats(password: String): Boolean {
     if (password.length < 4) return false
-    val distinct = password.toSet().size
-    val ratio = distinct.toDouble() / password.length.toDouble()
+    val ratio = password.toSet().size.toDouble() / password.length
     return ratio < 0.5
 }
 
