@@ -9,6 +9,12 @@
     <string name="symbols_label">Спецсимволы (!@#…)</string>
     <string name="exclude_duplicates_label">Исключать повторяющиеся символы</string>
     <string name="exclude_similar_label">Исключать похожие символы (i I 1 l o O 0)</string>
+    <string name="lowercase_hint">Добавляет базовый набор строчных букв для баланса читаемости и сложности.</string>
+    <string name="uppercase_hint">Включает заглавные буквы — повышает сложность и помогает удовлетворить политики.</string>
+    <string name="digits_hint">Добавляет цифры 0–9, чтобы пароль соответствовал типичным требованиям сервисов.</string>
+    <string name="symbols_hint">Подмешивает спецсимволы и заметно увеличивает пространство перебора.</string>
+    <string name="exclude_duplicates_hint">Не повторяет символы в одном пароле. Удобно для чтения, но может ограничить максимальную длину.</string>
+    <string name="exclude_similar_hint">Удаляет легко путаемые символы (i I 1 l o O 0), чтобы пароль проще различать глазами.</string>
 
     <string name="length_title">Длина: %1$d символов</string>
 
