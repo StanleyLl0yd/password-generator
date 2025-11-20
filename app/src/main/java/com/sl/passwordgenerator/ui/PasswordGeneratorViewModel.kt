@@ -8,14 +8,13 @@ import com.sl.passwordgenerator.domain.model.PasswordGenerationConfig
 import com.sl.passwordgenerator.domain.model.PasswordGenerationError
 import com.sl.passwordgenerator.domain.model.PasswordGenerationResult
 import com.sl.passwordgenerator.domain.usecase.PasswordGenerator
-import javax.inject.Inject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 const val MIN_LENGTH = 4
@@ -38,19 +37,19 @@ class PasswordGeneratorViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val preferences = settingsRepository.preferencesFlow.first()
-            _uiState.update {
-                it.copy(
-                    password = preferences.password,
-                    length = preferences.length.coerceIn(MIN_LENGTH.toFloat(), MAX_LENGTH.toFloat()),
-                    useLowercase = preferences.useLowercase,
-                    useUppercase = preferences.useUppercase,
-                    useDigits = preferences.useDigits,
-                    useSymbols = preferences.useSymbols,
-                    excludeDuplicates = preferences.excludeDuplicates,
-                    excludeSimilar = preferences.excludeSimilar,
-                    isLoading = false
-                ).withStrength()
-            }
+
+            _uiState.value = _uiState.value.copy(
+                password = preferences.password,
+                length = preferences.length.coerceIn(MIN_LENGTH.toFloat(), MAX_LENGTH.toFloat()),
+                useLowercase = preferences.useLowercase,
+                useUppercase = preferences.useUppercase,
+                useDigits = preferences.useDigits,
+                useSymbols = preferences.useSymbols,
+                excludeDuplicates = preferences.excludeDuplicates,
+                excludeSimilar = preferences.excludeSimilar,
+                isLoading = false
+            ).withStrength()
+
             isInitialized = true
 
             if (preferences.password.isEmpty()) {
@@ -71,23 +70,31 @@ class PasswordGeneratorViewModel @Inject constructor(
         }
     }
 
-    fun onLowercaseChanged(enabled: Boolean) = updateState { it.copy(useLowercase = enabled) }
+    fun onLowercaseChanged(enabled: Boolean) =
+        updateState { it.copy(useLowercase = enabled) }
 
-    fun onUppercaseChanged(enabled: Boolean) = updateState { it.copy(useUppercase = enabled) }
+    fun onUppercaseChanged(enabled: Boolean) =
+        updateState { it.copy(useUppercase = enabled) }
 
-    fun onDigitsChanged(enabled: Boolean) = updateState { it.copy(useDigits = enabled) }
+    fun onDigitsChanged(enabled: Boolean) =
+        updateState { it.copy(useDigits = enabled) }
 
-    fun onSymbolsChanged(enabled: Boolean) = updateState { it.copy(useSymbols = enabled) }
+    fun onSymbolsChanged(enabled: Boolean) =
+        updateState { it.copy(useSymbols = enabled) }
 
-    fun onExcludeDuplicatesChanged(enabled: Boolean) = updateState { it.copy(excludeDuplicates = enabled) }
+    fun onExcludeDuplicatesChanged(enabled: Boolean) =
+        updateState { it.copy(excludeDuplicates = enabled) }
 
-    fun onExcludeSimilarChanged(enabled: Boolean) = updateState { it.copy(excludeSimilar = enabled) }
+    fun onExcludeSimilarChanged(enabled: Boolean) =
+        updateState { it.copy(excludeSimilar = enabled) }
 
     fun generatePassword() {
         val config = _uiState.value.toGenerationConfig()
         when (val result = passwordGenerator.generate(config)) {
-            is PasswordGenerationResult.Success -> updateState { it.copy(password = result.password) }
-            is PasswordGenerationResult.Error -> notifyError(result.reason)
+            is PasswordGenerationResult.Success ->
+                updateState { it.copy(password = result.password) }
+            is PasswordGenerationResult.Error ->
+                notifyError(result.reason)
         }
     }
 
@@ -98,16 +105,15 @@ class PasswordGeneratorViewModel @Inject constructor(
     }
 
     private fun updateState(
-        transform: (PasswordGeneratorUiState) -> PasswordGeneratorUiState,
-        persist: Boolean = true
+        persist: Boolean = true,
+        transform: (PasswordGeneratorUiState) -> PasswordGeneratorUiState
     ) {
-        _uiState.update { current ->
-            transform(current).withStrength()
-        }
+        val newState = transform(_uiState.value).withStrength()
+        _uiState.value = newState
 
         if (isInitialized && persist) {
             viewModelScope.launch {
-                settingsRepository.savePreferences(_uiState.value.toPreferences())
+                settingsRepository.savePreferences(newState.toPreferences())
             }
         }
     }
