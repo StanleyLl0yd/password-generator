@@ -3,6 +3,7 @@ package com.sl.passwordgenerator
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -19,8 +20,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -67,7 +69,6 @@ private const val SIMILAR_CHARS = "iIl1oO0"
 
 private val secureRandom = SecureRandom()
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PasswordGeneratorScreen() {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -454,24 +455,40 @@ private fun CharsetCheckboxRow(
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.weight(1f)
         )
-        PlainTooltipBox(
-            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-            tooltip = {
-                PlainTooltip {
-                    Text(
-                        text = tooltipText,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
+        InfoTooltip(tooltipText = tooltipText)
+    }
+}
+
+@Composable
+private fun InfoTooltip(
+    tooltipText: String
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier.padding(start = 4.dp)
+    ) {
+        IconButton(
+            onClick = { expanded = !expanded },
+            modifier = Modifier.heightIn(min = 32.dp)
         ) {
             Icon(
                 imageVector = Icons.Outlined.Info,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                contentDescription = tooltipText,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            Text(
+                text = tooltipText,
+                style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier
-                    .padding(start = 4.dp)
-                    .tooltipAnchor()
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                    .fillMaxWidth()
             )
         }
     }
