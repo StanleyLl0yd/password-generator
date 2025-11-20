@@ -35,7 +35,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.tooltipAnchor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -434,6 +433,7 @@ private fun LengthSlider(
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
+@Composable
 @Composable
 private fun CharsetCheckboxRow(
     checked: Boolean,
