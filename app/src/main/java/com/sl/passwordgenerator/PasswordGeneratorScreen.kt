@@ -47,6 +47,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.security.SecureRandom
 import kotlin.math.ln
@@ -67,6 +68,7 @@ fun PasswordGeneratorScreen() {
     val scope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
+    val settingsRepository = remember { SettingsRepository(context) }
 
     var password by remember { mutableStateOf("") }
     var length by remember { mutableFloatStateOf(16f) }
@@ -78,6 +80,8 @@ fun PasswordGeneratorScreen() {
 
     var excludeDuplicates by remember { mutableStateOf(true) }
     var excludeSimilar by remember { mutableStateOf(true) }
+
+    var isInitialized by remember { mutableStateOf(false) }
 
     val strengthScore = remember(password) { estimatePasswordScore(password) }
 
@@ -147,6 +151,48 @@ fun PasswordGeneratorScreen() {
     }
 
     LaunchedEffect(Unit) {
+        val storedPreferences = settingsRepository.preferencesFlow.first()
+        password = storedPreferences.password
+        length = storedPreferences.length.coerceIn(MIN_LENGTH.toFloat(), MAX_LENGTH.toFloat())
+        useLowercase = storedPreferences.useLowercase
+        useUppercase = storedPreferences.useUppercase
+        useDigits = storedPreferences.useDigits
+        useSymbols = storedPreferences.useSymbols
+        excludeDuplicates = storedPreferences.excludeDuplicates
+        excludeSimilar = storedPreferences.excludeSimilar
+        isInitialized = true
+    }
+
+    LaunchedEffect(
+        length,
+        useLowercase,
+        useUppercase,
+        useDigits,
+        useSymbols,
+        excludeDuplicates,
+        excludeSimilar,
+        password,
+        isInitialized
+    ) {
+        if (isInitialized) {
+            settingsRepository.savePreferences(
+                GeneratorPreferences(
+                    password = password,
+                    length = length,
+                    useLowercase = useLowercase,
+                    useUppercase = useUppercase,
+                    useDigits = useDigits,
+                    useSymbols = useSymbols,
+                    excludeDuplicates = excludeDuplicates,
+                    excludeSimilar = excludeSimilar
+                )
+            )
+        }
+    }
+
+    LaunchedEffect(isInitialized) {
+        if (!isInitialized || password.isNotEmpty()) return@LaunchedEffect
+
         val initialPassword = generatePasswordWithValidation(
             length = length.toInt(),
             useLowercase = useLowercase,
