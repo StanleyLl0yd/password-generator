@@ -1,4 +1,4 @@
-package com.sl.passwordgenerator
+package com.sl.passwordgenerator.data
 
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -6,23 +6,19 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.sl.passwordgenerator.domain.model.GeneratorPreferences
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 private val Context.dataStore by preferencesDataStore(name = "generator_preferences")
 
-data class GeneratorPreferences(
-    val password: String = "",
-    val length: Float = 16f,
-    val useLowercase: Boolean = true,
-    val useUppercase: Boolean = true,
-    val useDigits: Boolean = true,
-    val useSymbols: Boolean = true,
-    val excludeDuplicates: Boolean = true,
-    val excludeSimilar: Boolean = true
-)
-
-class SettingsRepository(private val context: Context) {
+@Singleton
+class SettingsRepository @Inject constructor(
+    @ApplicationContext private val context: Context
+) {
 
     val preferencesFlow: Flow<GeneratorPreferences> = context.dataStore.data.map { preferences ->
         GeneratorPreferences(
@@ -50,14 +46,14 @@ class SettingsRepository(private val context: Context) {
         }
     }
 
-    companion object {
-        private val PASSWORD = stringPreferencesKey("password")
-        private val LENGTH = intPreferencesKey("length")
-        private val USE_LOWERCASE = booleanPreferencesKey("use_lowercase")
-        private val USE_UPPERCASE = booleanPreferencesKey("use_uppercase")
-        private val USE_DIGITS = booleanPreferencesKey("use_digits")
-        private val USE_SYMBOLS = booleanPreferencesKey("use_symbols")
-        private val EXCLUDE_DUPLICATES = booleanPreferencesKey("exclude_duplicates")
-        private val EXCLUDE_SIMILAR = booleanPreferencesKey("exclude_similar")
+    private companion object {
+        val PASSWORD = stringPreferencesKey("password")
+        val LENGTH = intPreferencesKey("length")
+        val USE_LOWERCASE = booleanPreferencesKey("use_lowercase")
+        val USE_UPPERCASE = booleanPreferencesKey("use_uppercase")
+        val USE_DIGITS = booleanPreferencesKey("use_digits")
+        val USE_SYMBOLS = booleanPreferencesKey("use_symbols")
+        val EXCLUDE_DUPLICATES = booleanPreferencesKey("exclude_duplicates")
+        val EXCLUDE_SIMILAR = booleanPreferencesKey("exclude_similar")
     }
 }
