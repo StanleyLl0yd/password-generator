@@ -51,15 +51,13 @@ import kotlinx.coroutines.launch
 import java.security.SecureRandom
 import kotlin.math.ln
 import kotlin.math.roundToInt
-import com.sl.passwordgenerator.R
 
-// Диапазон длины пароля
 private const val MIN_LENGTH = 4
 private const val MAX_LENGTH = 64
-
-// Константы для расчёта "силы" пароля
-private const val FULL_CHARSPACE = 95.0              // примерно 26+26+10+33
-private const val REF_LENGTH_FOR_MAX_SCORE = 20.0    // 20 символов из полного набора ≈ 100 баллов
+private const val FULL_CHARSPACE = 95.0
+private const val REF_LENGTH_FOR_MAX_SCORE = 20.0
+private const val SIMILAR_CHARS = "iIl1oO0"
+private val LN_2 = ln(2.0)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,7 +70,6 @@ fun PasswordGeneratorScreen() {
     var password by remember { mutableStateOf("") }
     var length by remember { mutableFloatStateOf(16f) }
 
-    // ВСЕ опции включены по умолчанию
     var useLowercase by remember { mutableStateOf(true) }
     var useUppercase by remember { mutableStateOf(true) }
     var useDigits by remember { mutableStateOf(true) }
@@ -235,7 +232,6 @@ private fun PasswordGeneratorContent(
                 .verticalScroll(scrollState),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            // 1. Наборы символов и опции
             Text(
                 text = context.getString(R.string.charsets_title),
                 style = MaterialTheme.typography.bodyMedium,
@@ -262,7 +258,6 @@ private fun PasswordGeneratorContent(
                 onCheckedChange = onUseSymbolsChange,
                 text = context.getString(R.string.symbols_label)
             )
-
             CharsetCheckboxRow(
                 checked = excludeDuplicates,
                 onCheckedChange = onExcludeDuplicatesChange,
@@ -274,7 +269,6 @@ private fun PasswordGeneratorContent(
                 text = context.getString(R.string.exclude_similar_label)
             )
 
-            // 2. Длина пароля
             Text(
                 text = context.getString(R.string.length_title, length.toInt()),
                 style = MaterialTheme.typography.bodyMedium,
@@ -302,7 +296,6 @@ private fun PasswordGeneratorContent(
                 }
             }
 
-            // 3. Пароль + кнопки
             Text(
                 text = context.getString(R.string.password_title),
                 style = MaterialTheme.typography.titleMedium,
@@ -330,7 +323,6 @@ private fun PasswordGeneratorContent(
                         singleLine = false,
                         textStyle = MaterialTheme.typography.bodyMedium
                     )
-
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -349,15 +341,10 @@ private fun PasswordGeneratorContent(
             }
         }
 
-        // 4. Надёжность пароля
         StrengthSection(strengthScore = strengthScore)
     }
 }
 
-/**
- * Слайдер длины пароля:
- * слева — MIN, справа — MAX, по центру — текущее значение length.
- */
 @Composable
 private fun LengthSlider(
     length: Float,
@@ -478,7 +465,6 @@ private fun StrengthSection(strengthScore: Int) {
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold
         )
-
         LinearProgressIndicator(
             progress = { fraction },
             modifier = Modifier
@@ -487,7 +473,6 @@ private fun StrengthSection(strengthScore: Int) {
             color = baseColor,
             trackColor = baseColor.copy(alpha = 0.2f)
         )
-
         Text(
             text = strengthLabel,
             style = MaterialTheme.typography.bodySmall,
@@ -496,10 +481,6 @@ private fun StrengthSection(strengthScore: Int) {
         )
     }
 }
-
-// ---------------------
-// Пул символов
-// ---------------------
 
 private data class CharPool(
     val groups: List<String>,
@@ -518,9 +499,8 @@ private fun buildCharPool(
     val digitChars = "0123456789"
     val symbolChars = "!@#\$%^&*()-_=+[]{};:,.<>?/|"
 
-    val similarChars = "iIl1oO0"
     fun String.applySimilar(): String =
-        if (!excludeSimilar) this else this.filter { it !in similarChars }
+        if (!excludeSimilar) this else this.filter { it !in SIMILAR_CHARS }
 
     val groups = mutableListOf<String>()
     if (useLowercase) groups += lowercaseChars.applySimilar()
@@ -540,10 +520,6 @@ private fun buildCharPool(
     )
 }
 
-// ---------------------
-// Генерация пароля
-// ---------------------
-
 private fun generatePassword(
     length: Int,
     pool: CharPool,
@@ -555,7 +531,6 @@ private fun generatePassword(
     val result = StringBuilder(length)
     val usedChars: MutableSet<Char>? = if (excludeDuplicates) mutableSetOf() else null
 
-    // минимум по одному символу из каждой выбранной группы
     for (group in pool.groups) {
         if (result.length >= length) break
         val candidateChars = if (excludeDuplicates) {
@@ -569,7 +544,6 @@ private fun generatePassword(
         usedChars?.add(ch)
     }
 
-    // остальные символы
     while (result.length < length) {
         val source = if (excludeDuplicates) {
             val remaining = pool.allChars.filter { it !in usedChars!! }
@@ -585,10 +559,6 @@ private fun generatePassword(
     return result.toList().shuffled(random).joinToString("")
 }
 
-// ---------------------
-// Оценка надёжности
-// ---------------------
-
 private enum class PasswordStrength {
     VERY_WEAK,
     WEAK,
@@ -597,11 +567,6 @@ private enum class PasswordStrength {
     VERY_STRONG
 }
 
-/**
- * Новый алгоритм оценки "силы" пароля:
- * - нормировка на энтропию пароля длиной 20 символов из полного набора (~95 символов),
- * - затем штрафы за длину, только цифры, последовательности и повторы.
- */
 private fun estimatePasswordScore(password: String): Int {
     if (password.isEmpty()) return 0
 
@@ -628,16 +593,10 @@ private fun estimatePasswordScore(password: String): Int {
     if (hasSymbol) charSpace += 33
     if (charSpace == 0) charSpace = 1
 
-    // Энтропия в битах
-    val entropyBits = length * (ln(charSpace.toDouble()) / ln(2.0))
-
-    // Максимальная "референтная" энтропия — 20 символов из полного набора (~95)
-    val maxEntropy = REF_LENGTH_FOR_MAX_SCORE * (ln(FULL_CHARSPACE) / ln(2.0))
-
-    // Нормируем на 0–100
+    val entropyBits = length * (ln(charSpace.toDouble()) / LN_2)
+    val maxEntropy = REF_LENGTH_FOR_MAX_SCORE * (ln(FULL_CHARSPACE) / LN_2)
     var score = (entropyBits * 100.0 / maxEntropy).toInt()
 
-    // Штрафы по длине: 4–5 очень плохо, 6–7 всё ещё плохо
     if (length < 8) {
         score -= 25
         if (length < 6) {
@@ -645,22 +604,18 @@ private fun estimatePasswordScore(password: String): Int {
         }
     }
 
-    // Только цифры и короткая длина
     if (length < 10 && hasDigit && !hasLower && !hasUpper && !hasSymbol) {
         score -= 15
     }
 
-    // Простая последовательность
     if (isSequential(password)) {
         score -= 20
     }
 
-    // Много повторов
     if (hasManyRepeats(password)) {
         score -= 10
     }
 
-    // Все символы одинаковые
     if (password.toSet().size == 1 && length >= 3) {
         score -= 10
     }
@@ -673,11 +628,11 @@ private fun estimatePasswordScore(password: String): Int {
 
 private fun getPasswordStrength(score: Int): PasswordStrength {
     return when {
-        score < 20 -> PasswordStrength.VERY_WEAK    // 0–19
-        score < 40 -> PasswordStrength.WEAK         // 20–39
-        score < 60 -> PasswordStrength.MEDIUM       // 40–59
-        score < 80 -> PasswordStrength.STRONG       // 60–79
-        else -> PasswordStrength.VERY_STRONG        // 80–100
+        score < 20 -> PasswordStrength.VERY_WEAK
+        score < 40 -> PasswordStrength.WEAK
+        score < 60 -> PasswordStrength.MEDIUM
+        score < 80 -> PasswordStrength.STRONG
+        else -> PasswordStrength.VERY_STRONG
     }
 }
 
