@@ -3,6 +3,7 @@ package com.sl.passwordgenerator
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -12,12 +13,16 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -61,7 +66,6 @@ private const val SIMILAR_CHARS = "iIl1oO0"
 
 private val secureRandom = SecureRandom()
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PasswordGeneratorScreen() {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -249,41 +253,47 @@ private fun PasswordGeneratorContent(
                 .verticalScroll(scrollState),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Text(
-                text = context.getString(R.string.charsets_title),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold
-            )
+        Text(
+            text = context.getString(R.string.charsets_title),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold
+        )
 
             CharsetCheckboxRow(
                 checked = useLowercase,
                 onCheckedChange = onUseLowercaseChange,
-                text = context.getString(R.string.lowercase_label)
+                text = context.getString(R.string.lowercase_label),
+                tooltipText = context.getString(R.string.lowercase_hint)
             )
             CharsetCheckboxRow(
                 checked = useUppercase,
                 onCheckedChange = onUseUppercaseChange,
-                text = context.getString(R.string.uppercase_label)
+                text = context.getString(R.string.uppercase_label),
+                tooltipText = context.getString(R.string.uppercase_hint)
             )
             CharsetCheckboxRow(
                 checked = useDigits,
                 onCheckedChange = onUseDigitsChange,
-                text = context.getString(R.string.digits_label)
+                text = context.getString(R.string.digits_label),
+                tooltipText = context.getString(R.string.digits_hint)
             )
             CharsetCheckboxRow(
                 checked = useSymbols,
                 onCheckedChange = onUseSymbolsChange,
-                text = context.getString(R.string.symbols_label)
+                text = context.getString(R.string.symbols_label),
+                tooltipText = context.getString(R.string.symbols_hint)
             )
             CharsetCheckboxRow(
                 checked = excludeDuplicates,
                 onCheckedChange = onExcludeDuplicatesChange,
-                text = context.getString(R.string.exclude_duplicates_label)
+                text = context.getString(R.string.exclude_duplicates_label),
+                tooltipText = context.getString(R.string.exclude_duplicates_hint)
             )
             CharsetCheckboxRow(
                 checked = excludeSimilar,
                 onCheckedChange = onExcludeSimilarChange,
-                text = context.getString(R.string.exclude_similar_label)
+                text = context.getString(R.string.exclude_similar_label),
+                tooltipText = context.getString(R.string.exclude_similar_hint)
             )
 
             Text(
@@ -424,7 +434,8 @@ private fun LengthSlider(
 private fun CharsetCheckboxRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
-    text: String
+    text: String,
+    tooltipText: String
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -436,8 +447,45 @@ private fun CharsetCheckboxRow(
         )
         Text(
             text = text,
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f)
         )
+        InfoTooltip(tooltipText = tooltipText)
+    }
+}
+
+@Composable
+private fun InfoTooltip(
+    tooltipText: String
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier.padding(start = 4.dp)
+    ) {
+        IconButton(
+            onClick = { expanded = !expanded },
+            modifier = Modifier.heightIn(min = 32.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Info,
+                contentDescription = tooltipText,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            Text(
+                text = tooltipText,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                    .fillMaxWidth()
+            )
+        }
     }
 }
 
