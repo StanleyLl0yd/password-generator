@@ -49,14 +49,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.toClipEntry
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.sl.passwordgenerator.R
 import com.sl.passwordgenerator.domain.model.PasswordGenerationError
@@ -292,11 +288,12 @@ private fun PasswordGeneratorContent(
                     }
                 }
             }
-        }
 
-        StrengthSection(
-            strengthScore = state.strengthScore
-        )
+            // Strength block is now logically attached to the password card
+            StrengthSection(
+                strengthScore = state.strengthScore
+            )
+        }
     }
 }
 
@@ -332,71 +329,54 @@ private fun CharsetCheckboxRow(
     text: String,
     tooltipText: String
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Checkbox(
-            checked = checked,
-            onCheckedChange = onCheckedChange
-        )
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f)
-        )
-        InfoTooltip(tooltipText = tooltipText)
-    }
-}
-
-@Composable
-private fun InfoTooltip(
-    tooltipText: String
-) {
     val expanded = remember { mutableStateOf(false) }
-    val density = LocalDensity.current
-    val offsetY = with(density) { 6.dp.roundToPx() }
 
-    Box(
-        modifier = Modifier.padding(start = 4.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp)
     ) {
-        IconButton(
-            onClick = { expanded.value = !expanded.value },
-            modifier = Modifier.heightIn(min = 32.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Outlined.Info,
-                contentDescription = tooltipText,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            Checkbox(
+                checked = checked,
+                onCheckedChange = onCheckedChange
             )
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(
+                onClick = { expanded.value = !expanded.value },
+                modifier = Modifier.heightIn(min = 32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Info,
+                    contentDescription = tooltipText,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
 
         if (expanded.value) {
-            Popup(
-                alignment = Alignment.TopEnd,
-                offset = IntOffset(x = 0, y = offsetY),
-                onDismissRequest = { expanded.value = false },
-                properties = PopupProperties(
-                    focusable = true,
-                    dismissOnBackPress = true,
-                    dismissOnClickOutside = true
-                )
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 52.dp, top = 4.dp, end = 8.dp),
+                shape = RoundedCornerShape(10.dp),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 4.dp,
+                shadowElevation = 6.dp
             ) {
-                Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 6.dp,
-                    shadowElevation = 10.dp
-                ) {
-                    Text(
-                        text = tooltipText,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier
-                            .padding(horizontal = 12.dp, vertical = 10.dp)
-                            .fillMaxWidth()
-                    )
-                }
+                Text(
+                    text = tooltipText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                )
             }
         }
     }
@@ -431,7 +411,7 @@ private fun StrengthSection(strengthScore: Int) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 2.dp),
+            .padding(top = 8.dp, bottom = 2.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         Text(
