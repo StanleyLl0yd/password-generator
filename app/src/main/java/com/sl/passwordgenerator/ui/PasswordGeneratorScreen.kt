@@ -67,6 +67,17 @@ private enum class PasswordStrength {
     VERY_STRONG
 }
 
+private data class PasswordGeneratorActions(
+    val onPasswordChange: (String) -> Unit,
+    val onLengthChange: (Float) -> Unit,
+    val onLowercaseChange: (Boolean) -> Unit,
+    val onUppercaseChange: (Boolean) -> Unit,
+    val onDigitsChange: (Boolean) -> Unit,
+    val onSymbolsChange: (Boolean) -> Unit,
+    val onExcludeDuplicatesChange: (Boolean) -> Unit,
+    val onExcludeSimilarChange: (Boolean) -> Unit
+)
+
 @Composable
 fun PasswordGeneratorScreen(
     viewModel: PasswordGeneratorViewModel = hiltViewModel()
@@ -91,6 +102,19 @@ fun PasswordGeneratorScreen(
                 }
             }
         }
+    }
+
+    val actions = remember(viewModel) {
+        PasswordGeneratorActions(
+            onPasswordChange = viewModel::onPasswordChanged,
+            onLengthChange = viewModel::onLengthChanged,
+            onLowercaseChange = viewModel::onLowercaseChanged,
+            onUppercaseChange = viewModel::onUppercaseChanged,
+            onDigitsChange = viewModel::onDigitsChanged,
+            onSymbolsChange = viewModel::onSymbolsChanged,
+            onExcludeDuplicatesChange = viewModel::onExcludeDuplicatesChanged,
+            onExcludeSimilarChange = viewModel::onExcludeSimilarChanged
+        )
     }
 
     Scaffold(
@@ -119,14 +143,7 @@ fun PasswordGeneratorScreen(
         PasswordGeneratorContent(
             innerPadding = innerPadding,
             state = uiState,
-            onPasswordChange = viewModel::onPasswordChanged,
-            onLengthChange = viewModel::onLengthChanged,
-            onLowercaseChange = viewModel::onLowercaseChanged,
-            onUppercaseChange = viewModel::onUppercaseChanged,
-            onDigitsChange = viewModel::onDigitsChanged,
-            onSymbolsChange = viewModel::onSymbolsChanged,
-            onExcludeDuplicatesChange = viewModel::onExcludeDuplicatesChanged,
-            onExcludeSimilarChange = viewModel::onExcludeSimilarChanged,
+            actions = actions,
             onGenerateClick = { viewModel.generatePassword() },
             onCopyClick = {
                 val password = uiState.password
@@ -149,14 +166,7 @@ fun PasswordGeneratorScreen(
 private fun PasswordGeneratorContent(
     innerPadding: PaddingValues,
     state: PasswordGeneratorUiState,
-    onPasswordChange: (String) -> Unit,
-    onLengthChange: (Float) -> Unit,
-    onLowercaseChange: (Boolean) -> Unit,
-    onUppercaseChange: (Boolean) -> Unit,
-    onDigitsChange: (Boolean) -> Unit,
-    onSymbolsChange: (Boolean) -> Unit,
-    onExcludeDuplicatesChange: (Boolean) -> Unit,
-    onExcludeSimilarChange: (Boolean) -> Unit,
+    actions: PasswordGeneratorActions,
     onGenerateClick: () -> Unit,
     onCopyClick: () -> Unit
 ) {
@@ -184,37 +194,37 @@ private fun PasswordGeneratorContent(
 
             CharsetCheckboxRow(
                 checked = state.useLowercase,
-                onCheckedChange = onLowercaseChange,
+                onCheckedChange = actions.onLowercaseChange,
                 text = context.getString(R.string.lowercase_label),
                 tooltipText = context.getString(R.string.lowercase_hint)
             )
             CharsetCheckboxRow(
                 checked = state.useUppercase,
-                onCheckedChange = onUppercaseChange,
+                onCheckedChange = actions.onUppercaseChange,
                 text = context.getString(R.string.uppercase_label),
                 tooltipText = context.getString(R.string.uppercase_hint)
             )
             CharsetCheckboxRow(
                 checked = state.useDigits,
-                onCheckedChange = onDigitsChange,
+                onCheckedChange = actions.onDigitsChange,
                 text = context.getString(R.string.digits_label),
                 tooltipText = context.getString(R.string.digits_hint)
             )
             CharsetCheckboxRow(
                 checked = state.useSymbols,
-                onCheckedChange = onSymbolsChange,
+                onCheckedChange = actions.onSymbolsChange,
                 text = context.getString(R.string.symbols_label),
                 tooltipText = context.getString(R.string.symbols_hint)
             )
             CharsetCheckboxRow(
                 checked = state.excludeDuplicates,
-                onCheckedChange = onExcludeDuplicatesChange,
+                onCheckedChange = actions.onExcludeDuplicatesChange,
                 text = context.getString(R.string.exclude_duplicates_label),
                 tooltipText = context.getString(R.string.exclude_duplicates_hint)
             )
             CharsetCheckboxRow(
                 checked = state.excludeSimilar,
-                onCheckedChange = onExcludeSimilarChange,
+                onCheckedChange = actions.onExcludeSimilarChange,
                 text = context.getString(R.string.exclude_similar_label),
                 tooltipText = context.getString(R.string.exclude_similar_hint)
             )
@@ -241,7 +251,7 @@ private fun PasswordGeneratorContent(
                 ) {
                     LengthSlider(
                         length = state.length,
-                        onLengthChange = onLengthChange
+                        onLengthChange = actions.onLengthChange
                     )
                 }
             }
@@ -265,7 +275,7 @@ private fun PasswordGeneratorContent(
                 ) {
                     OutlinedTextField(
                         value = state.password,
-                        onValueChange = onPasswordChange,
+                        onValueChange = actions.onPasswordChange,
                         label = { Text(text = context.getString(R.string.password_label)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
@@ -289,7 +299,6 @@ private fun PasswordGeneratorContent(
                 }
             }
 
-            // Strength block is now logically attached to the password card
             StrengthSection(
                 strengthScore = state.strengthScore
             )
