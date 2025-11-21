@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.sl.passwordgenerator.domain.PasswordConstants
 import com.sl.passwordgenerator.domain.model.GeneratorPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -22,31 +23,34 @@ class SettingsRepository @Inject constructor(
 
     val preferencesFlow: Flow<GeneratorPreferences> = context.dataStore.data.map { preferences ->
         GeneratorPreferences(
-            password = preferences[PASSWORD] ?: "",
-            length = (preferences[LENGTH] ?: 16).toFloat(),
-            useLowercase = preferences[USE_LOWERCASE] ?: true,
-            useUppercase = preferences[USE_UPPERCASE] ?: true,
-            useDigits = preferences[USE_DIGITS] ?: true,
-            useSymbols = preferences[USE_SYMBOLS] ?: true,
-            excludeDuplicates = preferences[EXCLUDE_DUPLICATES] ?: true,
-            excludeSimilar = preferences[EXCLUDE_SIMILAR] ?: true
+            password = preferences[Keys.PASSWORD].orEmpty(),
+            length = (preferences[Keys.LENGTH] ?: 16).toFloat().coerceIn(
+                PasswordConstants.MIN_LENGTH.toFloat(),
+                PasswordConstants.MAX_LENGTH.toFloat()
+            ),
+            useLowercase = preferences[Keys.USE_LOWERCASE] ?: true,
+            useUppercase = preferences[Keys.USE_UPPERCASE] ?: true,
+            useDigits = preferences[Keys.USE_DIGITS] ?: true,
+            useSymbols = preferences[Keys.USE_SYMBOLS] ?: true,
+            excludeDuplicates = preferences[Keys.EXCLUDE_DUPLICATES] ?: true,
+            excludeSimilar = preferences[Keys.EXCLUDE_SIMILAR] ?: true
         )
     }
 
     suspend fun savePreferences(preferences: GeneratorPreferences) {
         context.dataStore.edit { mutablePreferences ->
-            mutablePreferences[PASSWORD] = preferences.password
-            mutablePreferences[LENGTH] = preferences.length.toInt()
-            mutablePreferences[USE_LOWERCASE] = preferences.useLowercase
-            mutablePreferences[USE_UPPERCASE] = preferences.useUppercase
-            mutablePreferences[USE_DIGITS] = preferences.useDigits
-            mutablePreferences[USE_SYMBOLS] = preferences.useSymbols
-            mutablePreferences[EXCLUDE_DUPLICATES] = preferences.excludeDuplicates
-            mutablePreferences[EXCLUDE_SIMILAR] = preferences.excludeSimilar
+            mutablePreferences[Keys.PASSWORD] = preferences.password
+            mutablePreferences[Keys.LENGTH] = preferences.length.toInt()
+            mutablePreferences[Keys.USE_LOWERCASE] = preferences.useLowercase
+            mutablePreferences[Keys.USE_UPPERCASE] = preferences.useUppercase
+            mutablePreferences[Keys.USE_DIGITS] = preferences.useDigits
+            mutablePreferences[Keys.USE_SYMBOLS] = preferences.useSymbols
+            mutablePreferences[Keys.EXCLUDE_DUPLICATES] = preferences.excludeDuplicates
+            mutablePreferences[Keys.EXCLUDE_SIMILAR] = preferences.excludeSimilar
         }
     }
 
-    private companion object {
+    private object Keys {
         val PASSWORD = stringPreferencesKey("password")
         val LENGTH = intPreferencesKey("length")
         val USE_LOWERCASE = booleanPreferencesKey("use_lowercase")

@@ -1,5 +1,6 @@
 package com.sl.passwordgenerator.domain.usecase
 
+import com.sl.passwordgenerator.domain.PasswordConstants
 import com.sl.passwordgenerator.domain.model.PasswordGenerationConfig
 import com.sl.passwordgenerator.domain.model.PasswordGenerationError
 import com.sl.passwordgenerator.domain.model.PasswordGenerationResult
@@ -7,10 +8,6 @@ import java.security.SecureRandom
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.ln
-
-private const val FULL_CHARSPACE = 95.0
-private const val REF_LENGTH_FOR_MAX_SCORE = 20.0
-private const val SIMILAR_CHARS = "iIl1oO0"
 
 private data class CharPool(
     val groups: List<String>,
@@ -67,19 +64,14 @@ class PasswordGenerator @Inject constructor() {
         useSymbols: Boolean,
         excludeSimilar: Boolean
     ): CharPool {
-        val lowercaseChars = "abcdefghijklmnopqrstuvwxyz"
-        val uppercaseChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        val digitChars = "0123456789"
-        val symbolChars = "!@#\$%^&*()-_=+[]{};:,.<>?/|"
-
         fun String.filterSimilar(): String =
-            if (excludeSimilar) filterNot { it in SIMILAR_CHARS } else this
+            if (excludeSimilar) filterNot { it in PasswordConstants.SIMILAR_CHARS } else this
 
         val groups = buildList {
-            if (useLowercase) add(lowercaseChars.filterSimilar())
-            if (useUppercase) add(uppercaseChars.filterSimilar())
-            if (useDigits) add(digitChars.filterSimilar())
-            if (useSymbols) add(symbolChars.filterSimilar())
+            if (useLowercase) add(PasswordConstants.LOWERCASE_CHARS.filterSimilar())
+            if (useUppercase) add(PasswordConstants.UPPERCASE_CHARS.filterSimilar())
+            if (useDigits) add(PasswordConstants.DIGIT_CHARS.filterSimilar())
+            if (useSymbols) add(PasswordConstants.SYMBOL_CHARS.filterSimilar())
         }.filter { it.isNotEmpty() }
 
         return CharPool(
@@ -142,16 +134,17 @@ class PasswordGenerator @Inject constructor() {
 
     private fun calculateEntropyScore(length: Int, charSpace: Int): Int {
         val entropyBits = length * (ln(charSpace.toDouble()) / ln(2.0))
-        val maxEntropy = REF_LENGTH_FOR_MAX_SCORE * (ln(FULL_CHARSPACE) / ln(2.0))
+        val maxEntropy = PasswordConstants.REF_LENGTH_FOR_MAX_SCORE *
+                (ln(PasswordConstants.FULL_CHARSPACE) / ln(2.0))
         return (entropyBits * 100.0 / maxEntropy).toInt()
     }
 
     private fun calculatePasswordPenalty(password: String, length: Int): Int {
         var scoreAdjustment = 0
 
-        if (length < 8) {
-            scoreAdjustment -= 25
-            if (length < 6) scoreAdjustment -= 10
+        when {
+            length < 6 -> scoreAdjustment -= 35
+            length < 8 -> scoreAdjustment -= 25
         }
 
         val hasLower = password.any { it.isLowerCase() }
@@ -180,7 +173,7 @@ class PasswordGenerator @Inject constructor() {
             val diff = password[i] - password[i - 1]
             if (diff != 1) ascending = false
             if (diff != -1) descending = false
-            if (!ascending && !descending) break
+            if (!ascending && !descending) return false
         }
 
         return ascending || descending

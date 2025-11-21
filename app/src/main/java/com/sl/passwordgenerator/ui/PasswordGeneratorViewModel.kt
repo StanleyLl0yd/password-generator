@@ -3,6 +3,7 @@ package com.sl.passwordgenerator.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sl.passwordgenerator.data.SettingsRepository
+import com.sl.passwordgenerator.domain.PasswordConstants
 import com.sl.passwordgenerator.domain.model.GeneratorPreferences
 import com.sl.passwordgenerator.domain.model.PasswordGenerationConfig
 import com.sl.passwordgenerator.domain.model.PasswordGenerationError
@@ -16,9 +17,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-
-const val MIN_LENGTH = 4
-const val MAX_LENGTH = 64
 
 @HiltViewModel
 class PasswordGeneratorViewModel @Inject constructor(
@@ -40,7 +38,7 @@ class PasswordGeneratorViewModel @Inject constructor(
 
             _uiState.value = _uiState.value.copy(
                 password = preferences.password,
-                length = preferences.length.coerceIn(MIN_LENGTH.toFloat(), MAX_LENGTH.toFloat()),
+                length = preferences.length,
                 useLowercase = preferences.useLowercase,
                 useUppercase = preferences.useUppercase,
                 useDigits = preferences.useDigits,
@@ -65,7 +63,10 @@ class PasswordGeneratorViewModel @Inject constructor(
     fun onLengthChanged(value: Float) {
         updateState {
             it.copy(
-                length = value.coerceIn(MIN_LENGTH.toFloat(), MAX_LENGTH.toFloat())
+                length = value.coerceIn(
+                    PasswordConstants.MIN_LENGTH.toFloat(),
+                    PasswordConstants.MAX_LENGTH.toFloat()
+                )
             )
         }
     }
@@ -118,29 +119,27 @@ class PasswordGeneratorViewModel @Inject constructor(
         }
     }
 
-    private fun PasswordGeneratorUiState.toGenerationConfig(): PasswordGenerationConfig =
-        PasswordGenerationConfig(
-            length = length.toInt(),
-            useLowercase = useLowercase,
-            useUppercase = useUppercase,
-            useDigits = useDigits,
-            useSymbols = useSymbols,
-            excludeSimilar = excludeSimilar,
-            excludeDuplicates = excludeDuplicates
-        )
+    private fun PasswordGeneratorUiState.toGenerationConfig() = PasswordGenerationConfig(
+        length = length.toInt(),
+        useLowercase = useLowercase,
+        useUppercase = useUppercase,
+        useDigits = useDigits,
+        useSymbols = useSymbols,
+        excludeSimilar = excludeSimilar,
+        excludeDuplicates = excludeDuplicates
+    )
 
-    private fun PasswordGeneratorUiState.toPreferences(): GeneratorPreferences =
-        GeneratorPreferences(
-            password = password,
-            length = length,
-            useLowercase = useLowercase,
-            useUppercase = useUppercase,
-            useDigits = useDigits,
-            useSymbols = useSymbols,
-            excludeDuplicates = excludeDuplicates,
-            excludeSimilar = excludeSimilar
-        )
+    private fun PasswordGeneratorUiState.toPreferences() = GeneratorPreferences(
+        password = password,
+        length = length,
+        useLowercase = useLowercase,
+        useUppercase = useUppercase,
+        useDigits = useDigits,
+        useSymbols = useSymbols,
+        excludeDuplicates = excludeDuplicates,
+        excludeSimilar = excludeSimilar
+    )
 
-    private fun PasswordGeneratorUiState.withStrength(): PasswordGeneratorUiState =
+    private fun PasswordGeneratorUiState.withStrength() =
         copy(strengthScore = passwordGenerator.estimatePasswordScore(password))
 }

@@ -1,62 +1,29 @@
 package com.sl.passwordgenerator.ui
 
-import android.content.ClipData
 import android.content.Context
 import android.widget.Toast
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.toClipEntry
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.sl.passwordgenerator.R
+import com.sl.passwordgenerator.domain.PasswordConstants
 import com.sl.passwordgenerator.domain.model.PasswordGenerationError
-import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 private enum class PasswordStrength {
@@ -83,8 +50,7 @@ fun PasswordGeneratorScreen(
     viewModel: PasswordGeneratorViewModel = hiltViewModel()
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    val clipboard = LocalClipboard.current
-    val coroutineScope = rememberCoroutineScope()
+    val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
 
@@ -127,12 +93,12 @@ fun PasswordGeneratorScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
                     contentAlignment = Alignment.CenterStart
                 ) {
                     Text(
                         text = context.getString(R.string.app_name),
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 }
@@ -144,17 +110,11 @@ fun PasswordGeneratorScreen(
             innerPadding = innerPadding,
             state = uiState,
             actions = actions,
-            onGenerateClick = { viewModel.generatePassword() },
+            onGenerateClick = viewModel::generatePassword,
             onCopyClick = {
                 val password = uiState.password
                 if (password.isNotEmpty()) {
-                    coroutineScope.launch {
-                        val clipData = ClipData.newPlainText(
-                            context.getString(R.string.password_label),
-                            password
-                        )
-                        clipboard.setClipEntry(clipData.toClipEntry())
-                    }
+                    clipboardManager.setText(AnnotatedString(password))
                     showToast(context, context.getString(R.string.copied_to_clipboard))
                 }
             }
@@ -177,14 +137,14 @@ private fun PasswordGeneratorContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(innerPadding)
-            .padding(horizontal = 12.dp, vertical = 2.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(scrollState),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Text(
                 text = context.getString(R.string.charsets_title),
@@ -277,9 +237,10 @@ private fun PasswordGeneratorContent(
                         value = state.password,
                         onValueChange = actions.onPasswordChange,
                         label = { Text(text = context.getString(R.string.password_label)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        maxLines = 1,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 52.dp),
+                        singleLine = false,
                         textStyle = MaterialTheme.typography.bodyMedium
                     )
                     Row(
@@ -298,11 +259,9 @@ private fun PasswordGeneratorContent(
                     }
                 }
             }
-
-            StrengthSection(
-                strengthScore = state.strengthScore
-            )
         }
+
+        StrengthSection(strengthScore = state.strengthScore)
     }
 }
 
@@ -313,20 +272,56 @@ private fun LengthSlider(
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = PasswordConstants.MIN_LENGTH.toString(),
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Start
+            )
+            Text(
+                text = length.toInt().toString(),
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = PasswordConstants.MAX_LENGTH.toString(),
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.End
+            )
+        }
+
         Slider(
             value = length,
             onValueChange = { new ->
                 val clamped = new
-                    .coerceIn(MIN_LENGTH.toFloat(), MAX_LENGTH.toFloat())
+                    .coerceIn(
+                        PasswordConstants.MIN_LENGTH.toFloat(),
+                        PasswordConstants.MAX_LENGTH.toFloat()
+                    )
                     .roundToInt()
                     .toFloat()
                 onLengthChange(clamped)
             },
-            valueRange = MIN_LENGTH.toFloat()..MAX_LENGTH.toFloat(),
-            steps = MAX_LENGTH - MIN_LENGTH - 1,
-            modifier = Modifier.fillMaxWidth()
+            valueRange = PasswordConstants.MIN_LENGTH.toFloat()..PasswordConstants.MAX_LENGTH.toFloat(),
+            steps = PasswordConstants.MAX_LENGTH - PasswordConstants.MIN_LENGTH - 1,
+            modifier = Modifier.fillMaxWidth(),
+            colors = SliderDefaults.colors(
+                activeTrackColor = MaterialTheme.colorScheme.primary,
+                inactiveTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                thumbColor = MaterialTheme.colorScheme.surface,
+                activeTickColor = Color.Transparent,
+                inactiveTickColor = Color.Transparent
+            )
         )
     }
 }
@@ -338,12 +333,10 @@ private fun CharsetCheckboxRow(
     text: String,
     tooltipText: String
 ) {
-    val expanded = remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 2.dp)
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -359,7 +352,7 @@ private fun CharsetCheckboxRow(
                 modifier = Modifier.weight(1f)
             )
             IconButton(
-                onClick = { expanded.value = !expanded.value },
+                onClick = { expanded = !expanded },
                 modifier = Modifier.heightIn(min = 32.dp)
             ) {
                 Icon(
@@ -370,20 +363,19 @@ private fun CharsetCheckboxRow(
             }
         }
 
-        if (expanded.value) {
+        if (expanded) {
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 52.dp, top = 4.dp, end = 8.dp),
+                    .padding(start = 52.dp, top = 4.dp, end = 8.dp, bottom = 4.dp),
                 shape = RoundedCornerShape(10.dp),
-                color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 4.dp,
-                shadowElevation = 6.dp
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                tonalElevation = 2.dp
             ) {
                 Text(
                     text = tooltipText,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                 )
             }
@@ -420,7 +412,7 @@ private fun StrengthSection(strengthScore: Int) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 8.dp, bottom = 2.dp),
+            .padding(vertical = 2.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         Text(
