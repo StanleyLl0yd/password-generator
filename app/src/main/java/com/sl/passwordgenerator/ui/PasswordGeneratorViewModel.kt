@@ -6,16 +6,11 @@ import com.sl.passwordgenerator.data.SettingsRepository
 import com.sl.passwordgenerator.domain.PasswordConstants
 import com.sl.passwordgenerator.domain.model.GeneratorPreferences
 import com.sl.passwordgenerator.domain.model.PasswordGenerationConfig
-import com.sl.passwordgenerator.domain.model.PasswordGenerationError
 import com.sl.passwordgenerator.domain.model.PasswordGenerationResult
 import com.sl.passwordgenerator.domain.usecase.PasswordGenerator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -25,34 +20,25 @@ class PasswordGeneratorViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PasswordGeneratorUiState())
-    val uiState = _uiState.asStateFlow()
+    val uiState: StateFlow<PasswordGeneratorUiState> = _uiState.asStateFlow()
 
     private val _events = MutableSharedFlow<PasswordGeneratorUiEvent>()
-    val events = _events.asSharedFlow()
+    val events: SharedFlow<PasswordGeneratorUiEvent> = _events.asSharedFlow()
 
     private var isInitialized = false
 
     init {
         viewModelScope.launch {
-            val preferences = settingsRepository.preferencesFlow.first()
+            settingsRepository.preferencesFlow
+                .first()
+                .also { preferences ->
+                    _uiState.value = preferences.toUiState().withStrength()
+                    isInitialized = true
 
-            _uiState.value = _uiState.value.copy(
-                password = preferences.password,
-                length = preferences.length,
-                useLowercase = preferences.useLowercase,
-                useUppercase = preferences.useUppercase,
-                useDigits = preferences.useDigits,
-                useSymbols = preferences.useSymbols,
-                excludeDuplicates = preferences.excludeDuplicates,
-                excludeSimilar = preferences.excludeSimilar,
-                isLoading = false
-            ).withStrength()
-
-            isInitialized = true
-
-            if (preferences.password.isEmpty()) {
-                generatePassword()
-            }
+                    if (preferences.password.isEmpty()) {
+                        generatePassword()
+                    }
+                }
         }
     }
 
@@ -71,23 +57,29 @@ class PasswordGeneratorViewModel @Inject constructor(
         }
     }
 
-    fun onLowercaseChanged(enabled: Boolean) =
+    fun onLowercaseChanged(enabled: Boolean) {
         updateState { it.copy(useLowercase = enabled) }
+    }
 
-    fun onUppercaseChanged(enabled: Boolean) =
+    fun onUppercaseChanged(enabled: Boolean) {
         updateState { it.copy(useUppercase = enabled) }
+    }
 
-    fun onDigitsChanged(enabled: Boolean) =
+    fun onDigitsChanged(enabled: Boolean) {
         updateState { it.copy(useDigits = enabled) }
+    }
 
-    fun onSymbolsChanged(enabled: Boolean) =
+    fun onSymbolsChanged(enabled: Boolean) {
         updateState { it.copy(useSymbols = enabled) }
+    }
 
-    fun onExcludeDuplicatesChanged(enabled: Boolean) =
+    fun onExcludeDuplicatesChanged(enabled: Boolean) {
         updateState { it.copy(excludeDuplicates = enabled) }
+    }
 
-    fun onExcludeSimilarChanged(enabled: Boolean) =
+    fun onExcludeSimilarChanged(enabled: Boolean) {
         updateState { it.copy(excludeSimilar = enabled) }
+    }
 
     fun generatePassword() {
         val config = _uiState.value.toGenerationConfig()
@@ -95,13 +87,7 @@ class PasswordGeneratorViewModel @Inject constructor(
             is PasswordGenerationResult.Success ->
                 updateState { it.copy(password = result.password) }
             is PasswordGenerationResult.Error ->
-                notifyError(result.reason)
-        }
-    }
-
-    private fun notifyError(reason: PasswordGenerationError) {
-        viewModelScope.launch {
-            _events.emit(PasswordGeneratorUiEvent.Error(reason))
+                emitEvent(PasswordGeneratorUiEvent.Error(result.reason))
         }
     }
 
@@ -119,27 +105,47 @@ class PasswordGeneratorViewModel @Inject constructor(
         }
     }
 
-    private fun PasswordGeneratorUiState.toGenerationConfig() = PasswordGenerationConfig(
-        length = length.toInt(),
-        useLowercase = useLowercase,
-        useUppercase = useUppercase,
-        useDigits = useDigits,
-        useSymbols = useSymbols,
-        excludeSimilar = excludeSimilar,
-        excludeDuplicates = excludeDuplicates
-    )
+    private fun emitEvent(event: PasswordGeneratorUiEvent) {
+        viewModelScope.launch {
+            _events.emit(event)
+        }
+    }
 
-    private fun PasswordGeneratorUiState.toPreferences() = GeneratorPreferences(
-        password = password,
-        length = length,
-        useLowercase = useLowercase,
-        useUppercase = useUppercase,
-        useDigits = useDigits,
-        useSymbols = useSymbols,
-        excludeDuplicates = excludeDuplicates,
-        excludeSimilar = excludeSimilar
-    )
-
-    private fun PasswordGeneratorUiState.withStrength() =
-        copy(strengthScore = passwordGenerator.estimatePasswordScore(password))
+    private fun PasswordGeneratorUiState.withStrength(): PasswordGeneratorUiState {
+        return copy(strengthScore = passwordGenerator.estimatePasswordScore(password))
+    }
 }
+
+// Extension functions для маппинга
+private fun GeneratorPreferences.toUiState() = PasswordGeneratorUiState(
+    password = password,
+    length = length,
+    useLowercase = useLowercase,
+    useUppercase = useUppercase,
+    useDigits = useDigits,
+    useSymbols = useSymbols,
+    excludeDuplicates = excludeDuplicates,
+    excludeSimilar = excludeSimilar,
+    isLoading = false
+)
+
+private fun PasswordGeneratorUiState.toGenerationConfig() = PasswordGenerationConfig(
+    length = length.toInt(),
+    useLowercase = useLowercase,
+    useUppercase = useUppercase,
+    useDigits = useDigits,
+    useSymbols = useSymbols,
+    excludeSimilar = excludeSimilar,
+    excludeDuplicates = excludeDuplicates
+)
+
+private fun PasswordGeneratorUiState.toPreferences() = GeneratorPreferences(
+    password = password,
+    length = length,
+    useLowercase = useLowercase,
+    useUppercase = useUppercase,
+    useDigits = useDigits,
+    useSymbols = useSymbols,
+    excludeDuplicates = excludeDuplicates,
+    excludeSimilar = excludeSimilar
+)

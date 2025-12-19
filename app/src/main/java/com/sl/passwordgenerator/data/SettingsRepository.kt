@@ -18,8 +18,9 @@ private val Context.dataStore by preferencesDataStore(name = "generator_preferen
 
 @Singleton
 class SettingsRepository @Inject constructor(
-    @ApplicationContext private val context: Context
-) {
+    @ApplicationContext
+    private val context: Context
+){
 
     val preferencesFlow: Flow<GeneratorPreferences> = context.dataStore.data.map { preferences ->
         GeneratorPreferences(

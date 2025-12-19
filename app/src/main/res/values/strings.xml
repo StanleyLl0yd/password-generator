@@ -2,35 +2,34 @@
 <resources>
     <string name="app_name">Password Generator</string>
 
-    <string name="charsets_title">Наборы символов и опции</string>
-    <string name="lowercase_label">Строчные буквы (a–z)</string>
-    <string name="uppercase_label">Заглавные буквы (A–Z)</string>
-    <string name="digits_label">Цифры (0–9)</string>
-    <string name="symbols_label">Спецсимволы (!@#…)</string>
-    <string name="exclude_duplicates_label">Исключать повторяющиеся символы</string>
-    <string name="exclude_similar_label">Исключать похожие символы (i I 1 l o O 0)</string>
-    <string name="lowercase_hint">Добавляет базовый набор строчных букв для баланса читаемости и сложности.</string>
-    <string name="uppercase_hint">Включает заглавные буквы — повышает сложность и помогает удовлетворить политики.</string>
-    <string name="digits_hint">Добавляет цифры 0–9, чтобы пароль соответствовал типичным требованиям сервисов.</string>
-    <string name="symbols_hint">Подмешивает спецсимволы и заметно увеличивает пространство перебора.</string>
-    <string name="exclude_duplicates_hint">Не повторяет символы в одном пароле. Удобно для чтения, но может ограничить максимальную длину.</string>
-    <string name="exclude_similar_hint">Удаляет легко путаемые символы (i I 1 l o O 0), чтобы пароль проще различать глазами.</string>
+    <string name="lowercase_label">Lowercase (a–z)</string>
+    <string name="uppercase_label">Uppercase (A–Z)</string>
+    <string name="digits_label">Digits (0–9)</string>
+    <string name="symbols_label">Special chars (!@#…)</string>
+    <string name="exclude_duplicates_label">Exclude duplicates</string>
+    <string name="exclude_similar_label">Exclude similar (i I 1 l o O 0)</string>
 
-    <string name="length_title">Длина: %1$d символов</string>
+    <string name="lowercase_hint">Adds basic lowercase letters for balance of readability and complexity.</string>
+    <string name="uppercase_hint">Includes uppercase letters — increases complexity and helps meet policy requirements.</string>
+    <string name="digits_hint">Adds digits 0–9 so the password meets typical service requirements.</string>
+    <string name="symbols_hint">Mixes in special characters and significantly increases the search space.</string>
+    <string name="exclude_duplicates_hint">Does not repeat characters in one password. Convenient for reading, but may limit maximum length.</string>
+    <string name="exclude_similar_hint">Removes easily confused characters (i I 1 l o O 0) to make the password easier to distinguish.</string>
 
-    <string name="password_title">Сгенерированный пароль</string>
-    <string name="password_label">Пароль</string>
-    <string name="copy_button">Копировать</string>
-    <string name="generate_button">Сгенерировать</string>
+    <string name="length_title">Length: %1$d characters</string>
 
-    <string name="strength_title">Надёжность пароля</string>
-    <string name="strength_very_weak">Очень слабый пароль</string>
-    <string name="strength_weak">Слабый пароль</string>
-    <string name="strength_medium">Средний пароль</string>
-    <string name="strength_strong">Сильный пароль</string>
-    <string name="strength_very_strong">Очень сильный пароль</string>
+    <string name="password_label">Password</string>
+    <string name="copy_button">Copy</string>
+    <string name="generate_button">Generate</string>
 
-    <string name="error_no_charsets">Выберите хотя бы один набор символов</string>
-    <string name="error_no_enough_unique_chars">Недостаточно уникальных символов для такой длины без повторов</string>
-    <string name="copied_to_clipboard">Пароль скопирован в буфер обмена</string>
+    <string name="strength_title">Password strength</string>
+    <string name="strength_very_weak">Very weak password</string>
+    <string name="strength_weak">Weak password</string>
+    <string name="strength_medium">Medium password</string>
+    <string name="strength_strong">Strong password</string>
+    <string name="strength_very_strong">Very strong password</string>
+
+    <string name="error_no_charsets">Select at least one character set</string>
+    <string name="error_no_enough_unique_chars">Not enough unique characters for this length without duplicates</string>
+    <string name="copied_to_clipboard">Password copied to clipboard</string>
 </resources>

@@ -1,187 +1,357 @@
-Password Generator (Offline)
+# Password Generator
 
-Android app for generating strong, unique passwords fully offline.
+[![en](https://img.shields.io/badge/lang-en-red.svg)](README.md)
+[![ru](https://img.shields.io/badge/lang-ru-blue.svg)](README.ru.md)
 
-Overview
+**Version:** 1.4.0  
+**Min SDK:** 24 (Android 7.0)  
+**Target SDK:** 36
 
-Password Generator is a minimal, privacy-friendly tool that helps you create strong passwords for any service.
-All generation happens locally on your device: the app does not use the network, does not send data anywhere and does not show ads.
+A modern, privacy-focused Android password generator with adaptive UI and clean architecture.
 
-Features
-	•	Offline password generation – no network access is required
-	•	Flexible character sets:
-	•	Lowercase letters (a–z)
-	•	Uppercase letters (A–Z)
-	•	Digits (0–9)
-	•	Special characters (!@#…)
-	•	Extra options:
-	•	Exclude duplicate characters
-	•	Exclude similar characters (i I 1 l o O 0) to make passwords easier to read and type
-	•	Password length from 4 to 64 characters (default: 16)
-	•	Visual password strength indicator:
-	•	Score from 0 to 100
-	•	Color gradient from red (weak) through yellow to green (strong)
-	•	Text labels: Very weak / Weak / Medium / Strong / Very strong
-	•	Single-screen UI in Material Design 3
-	•	One-tap copy to clipboard
+---
 
-Password strength model
+## 📱 Screenshots
 
-The app uses an entropy-based score, calibrated for real-world passwords:
-	•	Estimates character space based on used sets (lowercase, uppercase, digits, symbols)
-	•	Entropy ≈ length * log2(charSpace)
-	•	Normalized so that a 20-character random password from the full set is close to 100
-	•	Penalties are applied for:
-	•	Short length (4–7 characters)
-	•	Digits-only short passwords
-	•	Strict ascending/descending sequences (e.g. 123456, abcdef)
-	•	Heavy repetition and all-same characters
+<div align="center">
+  <img src="screenshots/main_en.png" width="250" alt="Main Screen (English)"/>
+  <img src="screenshots/main_ru.png" width="250" alt="Main Screen (Russian)"/>
+  <img src="screenshots/adaptive.png" width="250" alt="Adaptive Layout"/>
+</div>
 
-Resulting score is clamped to 0–100 and mapped to 5 levels:
-Very weak, Weak, Medium, Strong, Very strong.
+---
 
-This score is only a heuristic and does not guarantee absolute security, but it clearly separates obviously weak passwords from strong, high-entropy ones.
+## ✨ Features
 
-Technology
-	•	Language: Kotlin
-	•	UI: Jetpack Compose
-	•	Design: Material 3
-	•	Min SDK: 24
-	•	No external backend, everything is on-device
-	•	Single MainActivity + composable UI
+### 🔐 Password Generation
+- **Flexible character sets**: lowercase, uppercase, digits, special characters
+- **Customizable length**: 4-64 characters
+- **Smart options**:
+    - Exclude duplicate characters
+    - Exclude similar characters (i I 1 l o O 0) for better readability
+- **Real-time strength indicator**: visual feedback with color-coded progress bar
+- **One-tap copy to clipboard** with haptic feedback
 
-Project structure
-	•	app/src/main/java/com/sl/passwordgenerator
-	•	MainActivity.kt – entry point
-	•	PasswordGeneratorScreen.kt – UI, generation logic, strength estimation
-	•	app/src/main/java/com/sl/passwordgenerator/ui/theme
-	•	Theme.kt, Color.kt, Type.kt – Material 3 theme
-	•	app/src/main/res
-	•	values/*.xml – strings, theme, colors
-	•	mipmap-* / drawable – app icon
+### 🎨 Modern UI/UX
+- **Adaptive layout**: automatically switches between 1 or 2 columns based on screen height
+- **Popup tooltips**: helpful hints that float above content without disrupting layout
+- **Material 3 Design**: follows latest Google design guidelines
+- **Smooth animations**: polished transitions and micro-interactions
+- **Dark/Light theme**: automatic based on system settings
 
-Getting started
+### 🌍 Localization
+- **English** (default for all languages)
+- **Русский** (Russian)
+- Automatic language detection based on system settings
 
-Requirements
-	•	Android Studio Hedgehog / Iguana or newer
-	•	Android SDK 24+
-	•	JDK 11
+### 🔒 Privacy & Security
+- **100% offline**: no network access required
+- **No data collection**: zero analytics, tracking, or ads
+- **Local storage only**: passwords generated in memory, optionally saved locally
+- **Open source**: full code transparency
 
-Build & run
-	1.	Clone the repository
-	•	git clone https://github.com/<your-username>/password-generator.git
-	•	cd password-generator
-	2.	Open the project in Android Studio
-	3.	Let Gradle sync finish
-	4.	Run on an emulator or a physical device (API 24+)
+### 🏗️ Technical Excellence
+- **Clean Architecture**: Domain/Data/UI separation
+- **MVVM pattern**: StateFlow-based state management
+- **Hilt DI**: dependency injection for testability
+- **Jetpack Compose**: modern declarative UI
+- **Component-based**: reusable UI components
+- **Optimized performance**: minimal recomposition
 
-Privacy and data
-	•	The app works 100% offline
-	•	No network requests
-	•	No analytics, no crash reporting, no ads
-	•	Passwords are generated in memory and are not stored anywhere by the app
-	•	The only operation with external state is copying to clipboard when you tap “Copy”
+---
 
-Roadmap / ideas
+## 📦 Installation
 
-Planned and possible future improvements:
-	•	History of recently generated passwords (optional, opt-in)
-	•	Custom character sets
-	•	Dark theme toggle (if you want to override system)
-	•	Import/export of settings
-	•	In-app help and security tips
+### From Source
 
-⸻
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/yourusername/password-generator.git
+   cd password-generator
+   ```
 
-Генератор паролей (офлайн)
+2. **Open in Android Studio**:
+    - Android Studio Hedgehog (2023.1.1) or newer
+    - JDK 11 or higher
 
-Android-приложение для генерации надёжных паролей полностью офлайн.
+3. **Sync Gradle**:
+    - Let Android Studio sync dependencies
 
-Обзор
+4. **Build and Run**:
+   ```bash
+   ./gradlew assembleDebug
+   ./gradlew installDebug
+   ```
 
-«Генератор паролей» — это минималистичное и приватное приложение для создания сильных и уникальных паролей для любых сервисов.
-Все расчёты выполняются локально на устройстве: приложение не использует интернет, не отправляет данные и не показывает рекламу.
+### APK Release
 
-Возможности
-	•	Генерация паролей без интернета
-	•	Гибкий выбор наборов символов:
-	•	строчные буквы (a–z)
-	•	заглавные буквы (A–Z)
-	•	цифры (0–9)
-	•	спецсимволы (!@#…)
-	•	Дополнительные опции:
-	•	исключать повторяющиеся символы
-	•	исключать похожие символы (i I 1 l o O 0), чтобы пароль было легче прочитать и ввести
-	•	Длина пароля от 4 до 64 символов (по умолчанию – 16)
-	•	Наглядная оценка надёжности:
-	•	шкала от 0 до 100
-	•	цветовой градиент от красного (слабый) через жёлтый к зелёному (сильный)
-	•	текстовые уровни: Очень слабый / Слабый / Средний / Сильный / Очень сильный
-	•	Весь интерфейс — на одном экране в стиле Material Design 3
-	•	Быстрое копирование пароля в буфер обмена одной кнопкой
+Download the latest APK from [Releases](https://github.com/yourusername/password-generator/releases)
 
-Модель оценки надёжности
+---
 
-Приложение использует оценку на основе энтропии, адаптированную под реальные пароли:
-	•	Определяется «алфавит» по использованным наборам символов (строчные, заглавные, цифры, спецсимволы)
-	•	Энтропия ≈ length * log2(charSpace)
-	•	Энтропия нормируется так, чтобы случайный пароль длиной 20 символов из полного набора давал оценку около 100
-	•	Дополнительно применяются штрафы за:
-	•	короткую длину (4–7 символов)
-	•	короткие пароли только из цифр
-	•	простые последовательности (строго по возрастанию или убыванию, например 123456, abcdef)
-	•	большое количество повторов и одинаковые символы
+## 🛠️ Technology Stack
 
-Результат ограничивается диапазоном 0–100 и переводится в 5 уровней:
-Очень слабый, Слабый, Средний, Сильный, Очень сильный.
+| Category | Technology |
+|----------|------------|
+| **Language** | Kotlin 2.0.21 |
+| **UI Framework** | Jetpack Compose |
+| **Design System** | Material 3 |
+| **Architecture** | MVVM + Clean Architecture |
+| **Dependency Injection** | Hilt 2.57.2 |
+| **Async** | Kotlin Coroutines + Flow |
+| **Local Storage** | DataStore Preferences |
+| **Build System** | Gradle 8.13 (Kotlin DSL) |
 
-Это не «волшебная защита», а удобная оценка, которая чётко показывает, насколько пароль лучше или хуже очевидно слабых вариантов.
+---
 
-Технологии
-	•	Язык: Kotlin
-	•	UI: Jetpack Compose
-	•	Дизайн: Material 3
-	•	Min SDK: 24
-	•	Без внешнего бэкенда, всё на устройстве
-	•	Одна MainActivity + composable-экран
+## 📁 Project Structure
 
-Структура проекта
-	•	app/src/main/java/com/sl/passwordgenerator
-	•	MainActivity.kt — входная точка приложения
-	•	PasswordGeneratorScreen.kt — интерфейс, генерация пароля, оценка надёжности
-	•	app/src/main/java/com/sl/passwordgenerator/ui/theme
-	•	Theme.kt, Color.kt, Type.kt — тема Material 3
-	•	app/src/main/res
-	•	values/*.xml — строки, тема, цвета
-	•	mipmap-* / drawable — иконка приложения
+```
+app/src/main/java/com/sl/passwordgenerator/
+├── data/
+│   └── SettingsRepository.kt          # DataStore persistence
+├── domain/
+│   ├── model/
+│   │   ├── GeneratorPreferences.kt    # User preferences model
+│   │   ├── PasswordGenerationConfig.kt
+│   │   ├── PasswordGenerationResult.kt
+│   │   └── PasswordStrength.kt        # Strength enum with logic
+│   ├── usecase/
+│   │   └── PasswordGenerator.kt       # Core generation logic
+│   └── PasswordConstants.kt           # Character sets & constants
+├── ui/
+│   ├── components/
+│   │   ├── CheckboxRow.kt             # Reusable checkbox with tooltip
+│   │   ├── LengthSlider.kt            # Password length slider
+│   │   ├── PasswordField.kt           # Password input with visibility toggle
+│   │   └── StrengthIndicator.kt       # Visual strength indicator
+│   ├── theme/
+│   │   ├── Color.kt                   # Material 3 color palette
+│   │   ├── Theme.kt                   # Theme configuration
+│   │   └── Type.kt                    # Typography system
+│   ├── PasswordGeneratorScreen.kt     # Main composable screen
+│   ├── PasswordGeneratorViewModel.kt  # State & business logic
+│   └── PasswordGeneratorUiState.kt    # UI state data class
+├── util/
+│   └── HapticFeedback.kt              # Vibration utility
+├── MainActivity.kt                     # Entry point
+└── PasswordGeneratorApplication.kt    # Hilt application class
+```
 
-Как собрать и запустить
+---
 
-Требования
-	•	Android Studio Hedgehog / Iguana или новее
-	•	Android SDK 24+
-	•	JDK 11
+## 🎯 Key Features Explained
 
-Шаги
-	1.	Клонировать репозиторий
-git clone https://github.com/<your-username>/password-generator.git
-cd password-generator
-	2.	Открыть проект в Android Studio
-	3.	Дождаться окончания синхронизации Gradle
-	4.	Запустить на эмуляторе или реальном устройстве (API 24+)
+### Adaptive Layout
 
-Конфиденциальность и данные
-	•	Приложение работает полностью офлайн
-	•	Нет сетевых запросов
-	•	Нет аналитики, трекинга и рекламы
-	•	Пароли генерируются в памяти и не сохраняются приложением
-	•	Единственное действие «наружу» — копирование пароля в буфер обмена по нажатию кнопки
+The app intelligently adapts to different screen sizes:
 
-Дальнейшее развитие
+- **Small screens (< 700dp height)**: 2-column checkbox grid for space efficiency
+- **Large screens (≥ 700dp height)**: 1-column layout for better readability
 
-Идеи для будущих версий:
-	•	История недавно сгенерированных паролей (по желанию пользователя)
-	•	Пользовательские наборы символов
-	•	Переключатель темы (принудительно светлая/тёмная)
-	•	Экспорт/импорт настроек
-	•	Встроенные подсказки по безопасности паролей
+```kotlin
+val useTwoColumns = configuration.screenHeightDp.dp < 700.dp
+```
+
+### Password Strength Algorithm
+
+The strength indicator uses entropy-based scoring:
+
+1. **Character space calculation**: based on selected character sets
+2. **Entropy formula**: `length × log₂(charSpace)`
+3. **Normalization**: scaled so 20-char full-charset password ≈ 100
+4. **Penalties applied for**:
+    - Short length (< 8 characters)
+    - Digit-only short passwords
+    - Sequential patterns (123456, abcdef)
+    - Heavy repetition
+
+**Result**: 0-100 score mapped to 5 levels (Very Weak → Very Strong)
+
+### Popup Tooltips
+
+Tooltips use Compose `Popup` for floating behavior:
+
+```kotlin
+Popup(
+    alignment = Alignment.TopCenter,
+    onDismissRequest = { showTooltip = false },
+    properties = PopupProperties(focusable = true)
+) {
+    // Tooltip content
+}
+```
+
+Benefits:
+- ✅ Floats above content
+- ✅ Doesn't shift layout
+- ✅ Auto-dismisses on outside click
+- ✅ Smooth fade animations
+
+---
+
+## 🔧 Configuration
+
+### Gradle
+
+Key dependencies in `app/build.gradle.kts`:
+
+```kotlin
+android {
+    namespace = "com.sl.passwordgenerator"
+    compileSdk = 36
+    
+    defaultConfig {
+        minSdk = 24
+        targetSdk = 36
+        versionCode = 6
+        versionName = "1.4.0"
+    }
+}
+
+dependencies {
+    // Compose
+    implementation(platform("androidx.compose:compose-bom:2025.11.01"))
+    implementation("androidx.compose.material3:material3")
+    
+    // Hilt
+    implementation("com.google.dagger:hilt-android:2.57.2")
+    kapt("com.google.dagger:hilt-android-compiler:2.57.2")
+    
+    // DataStore
+    implementation("androidx.datastore:datastore-preferences:1.2.0")
+}
+```
+
+### App Configuration
+
+Settings are stored in DataStore Preferences:
+
+- Password length (4-64)
+- Character set selections
+- Exclude options
+- Last generated password (optional)
+
+---
+
+## 🧪 Testing
+
+### Unit Tests
+
+Run unit tests:
+```bash
+./gradlew test
+```
+
+### UI Tests
+
+Run instrumented tests:
+```bash
+./gradlew connectedAndroidTest
+```
+
+---
+
+## 📊 Version History
+
+See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
+
+**Latest:** v1.4.0
+- English localization (default)
+- Russian localization
+- Adaptive 1/2 column layout
+- Popup tooltips
+- Clean architecture refactor
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+### Code Style
+
+- Follow [Kotlin Coding Conventions](https://kotlinlang.org/docs/coding-conventions.html)
+- Use meaningful variable/function names
+- Add comments for complex logic
+- Keep functions small and focused
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+```
+MIT License
+
+Copyright (c) 2025 Stanley
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+---
+
+## 👨‍💻 Author
+
+**Stanley**
+
+- GitHub: [@yourusername](https://github.com/yourusername)
+
+---
+
+## 🙏 Acknowledgments
+
+- Google Material Design team for Material 3 guidelines
+- Jetpack Compose team for amazing declarative UI framework
+- Android community for valuable feedback and contributions
+
+---
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/yourusername/password-generator/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/password-generator/discussions)
+
+---
+
+## 🔮 Roadmap
+
+Future improvements planned:
+
+- [ ] Password history (opt-in)
+- [ ] Custom character sets
+- [ ] Password templates
+- [ ] Backup/restore settings
+- [ ] Widget support
+- [ ] Wear OS companion app
+- [ ] More languages (German, French, Spanish, Chinese)
+
+---
+
+<div align="center">
+  <p>Made with ❤️ for security-conscious users</p>
+  <p>⭐ Star this repo if you find it useful!</p>
+</div>
