@@ -40,19 +40,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **PasswordStrength enum**: Created enum with companion object for strength calculations
 - **Extension functions**: Added mapping functions between layers for cleaner code
 - **Minimized recomposition**: Optimized Compose performance
+- **Updated dependencies**: Kotlin 2.2.0, AGP 8.13.2, Compose BOM 2025.12.01
 
 ### 🔧 Fixed
 - **Clipboard API**: Updated to use standard Android ClipboardManager instead of deprecated Compose Clipboard
 - **Text overflow**: Fixed checkbox labels cutting off text
 - **Import cleanup**: Removed unused imports from all files
 - **AndroidManifest warning**: Removed deprecated package attribute
+- **Annotation warnings**: Fixed Hilt annotation targets for Kotlin 2.2.0 compatibility
 
 ### 📦 Technical Details
 - Updated `versionCode` to 6
 - Updated `versionName` to "1.4.0"
 - Target SDK: 36
-- Kotlin: 2.0.21
-- Compose BOM: 2025.11.01
+- Kotlin: 2.2.0
+- AGP: 8.13.2
+- Compose BOM: 2025.12.01
 - Hilt: 2.57.2
 
 ---
@@ -119,6 +122,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Links
 
-- [Repository](https://github.com/yourusername/password-generator)
-- [Issues](https://github.com/yourusername/password-generator/issues)
-- [Releases](https://github.com/yourusername/password-generator/releases)
+- [Repository](https://github.com/StanleyLl0yd/password-generator)
+- [Issues](https://github.com/StanleyLl0yd/password-generator/issues)
+- [Releases](https://github.com/StanleyLl0yd/password-generator/releases)
+- [Discussions](https://github.com/StanleyLl0yd/password-generator/discussions)
+
+---
+
+## License
+
+Copyright (c) 2025 Stanley Lloyd.
+
+Licensed under the PolyForm Noncommercial 1.0.0 license. Noncommercial use, copying, modification, and distribution are permitted. Commercial use requires a separate agreement; contact Stanley Lloyd for licensing.

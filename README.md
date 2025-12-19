@@ -66,7 +66,7 @@ A modern, privacy-focused Android password generator with adaptive UI and clean 
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/password-generator.git
+   git clone https://github.com/StanleyLl0yd/password-generator.git
    cd password-generator
    ```
 
@@ -85,7 +85,7 @@ A modern, privacy-focused Android password generator with adaptive UI and clean 
 
 ### APK Release
 
-Download the latest APK from [Releases](https://github.com/yourusername/password-generator/releases)
+Download the latest APK from [Releases](https://github.com/StanleyLl0yd/password-generator/releases)
 
 ---
 
@@ -93,7 +93,7 @@ Download the latest APK from [Releases](https://github.com/yourusername/password
 
 | Category | Technology |
 |----------|------------|
-| **Language** | Kotlin 2.0.21 |
+| **Language** | Kotlin 2.2.0 |
 | **UI Framework** | Jetpack Compose |
 | **Design System** | Material 3 |
 | **Architecture** | MVVM + Clean Architecture |
@@ -211,7 +211,7 @@ android {
 
 dependencies {
     // Compose
-    implementation(platform("androidx.compose:compose-bom:2025.11.01"))
+    implementation(platform("androidx.compose:compose-bom:2025.12.01"))
     implementation("androidx.compose.material3:material3")
     
     // Hilt
@@ -257,8 +257,7 @@ Run instrumented tests:
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
 **Latest:** v1.4.0
-- English localization (default)
-- Russian localization
+- English and Russian localization
 - Adaptive 1/2 column layout
 - Popup tooltips
 - Clean architecture refactor
@@ -286,39 +285,24 @@ Contributions are welcome! Please follow these steps:
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **PolyForm Noncommercial License 1.0.0**.
 
-```
-MIT License
+**Copyright (c) 2025 Stanley Lloyd.**
 
-Copyright (c) 2025 Stanley
+**Noncommercial use, copying, modification, and distribution are permitted.** Commercial use requires a separate agreement; contact me for licensing.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+See [LICENSE](LICENSE) file for full terms.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
+For commercial licensing inquiries, please contact Stanley Lloyd.
 
 ---
 
 ## 👨‍💻 Author
 
-**Stanley**
+**Stanley Lloyd**
 
-- GitHub: [@yourusername](https://github.com/yourusername)
+- GitHub: [@StanleyLl0yd](https://github.com/StanleyLl0yd)
+- Repository: [password-generator](https://github.com/StanleyLl0yd/password-generator)
 
 ---
 
@@ -332,8 +316,8 @@ SOFTWARE.
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/password-generator/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/password-generator/discussions)
+- **Issues**: [GitHub Issues](https://github.com/StanleyLl0yd/password-generator/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/StanleyLl0yd/password-generator/discussions)
 
 ---
 
