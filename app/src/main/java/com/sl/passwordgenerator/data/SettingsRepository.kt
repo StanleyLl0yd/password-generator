@@ -18,9 +18,11 @@ private val Context.dataStore by preferencesDataStore(name = "generator_preferen
 
 @Singleton
 class SettingsRepository @Inject constructor(
-    @ApplicationContext
+    // ИСПРАВЛЕНО: явно указываем цель аннотации @param:, чтобы она применялась
+    // только к параметру конструктора, а не к полю (KT-73255 / Kotlin 2.2.0+)
+    @param:ApplicationContext
     private val context: Context
-){
+) {
 
     val preferencesFlow: Flow<GeneratorPreferences> = context.dataStore.data.map { preferences ->
         GeneratorPreferences(

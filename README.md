@@ -3,7 +3,7 @@
 [![en](https://img.shields.io/badge/lang-en-red.svg)](README.md)
 [![ru](https://img.shields.io/badge/lang-ru-blue.svg)](README.ru.md)
 
-**Version:** 1.4.0  
+**Version:** 1.4.1  
 **Min SDK:** 24 (Android 7.0)  
 **Target SDK:** 36
 
@@ -48,6 +48,7 @@ A modern, privacy-focused Android password generator with adaptive UI and clean 
 - **100% offline**: no network access required
 - **No data collection**: zero analytics, tracking, or ads
 - **Local storage only**: passwords generated in memory, optionally saved locally
+- **Backup protection**: saved preferences explicitly excluded from Android auto-backup
 - **Open source**: full code transparency
 
 ### 🏗️ Technical Excellence
@@ -204,8 +205,8 @@ android {
     defaultConfig {
         minSdk = 24
         targetSdk = 36
-        versionCode = 6
-        versionName = "1.4.0"
+        versionCode = 7
+        versionName = "1.4.1"
     }
 }
 
@@ -217,6 +218,7 @@ dependencies {
     // Hilt
     implementation("com.google.dagger:hilt-android:2.57.2")
     kapt("com.google.dagger:hilt-android-compiler:2.57.2")
+    implementation("androidx.hilt:hilt-lifecycle-viewmodel-compose:1.3.0")
     
     // DataStore
     implementation("androidx.datastore:datastore-preferences:1.2.0")
@@ -256,11 +258,10 @@ Run instrumented tests:
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
-**Latest:** v1.4.0
-- English and Russian localization
-- Adaptive 1/2 column layout
-- Popup tooltips
-- Clean architecture refactor
+**Latest:** v1.4.1
+- Clean compiler output — all warnings resolved
+- Backup protection for saved preferences
+- Hilt dependency migration
 
 ---
 

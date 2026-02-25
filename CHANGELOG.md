@@ -10,6 +10,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.1] - 2026-02-25
+
+### 🔧 Fixed
+- **Compiler warnings eliminated**: build is now warning-free
+- **`@param:ApplicationContext`**: fixed Hilt annotation target in `SettingsRepository` for Kotlin 2.2.0+ compatibility (KT-73255)
+- **`hiltViewModel()` deprecation**: migrated from `hilt-navigation-compose` to `hilt-lifecycle-viewmodel-compose` artifact
+- **Hardcoded strings**: password visibility toggle labels (`show_password`, `hide_password`) moved to `strings.xml` / `strings-ru.xml`
+- **Backup rules**: DataStore preferences file now explicitly excluded from Android auto-backup and device transfer to prevent password leakage
+
+### 📦 Technical Details
+- Updated `versionCode` to 7
+- Updated `versionName` to "1.4.1"
+- Replaced dependency: `hilt-navigation-compose` → `hilt-lifecycle-viewmodel-compose:1.3.0`
+
+---
+
 ## [1.4.0] - 2025-12-19
 
 ### 🌍 Added - Localization

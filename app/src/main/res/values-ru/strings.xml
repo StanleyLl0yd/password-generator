@@ -22,6 +22,10 @@
     <string name="copy_button">Копировать</string>
     <string name="generate_button">Сгенерировать</string>
 
+    <!-- ДОБАВЛЕНО: строки для иконки показа/скрытия пароля -->
+    <string name="show_password">Показать пароль</string>
+    <string name="hide_password">Скрыть пароль</string>
+
     <string name="strength_title">Надёжность пароля</string>
     <string name="strength_very_weak">Очень слабый пароль</string>
     <string name="strength_weak">Слабый пароль</string>

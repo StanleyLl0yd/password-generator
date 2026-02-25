@@ -15,9 +15,11 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.sl.passwordgenerator.R
 
 @Composable
 fun PasswordField(
@@ -64,10 +66,11 @@ fun PasswordField(
                         } else {
                             Icons.Filled.VisibilityOff
                         },
+                        // ИСПРАВЛЕНО: убраны хардкод-строки на русском, используется R.string
                         contentDescription = if (passwordVisible) {
-                            "Скрыть пароль"
+                            stringResource(R.string.hide_password)
                         } else {
-                            "Показать пароль"
+                            stringResource(R.string.show_password)
                         }
                     )
                 }

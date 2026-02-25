@@ -1,19 +1,17 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    ИСПРАВЛЕНО: исключаем DataStore из облачного бэкапа и переноса между устройствами.
+    Применяется на Android 12+ (API 31+).
+
+    DataStore хранит данные в files/datastore/.
+    Исключение предотвращает попадание сохранённого пароля в бэкап Google
+    или при переносе через USB/ADB.
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <exclude domain="file" path="datastore/generator_preferences.preferences_pb"/>
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <exclude domain="file" path="datastore/generator_preferences.preferences_pb"/>
     </device-transfer>
-    -->
 </data-extraction-rules>

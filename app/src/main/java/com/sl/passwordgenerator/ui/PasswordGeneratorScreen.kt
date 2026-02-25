@@ -18,6 +18,9 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+// ИСПРАВЛЕНО: используем новый пакет из артефакта hilt-lifecycle-viewmodel-compose (1.3.0+)
+// Требует добавления зависимости в build.gradle.kts:
+//   implementation("androidx.hilt:hilt-lifecycle-viewmodel-compose:1.3.0")
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.sl.passwordgenerator.R
 import com.sl.passwordgenerator.domain.model.PasswordGenerationError

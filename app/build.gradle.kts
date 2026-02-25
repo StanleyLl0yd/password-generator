@@ -14,8 +14,8 @@ android {
         applicationId = "com.sl.passwordgenerator"
         minSdk = 24
         targetSdk = 36
-        versionCode = 6
-        versionName = "1.4.0"
+        versionCode = 7
+        versionName = "1.4.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -34,7 +34,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    // НОВЫЙ СИНТАКСИС ДЛЯ KOTLIN 2.3.0+
     kotlin {
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
@@ -63,7 +62,10 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
-    implementation(libs.androidx.hilt.navigation.compose)
+    // ИЗМЕНЕНО: заменяем hilt-navigation-compose на hilt-lifecycle-viewmodel-compose.
+    // Старый артефакт помечает hiltViewModel() как @Deprecated начиная с версии 1.3.0.
+    // Новый артефакт содержит актуальную реализацию без Navigation-зависимости.
+    implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(libs.javapoet)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
