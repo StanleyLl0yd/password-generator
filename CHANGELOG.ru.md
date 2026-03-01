@@ -10,6 +10,29 @@
 
 ---
 
+## [1.4.2] - 2026-03-01
+
+### 🐛 Исправлено — Критические баги
+- **Утечка корутины** (`PasswordGeneratorScreen`): `LaunchedEffect(Unit)` заменён на `LaunchedEffect(events)` — корутина корректно отменяется при уходе с экрана и перезапускается при пересоздании ViewModel
+- **`excludeDuplicates` молча нарушал контракт** (`PasswordGenerator`): убран фоллбэк `.ifEmpty { pool.allChars }`, который тихо допускал повторы когда пул символов заканчивался; теперь нарушение выбрасывает `IllegalStateException` с понятным сообщением
+- **`isGenerating` не переживал рекомпозицию** (`PasswordGeneratorViewModel`, `PasswordGeneratorUiState`, `PasswordGeneratorScreen`): флаг перенесён из локального `remember{}` в `UiState`; убраны искусственные `delay(100/200)`; добавлена защита от двойного нажатия в ViewModel; состояние сбрасывается атомарно вместе с новым паролем
+- **Двойной вызов `withStrength()` при инициализации** (`PasswordGeneratorViewModel`): оценка силы пароля вычисляется ровно один раз; `isInitialized = true` выставляется до `generatePassword()`, чтобы первый пароль тоже сохранял настройки
+- **Пароль записывался на диск** (`PasswordGeneratorViewModel`): пароль больше не сохраняется в DataStore — только настройки (длина, наборы символов, опции), что соответствует описанию в README: *"пароли генерируются в памяти"*
+
+### 🔒 Безопасность / Корректность
+- **Неполный список `SIMILAR_CHARS`** (`PasswordConstants`): добавлены `B8`, `G6`, `S5`, `Z2` — теперь исключается полный стандартный набор визуально похожих символов
+- **Неявное приведение `SecureRandom`** (`PasswordGenerator`): заменено явным `secureRandom.asKotlinRandom()` для стабильности при обновлениях stdlib
+
+### ⚙️ Улучшено
+- **Обнаружение последовательностей** (`PasswordGenerator`): `isSequential()` заменён на `containsSequentialSubstring(minLength = 4)` — пароли вида `"abc12345xyz"` теперь корректно получают штраф к силе
+- **Кнопка Copy** (`PasswordGeneratorScreen`): заблокирована пока пароль пуст или идёт генерация
+
+### 📦 Технические детали
+- Обновлён `versionCode` до 8
+- Обновлён `versionName` до "1.4.2"
+
+---
+
 ## [1.4.1] - 2026-02-25
 
 ### 🔧 Исправлено

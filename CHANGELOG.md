@@ -10,6 +10,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.2] - 2026-03-01
+
+### 🐛 Fixed — Critical bugs
+- **Coroutine leak** (`PasswordGeneratorScreen`): `LaunchedEffect(Unit)` replaced with `LaunchedEffect(events)` — the coroutine now correctly cancels on screen exit and restarts if the ViewModel is recreated
+- **`excludeDuplicates` silent contract violation** (`PasswordGenerator`): removed the `.ifEmpty { pool.allChars }` fallback that silently allowed duplicate characters when the pool ran out; violation now throws a clear `IllegalStateException` pointing to a logic inconsistency
+- **`isGenerating` survives recomposition** (`PasswordGeneratorViewModel`, `PasswordGeneratorUiState`, `PasswordGeneratorScreen`): flag moved from local Composable `remember{}` into `UiState`; artificial `delay(100/200)` removed; double-tap protection added in ViewModel; state resets atomically with the new password
+- **Double `withStrength()` call on init** (`PasswordGeneratorViewModel`): strength score computed exactly once during initialization; `isInitialized = true` is set before `generatePassword()` so the first password also triggers a settings save
+- **Password written to disk** (`PasswordGeneratorViewModel`): password no longer persisted to DataStore — only settings (length, charsets, options) are saved, matching the README claim *"passwords generated in memory"*
+
+### 🔒 Security / Correctness
+- **Incomplete `SIMILAR_CHARS`** (`PasswordConstants`): added `B8`, `G6`, `S5`, `Z2` — full standard set of visually ambiguous characters now excluded
+- **Implicit `SecureRandom` adapter** (`PasswordGenerator`): replaced implicit stdlib coercion with explicit `secureRandom.asKotlinRandom()`
+
+### ⚙️ Improved
+- **Sequential pattern detection** (`PasswordGenerator`): `isSequential()` replaced by `containsSequentialSubstring(minLength = 4)` — passwords like `"abc12345xyz"` now correctly receive a strength penalty
+- **Copy button** (`PasswordGeneratorScreen`): disabled while password is empty or generation is in progress
+
+### 📦 Technical Details
+- Updated `versionCode` to 8
+- Updated `versionName` to "1.4.2"
+
+---
+
 ## [1.4.1] - 2026-02-25
 
 ### 🔧 Fixed

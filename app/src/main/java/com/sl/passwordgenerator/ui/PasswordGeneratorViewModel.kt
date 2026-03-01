@@ -29,16 +29,22 @@ class PasswordGeneratorViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            settingsRepository.preferencesFlow
-                .first()
-                .also { preferences ->
-                    _uiState.value = preferences.toUiState().withStrength()
-                    isInitialized = true
+            val preferences = settingsRepository.preferencesFlow.first()
 
-                    if (preferences.password.isEmpty()) {
-                        generatePassword()
-                    }
-                }
+            // FIX #4: withStrength() вызывается только один раз здесь.
+            // Далее isInitialized выставляется ДО generatePassword(),
+            // чтобы первый пароль тоже сохранялся в DataStore.
+            _uiState.value = preferences.toUiState().let { state ->
+                state.copy(
+                    strengthScore = passwordGenerator.estimatePasswordScore(state.password),
+                    isLoading = false
+                )
+            }
+            isInitialized = true
+
+            if (preferences.password.isEmpty()) {
+                generatePassword()
+            }
         }
     }
 
@@ -82,12 +88,21 @@ class PasswordGeneratorViewModel @Inject constructor(
     }
 
     fun generatePassword() {
+        // FIX #3: защита от повторного вызова пока идёт генерация
+        if (_uiState.value.isGenerating) return
+
+        // FIX #3: isGenerating управляется из ViewModel, переживает рекомпозицию
+        _uiState.update { it.copy(isGenerating = true) }
+
         val config = _uiState.value.toGenerationConfig()
         when (val result = passwordGenerator.generate(config)) {
             is PasswordGenerationResult.Success ->
-                updateState { it.copy(password = result.password) }
-            is PasswordGenerationResult.Error ->
+                // FIX #3: сбрасываем isGenerating вместе с новым паролем атомарно
+                updateState { it.copy(password = result.password, isGenerating = false) }
+            is PasswordGenerationResult.Error -> {
+                _uiState.update { it.copy(isGenerating = false) }
                 emitEvent(PasswordGeneratorUiEvent.Error(result.reason))
+            }
         }
     }
 
@@ -100,7 +115,10 @@ class PasswordGeneratorViewModel @Inject constructor(
 
         if (isInitialized && persist) {
             viewModelScope.launch {
-                settingsRepository.savePreferences(newState.toPreferences())
+                // FIX #5: пароль НЕ сохраняется в DataStore — только настройки.
+                // README заявляет "passwords generated in memory", поэтому
+                // передаём пустую строку вместо актуального пароля.
+                settingsRepository.savePreferences(newState.toPreferences(savePassword = false))
             }
         }
     }
@@ -111,12 +129,12 @@ class PasswordGeneratorViewModel @Inject constructor(
         }
     }
 
-    private fun PasswordGeneratorUiState.withStrength(): PasswordGeneratorUiState {
-        return copy(strengthScore = passwordGenerator.estimatePasswordScore(password))
-    }
+    // FIX #4: withStrength() вынесен в приватный метод, вызывается только из updateState
+    private fun PasswordGeneratorUiState.withStrength(): PasswordGeneratorUiState =
+        copy(strengthScore = passwordGenerator.estimatePasswordScore(password))
 }
 
-// Extension functions для маппинга
+// Маппинг
 private fun GeneratorPreferences.toUiState() = PasswordGeneratorUiState(
     password = password,
     length = length,
@@ -139,8 +157,9 @@ private fun PasswordGeneratorUiState.toGenerationConfig() = PasswordGenerationCo
     excludeDuplicates = excludeDuplicates
 )
 
-private fun PasswordGeneratorUiState.toPreferences() = GeneratorPreferences(
-    password = password,
+// FIX #5: параметр savePassword позволяет явно не сохранять пароль на диск
+private fun PasswordGeneratorUiState.toPreferences(savePassword: Boolean = false) = GeneratorPreferences(
+    password = if (savePassword) password else "",
     length = length,
     useLowercase = useLowercase,
     useUppercase = useUppercase,

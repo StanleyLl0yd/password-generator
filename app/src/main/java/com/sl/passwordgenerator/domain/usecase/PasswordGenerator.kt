@@ -8,6 +8,7 @@ import java.security.SecureRandom
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.ln
+import kotlin.random.asKotlinRandom
 
 private data class CharPool(
     val groups: List<String>,
@@ -17,7 +18,12 @@ private data class CharPool(
 @Singleton
 class PasswordGenerator @Inject constructor() {
 
+    // SecureRandom — thread-safe синглтон, намеренно не создаётся локально
     private val secureRandom = SecureRandom()
+
+    // FIX #6: явное преобразование SecureRandom → kotlin.random.Random
+    // чтобы не полагаться на неявный адаптер из stdlib
+    private val kotlinRandom = secureRandom.asKotlinRandom()
 
     fun generate(config: PasswordGenerationConfig): PasswordGenerationResult {
         val pool = buildCharPool(
@@ -32,6 +38,8 @@ class PasswordGenerator @Inject constructor() {
             return PasswordGenerationResult.Error(PasswordGenerationError.NO_CHARSETS)
         }
 
+        // FIX #2: проверка на уникальность считается по distinct-символам пула,
+        // а не по длине строки allChars (которая может содержать дубли между группами)
         val distinctCount = pool.allChars.toSet().size
         if (config.excludeDuplicates && config.length > distinctCount) {
             return PasswordGenerationResult.Error(PasswordGenerationError.NOT_ENOUGH_UNIQUE_CHARS)
@@ -90,6 +98,7 @@ class PasswordGenerator @Inject constructor() {
         val result = StringBuilder(length)
         val usedChars = if (excludeDuplicates) mutableSetOf<Char>() else null
 
+        // Гарантируем хотя бы по одному символу из каждой группы
         for (group in pool.groups) {
             if (result.length >= length) break
 
@@ -106,9 +115,19 @@ class PasswordGenerator @Inject constructor() {
             usedChars?.add(ch)
         }
 
+        // Добираем оставшиеся символы
         while (result.length < length) {
             val availableChars = if (excludeDuplicates) {
-                pool.allChars.filterNot { it in usedChars!! }.ifEmpty { pool.allChars }
+                // FIX #2: убран фоллбэк `.ifEmpty { pool.allChars }`.
+                // Если уникальных символов не осталось — это ошибка данных,
+                // которая должна была быть поймана проверкой выше (NOT_ENOUGH_UNIQUE_CHARS).
+                // Здесь она означает баг в логике — бросаем понятное исключение.
+                val available = pool.allChars.filterNot { it in usedChars!! }
+                check(available.isNotEmpty()) {
+                    "No unique chars left but NOT_ENOUGH_UNIQUE_CHARS was not triggered. " +
+                            "distinctCount check may be inconsistent with pool composition."
+                }
+                available
             } else {
                 pool.allChars
             }
@@ -118,17 +137,16 @@ class PasswordGenerator @Inject constructor() {
             usedChars?.add(ch)
         }
 
-        return result.toList().shuffled(secureRandom).joinToString("")
+        // FIX #6: явно используем kotlinRandom вместо неявного приведения SecureRandom
+        return result.toList().shuffled(kotlinRandom).joinToString("")
     }
 
     private fun calculateCharSpace(password: String): Int {
         var charSpace = 0
-
         if (password.any { it.isLowerCase() }) charSpace += 26
         if (password.any { it.isUpperCase() }) charSpace += 26
         if (password.any { it.isDigit() }) charSpace += 10
         if (password.any { !it.isLetterOrDigit() }) charSpace += 33
-
         return if (charSpace == 0) 1 else charSpace
     }
 
@@ -156,27 +174,41 @@ class PasswordGenerator @Inject constructor() {
             scoreAdjustment -= 15
         }
 
-        if (isSequential(password)) scoreAdjustment -= 20
+        // FIX #8: ищем последовательности внутри пароля, а не только если весь пароль — последовательность
+        if (containsSequentialSubstring(password, minLength = 4)) scoreAdjustment -= 20
         if (hasManyRepeats(password)) scoreAdjustment -= 10
         if (password.toSet().size == 1 && length >= 3) scoreAdjustment -= 10
 
         return scoreAdjustment
     }
 
-    private fun isSequential(password: String): Boolean {
-        if (password.length < 3) return false
+    // FIX #8: заменён isSequential — теперь ищет любую последовательную подстроку
+    // заданной минимальной длины (ascending или descending)
+    private fun containsSequentialSubstring(password: String, minLength: Int): Boolean {
+        if (password.length < minLength) return false
 
-        var ascending = true
-        var descending = true
+        var ascLen = 1
+        var descLen = 1
 
         for (i in 1 until password.length) {
             val diff = password[i] - password[i - 1]
-            if (diff != 1) ascending = false
-            if (diff != -1) descending = false
-            if (!ascending && !descending) return false
+
+            if (diff == 1) {
+                ascLen++
+                if (ascLen >= minLength) return true
+            } else {
+                ascLen = 1
+            }
+
+            if (diff == -1) {
+                descLen++
+                if (descLen >= minLength) return true
+            } else {
+                descLen = 1
+            }
         }
 
-        return ascending || descending
+        return false
     }
 
     private fun hasManyRepeats(password: String): Boolean {

@@ -3,7 +3,7 @@
 [![en](https://img.shields.io/badge/lang-en-red.svg)](README.md)
 [![ru](https://img.shields.io/badge/lang-ru-blue.svg)](README.ru.md)
 
-**Version:** 1.4.1  
+**Version:** 1.4.2  
 **Min SDK:** 24 (Android 7.0)  
 **Target SDK:** 36
 
@@ -205,8 +205,8 @@ android {
     defaultConfig {
         minSdk = 24
         targetSdk = 36
-        versionCode = 7
-        versionName = "1.4.1"
+        versionCode = 8
+        versionName = "1.4.2"
     }
 }
 
@@ -258,10 +258,10 @@ Run instrumented tests:
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
-**Latest:** v1.4.1
-- Clean compiler output — all warnings resolved
-- Backup protection for saved preferences
-- Hilt dependency migration
+**Latest:** v1.4.2
+- 8 critical bugs fixed: coroutine leak, `excludeDuplicates` contract, `isGenerating` race condition, password written to disk, and more
+- Passwords no longer persisted to DataStore — in-memory only as documented
+- Expanded similar-chars exclusion set, improved sequential pattern detection
 
 ---
 

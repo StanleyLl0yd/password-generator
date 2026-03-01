@@ -18,17 +18,12 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-// ИСПРАВЛЕНО: используем новый пакет из артефакта hilt-lifecycle-viewmodel-compose (1.3.0+)
-// Требует добавления зависимости в build.gradle.kts:
-//   implementation("androidx.hilt:hilt-lifecycle-viewmodel-compose:1.3.0")
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.sl.passwordgenerator.R
 import com.sl.passwordgenerator.domain.model.PasswordGenerationError
 import com.sl.passwordgenerator.domain.model.PasswordStrength
 import com.sl.passwordgenerator.ui.components.*
 import com.sl.passwordgenerator.util.HapticFeedback
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @Composable
 fun PasswordGeneratorScreen(
@@ -38,8 +33,12 @@ fun PasswordGeneratorScreen(
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
+    // FIX #1: ключ — сам flow-объект вместо Unit.
+    // Корутина корректно отменяется при уходе с экрана и перезапускается
+    // если flow заменится (пересоздание ViewModel).
+    val events = viewModel.events
+    LaunchedEffect(events) {
+        events.collect { event ->
             when (event) {
                 is PasswordGeneratorUiEvent.Error -> {
                     val message = event.reason.toErrorMessage(context)
@@ -51,9 +50,7 @@ fun PasswordGeneratorScreen(
 
     Scaffold(
         topBar = {
-            PasswordGeneratorTopBar(
-                title = stringResource(R.string.app_name)
-            )
+            PasswordGeneratorTopBar(title = stringResource(R.string.app_name))
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
@@ -97,14 +94,12 @@ private fun PasswordGeneratorContent(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
 
     val configuration = LocalConfiguration.current
     val useTwoColumns = configuration.screenHeightDp.dp < 700.dp
 
-    var isGenerating by remember { mutableStateOf(false) }
-
+    // FIX #3: isGenerating убран из локального remember{} — теперь берётся из state
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -112,11 +107,7 @@ private fun PasswordGeneratorContent(
             .padding(horizontal = 10.dp, vertical = 6.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        CheckboxGrid(
-            state = state,
-            viewModel = viewModel,
-            useTwoColumns = useTwoColumns
-        )
+        CheckboxGrid(state = state, viewModel = viewModel, useTwoColumns = useTwoColumns)
 
         LengthSliderCard(
             length = state.length,
@@ -126,23 +117,17 @@ private fun PasswordGeneratorContent(
 
         PasswordCard(
             password = state.password,
+            isGenerating = state.isGenerating,
             onPasswordChange = viewModel::onPasswordChanged,
-            isGenerating = isGenerating,
             onCopyClick = {
-                copyPasswordToClipboard(
-                    context = context,
-                    password = state.password
-                )
+                copyPasswordToClipboard(context = context, password = state.password)
             },
             onGenerateClick = {
-                scope.launch {
-                    isGenerating = true
-                    HapticFeedback.performMedium(context)
-                    delay(100)
-                    viewModel.generatePassword()
-                    delay(200)
-                    isGenerating = false
-                }
+                // FIX #3: убраны искусственные delay(100/200).
+                // isGenerating управляется из ViewModel атомарно.
+                // Haptic синхронный — вызываем до генерации.
+                HapticFeedback.performMedium(context)
+                viewModel.generatePassword()
             }
         )
 
@@ -176,10 +161,7 @@ private fun TwoColumnCheckboxGrid(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             CheckboxRow(
                 checked = state.useLowercase,
                 onCheckedChange = viewModel::onLowercaseChanged,
@@ -202,11 +184,7 @@ private fun TwoColumnCheckboxGrid(
                 compact = true
             )
         }
-
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             CheckboxRow(
                 checked = state.useUppercase,
                 onCheckedChange = viewModel::onUppercaseChanged,
@@ -237,10 +215,7 @@ private fun SingleColumnCheckboxGrid(
     state: PasswordGeneratorUiState,
     viewModel: PasswordGeneratorViewModel
 ) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         CheckboxRow(
             checked = state.useLowercase,
             onCheckedChange = viewModel::onLowercaseChanged,
@@ -283,8 +258,8 @@ private fun SingleColumnCheckboxGrid(
 @Composable
 private fun PasswordCard(
     password: String,
-    onPasswordChange: (String) -> Unit,
     isGenerating: Boolean,
+    onPasswordChange: (String) -> Unit,
     onCopyClick: () -> Unit,
     onGenerateClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -294,9 +269,7 @@ private fun PasswordCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
+            modifier = Modifier.fillMaxWidth().padding(8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             PasswordField(
@@ -311,7 +284,11 @@ private fun PasswordCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(onClick = onCopyClick) {
+                // Кнопка Copy: disabled пока пароль пуст или идёт генерация
+                TextButton(
+                    onClick = onCopyClick,
+                    enabled = password.isNotEmpty() && !isGenerating
+                ) {
                     Text(text = stringResource(R.string.copy_button))
                 }
 
@@ -333,44 +310,25 @@ private fun PasswordCard(
     }
 }
 
-private fun copyPasswordToClipboard(
-    context: Context,
-    password: String
-) {
+private fun copyPasswordToClipboard(context: Context, password: String) {
     if (password.isEmpty()) return
-
     val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    val clipData = ClipData.newPlainText(
-        context.getString(R.string.password_label),
-        password
-    )
+    val clipData = ClipData.newPlainText(context.getString(R.string.password_label), password)
     clipboardManager.setPrimaryClip(clipData)
-
     HapticFeedback.performLight(context)
-    Toast.makeText(
-        context,
-        context.getString(R.string.copied_to_clipboard),
-        Toast.LENGTH_SHORT
-    ).show()
+    Toast.makeText(context, context.getString(R.string.copied_to_clipboard), Toast.LENGTH_SHORT).show()
 }
 
-// Extension functions
-private fun PasswordGenerationError.toErrorMessage(context: Context): String {
-    return when (this) {
-        PasswordGenerationError.NO_CHARSETS ->
-            context.getString(R.string.error_no_charsets)
-        PasswordGenerationError.NOT_ENOUGH_UNIQUE_CHARS ->
-            context.getString(R.string.error_no_enough_unique_chars)
-    }
+private fun PasswordGenerationError.toErrorMessage(context: Context): String = when (this) {
+    PasswordGenerationError.NO_CHARSETS -> context.getString(R.string.error_no_charsets)
+    PasswordGenerationError.NOT_ENOUGH_UNIQUE_CHARS -> context.getString(R.string.error_no_enough_unique_chars)
 }
 
-private fun Int.toStrengthLabel(context: Context): String {
-    val strength = PasswordStrength.fromScore(this)
-    return when (strength) {
+private fun Int.toStrengthLabel(context: Context): String =
+    when (PasswordStrength.fromScore(this)) {
         PasswordStrength.VERY_WEAK -> context.getString(R.string.strength_very_weak)
         PasswordStrength.WEAK -> context.getString(R.string.strength_weak)
         PasswordStrength.MEDIUM -> context.getString(R.string.strength_medium)
         PasswordStrength.STRONG -> context.getString(R.string.strength_strong)
         PasswordStrength.VERY_STRONG -> context.getString(R.string.strength_very_strong)
     }
-}

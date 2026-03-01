@@ -5,7 +5,9 @@ object PasswordConstants {
     const val MAX_LENGTH = 64
     const val FULL_CHARSPACE = 95.0
     const val REF_LENGTH_FOR_MAX_SCORE = 20.0
-    const val SIMILAR_CHARS = "iIl1oO0"
+
+    // FIX #7: расширен список похожих символов — добавлены B8, G6, S5, Z2
+    const val SIMILAR_CHARS = "iIl1oO0B8G6S5Z2"
 
     const val LOWERCASE_CHARS = "abcdefghijklmnopqrstuvwxyz"
     const val UPPERCASE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"

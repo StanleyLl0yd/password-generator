@@ -12,7 +12,10 @@ data class PasswordGeneratorUiState(
     val excludeDuplicates: Boolean = true,
     val excludeSimilar: Boolean = true,
     val strengthScore: Int = 0,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    // FIX #3: перенесён из локального состояния Composable в UiState,
+    // чтобы флаг переживал рекомпозицию и управлялся только из ViewModel
+    val isGenerating: Boolean = false
 )
 
 sealed class PasswordGeneratorUiEvent {
