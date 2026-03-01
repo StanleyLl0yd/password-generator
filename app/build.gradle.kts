@@ -14,18 +14,24 @@ android {
         applicationId = "com.sl.passwordgenerator"
         minSdk = 24
         targetSdk = 36
-        versionCode = 8
-        versionName = "1.4.2"
+        versionCode = 9
+        versionName = "1.4.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // FIX #7: включена минификация и обфускация для release-сборки.
+            // Уменьшает размер APK и затрудняет декомпиляцию криптографической логики.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        debug {
+            isMinifyEnabled = false
         }
     }
 

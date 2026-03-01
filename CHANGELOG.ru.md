@@ -10,6 +10,34 @@
 
 ---
 
+## [1.4.3] - 2026-03-01
+
+### 🗑️ Удалено
+- **Мёртвый код** (`EstimatePasswordStrengthUseCase`): `@Singleton` use-case, который никогда не вызывался, удалён — ViewModel напрямую использовала `passwordGenerator.estimatePasswordScore()`; удалите файл из `domain/usecase/`
+- **Флаг `isLoading`** (`PasswordGeneratorUiState`): объявлялся, но нигде не читался в UI; вызывал артефакт — мгновенное отображение дефолтных значений чекбоксов при старте, пока DataStore загружался
+- **Поле `password`** (`GeneratorPreferences`, `SettingsRepository`): `Keys.PASSWORD` и все операции чтения/записи удалены — пароль не записывался с v1.4.2; теперь поле и ключ полностью убраны из слоя данных
+
+### ⚡ Производительность / Потоки
+- **`generatePassword()` на Main-потоке** (`PasswordGeneratorViewModel`): перенесено в `viewModelScope.launch { withContext(Dispatchers.Default) { ... } }` — SecureRandom и строковые операции больше не блокируют UI-поток
+- **Debounce сохранения настроек** (`PasswordGeneratorViewModel`): `viewModelScope.launch` без отмены заменён на `saveJob?.cancel()` + `delay(300)` — быстрое движение слайдера теперь даёт одну запись в DataStore вместо десятков
+
+### 🏗️ Архитектура
+- **Clamp длины перенесён в domain** (`PasswordGenerator.clampLength()`, `PasswordGeneratorViewModel`): `coerceIn(MIN_LENGTH, MAX_LENGTH)` вынесен в `PasswordGenerator` — бизнес-правило больше не протекает в слой ViewModel
+
+### 🔒 Безопасность
+- **Минификация release включена** (`build.gradle.kts`, `proguard-rules.pro`): `isMinifyEnabled = true`, `isShrinkResources = true` для release; написан `proguard-rules.pro` с правилами для Hilt, DataStore, Kotlin Coroutines и доменных моделей
+
+### 🐛 Исправлено
+- **`PasswordField` редактируем во время генерации** (`PasswordField`): добавлен `readOnly = isGenerating` — ввод пользователя больше не конкурирует с входящим сгенерированным паролем
+- **Несоответствие `SIMILAR_CHARS` в строках UI** (`strings.xml`, `strings-ru.xml`): label и hint обновлены — отображается полный список: `i I l 1 o O 0 B 8 G 6 S 5 Z 2`
+- **Лишние переменные `hasLower` / `hasUpper`** (`PasswordGenerator`): встроены напрямую в условие штрафа
+
+### 📦 Технические детали
+- Обновлён `versionCode` до 9
+- Обновлён `versionName` до "1.4.3"
+
+---
+
 ## [1.4.2] - 2026-03-01
 
 ### 🐛 Исправлено — Критические баги

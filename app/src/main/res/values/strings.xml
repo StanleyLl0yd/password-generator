@@ -7,14 +7,16 @@
     <string name="digits_label">Digits (0–9)</string>
     <string name="symbols_label">Special chars (!@#…)</string>
     <string name="exclude_duplicates_label">Exclude duplicates</string>
-    <string name="exclude_similar_label">Exclude similar (i I 1 l o O 0)</string>
+    <!-- FIX #5: обновлён список похожих символов — теперь соответствует PasswordConstants.SIMILAR_CHARS -->
+    <string name="exclude_similar_label">Exclude similar (i I l 1 o O 0 B 8…)</string>
 
     <string name="lowercase_hint">Adds basic lowercase letters for balance of readability and complexity.</string>
     <string name="uppercase_hint">Includes uppercase letters — increases complexity and helps meet policy requirements.</string>
     <string name="digits_hint">Adds digits 0–9 so the password meets typical service requirements.</string>
     <string name="symbols_hint">Mixes in special characters and significantly increases the search space.</string>
     <string name="exclude_duplicates_hint">Does not repeat characters in one password. Convenient for reading, but may limit maximum length.</string>
-    <string name="exclude_similar_hint">Removes easily confused characters (i I 1 l o O 0) to make the password easier to distinguish.</string>
+    <!-- FIX #5: обновлена подсказка — полный список: i I l 1 o O 0 B 8 G 6 S 5 Z 2 -->
+    <string name="exclude_similar_hint">Removes visually ambiguous characters (i I l 1 o O 0 B 8 G 6 S 5 Z 2) to make the password easier to read and type.</string>
 
     <string name="length_title">Length: %1$d characters</string>
 
@@ -22,7 +24,6 @@
     <string name="copy_button">Copy</string>
     <string name="generate_button">Generate</string>
 
-    <!-- ДОБАВЛЕНО: строки для иконки показа/скрытия пароля -->
     <string name="show_password">Show password</string>
     <string name="hide_password">Hide password</string>
 

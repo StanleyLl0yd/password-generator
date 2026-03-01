@@ -52,6 +52,9 @@ fun PasswordField(
                 .fillMaxWidth()
                 .heightIn(min = 48.dp),
             singleLine = true,
+            // FIX #12: поле нередактируемо пока идёт генерация —
+            // исключает гонку между вводом пользователя и новым паролем
+            readOnly = isGenerating,
             textStyle = MaterialTheme.typography.bodyMedium,
             visualTransformation = if (passwordVisible) {
                 VisualTransformation.None
@@ -66,7 +69,6 @@ fun PasswordField(
                         } else {
                             Icons.Filled.VisibilityOff
                         },
-                        // ИСПРАВЛЕНО: убраны хардкод-строки на русском, используется R.string
                         contentDescription = if (passwordVisible) {
                             stringResource(R.string.hide_password)
                         } else {

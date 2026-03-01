@@ -10,6 +10,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.3] - 2026-03-01
+
+### 🗑️ Removed
+- **Dead code** (`EstimatePasswordStrengthUseCase`): `@Singleton` use-case that was never called removed — ViewModel already used `passwordGenerator.estimatePasswordScore()` directly; delete the file from `domain/usecase/`
+- **`isLoading` flag** (`PasswordGeneratorUiState`): declared but never read in UI; caused a flash of default checkbox values on startup while DataStore loaded
+- **`password` field** (`GeneratorPreferences`, `SettingsRepository`): `Keys.PASSWORD` and all reads/writes removed — password was already not being written since v1.4.2; now the field and key are fully gone from the data layer
+
+### ⚡ Performance / Threading
+- **`generatePassword()` on Main thread** (`PasswordGeneratorViewModel`): moved to `viewModelScope.launch { withContext(Dispatchers.Default) { ... } }` — SecureRandom and string operations no longer block the UI thread
+- **`savePreferences` debounce** (`PasswordGeneratorViewModel`): replaced fire-and-forget `viewModelScope.launch` with a cancellable `saveJob` + `delay(300)` — rapid slider movement now produces a single DataStore write instead of dozens
+
+### 🏗️ Architecture
+- **Length clamp moved to domain** (`PasswordGenerator.clampLength()`, `PasswordGeneratorViewModel`): `coerceIn(MIN_LENGTH, MAX_LENGTH)` extracted to `PasswordGenerator` — business rule no longer leaks into the ViewModel layer
+
+### 🔒 Security
+- **Release minification enabled** (`build.gradle.kts`, `proguard-rules.pro`): `isMinifyEnabled = true`, `isShrinkResources = true` for release builds; `proguard-rules.pro` written with rules for Hilt, DataStore, Kotlin Coroutines, and domain models
+
+### 🐛 Fixed
+- **`PasswordField` editable during generation** (`PasswordField`): added `readOnly = isGenerating` — user input can no longer race with an incoming generated password
+- **`SIMILAR_CHARS` mismatch in UI strings** (`strings.xml`, `strings-ru.xml`): label and hint updated to reflect full exclusion set `i I l 1 o O 0 B 8 G 6 S 5 Z 2`
+- **Unused variables `hasLower` / `hasUpper`** (`PasswordGenerator`): inlined directly into the penalty condition — no dangling declarations
+
+### 📦 Technical Details
+- Updated `versionCode` to 9
+- Updated `versionName` to "1.4.3"
+
+---
+
 ## [1.4.2] - 2026-03-01
 
 ### 🐛 Fixed — Critical bugs

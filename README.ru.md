@@ -3,7 +3,7 @@
 [![en](https://img.shields.io/badge/lang-en-red.svg)](README.md)
 [![ru](https://img.shields.io/badge/lang-ru-blue.svg)](README.ru.md)
 
-**Версия:** 1.4.2  
+**Версия:** 1.4.3  
 **Min SDK:** 24 (Android 7.0)  
 **Target SDK:** 36
 
@@ -145,10 +145,11 @@ app/src/main/java/com/sl/passwordgenerator/
 
 Смотрите [CHANGELOG.ru.md](CHANGELOG.ru.md) для подробной истории версий.
 
-**Последняя:** v1.4.2
-- Исправлено 8 критических багов: утечка корутины, нарушение контракта `excludeDuplicates`, race condition `isGenerating`, запись пароля на диск и другие
-- Пароль больше не сохраняется в DataStore — только в памяти, как указано в документации
-- Расширен список похожих символов, улучшено обнаружение последовательностей
+**Последняя:** v1.4.3
+- Архитектура и производительность: генерация вынесена с Main-потока, запись в DataStore с debounce, clamp длины в domain
+- Release-сборка усилена: минификация + shrink ресурсов, написан `proguard-rules.pro`
+- Удалён мёртвый код: `EstimatePasswordStrengthUseCase`, `isLoading`, ключ `password` в DataStore
+- Исправления UI: `PasswordField` read-only при генерации, строки похожих символов обновлены
 
 ---
 

@@ -3,7 +3,7 @@
 [![en](https://img.shields.io/badge/lang-en-red.svg)](README.md)
 [![ru](https://img.shields.io/badge/lang-ru-blue.svg)](README.ru.md)
 
-**Version:** 1.4.2  
+**Version:** 1.4.3  
 **Min SDK:** 24 (Android 7.0)  
 **Target SDK:** 36
 
@@ -205,8 +205,8 @@ android {
     defaultConfig {
         minSdk = 24
         targetSdk = 36
-        versionCode = 8
-        versionName = "1.4.2"
+        versionCode = 9
+        versionName = "1.4.3"
     }
 }
 
@@ -258,10 +258,11 @@ Run instrumented tests:
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
-**Latest:** v1.4.2
-- 8 critical bugs fixed: coroutine leak, `excludeDuplicates` contract, `isGenerating` race condition, password written to disk, and more
-- Passwords no longer persisted to DataStore — in-memory only as documented
-- Expanded similar-chars exclusion set, improved sequential pattern detection
+**Latest:** v1.4.3
+- Architecture & performance: `generate()` moved off Main thread, DataStore writes debounced, length clamp in domain layer
+- Release build hardened: minification + shrinking enabled, `proguard-rules.pro` written
+- Dead code removed: `EstimatePasswordStrengthUseCase`, `isLoading`, `password` key in DataStore
+- UI fixes: `PasswordField` read-only during generation, similar-chars strings updated
 
 ---
 
