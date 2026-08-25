@@ -1,339 +1,113 @@
 # Password Generator
 
+[![Android CI](https://github.com/StanleyLl0yd/password-generator/actions/workflows/android.yml/badge.svg?branch=main)](https://github.com/StanleyLl0yd/password-generator/actions/workflows/android.yml)
+[![Latest release](https://img.shields.io/github/v/release/StanleyLl0yd/password-generator)](https://github.com/StanleyLl0yd/password-generator/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/StanleyLl0yd/password-generator/total)](https://github.com/StanleyLl0yd/password-generator/releases)
+[![Android 7+](https://img.shields.io/badge/Android-7.0%2B-3DDC84?logo=android&logoColor=white)](https://github.com/StanleyLl0yd/password-generator/releases/latest)
+[![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-blue)](LICENSE)
+
 [![en](https://img.shields.io/badge/lang-en-red.svg)](README.md)
 [![ru](https://img.shields.io/badge/lang-ru-blue.svg)](README.ru.md)
 
-**Version:** 1.4.4
+A privacy-focused offline password generator for Android, built with Kotlin, Jetpack Compose and Material 3.
 
-**Min SDK:** 24 (Android 7.0)
+[⬇️ Download the latest APK](https://github.com/StanleyLl0yd/password-generator/releases/latest)
 
-**Target SDK:** 36
-
-A modern, privacy-focused Android password generator with adaptive UI and clean architecture.
-
----
+Current version: **1.4.4** · Min SDK: **24 (Android 7.0)** · Target SDK: **36**
 
 ## ✨ Features
 
-### 🔐 Password Generation
-- **Flexible character sets**: lowercase, uppercase, digits, special characters
-- **Customizable length**: 4-64 characters
-- **Smart options**:
-    - Exclude duplicate characters
-    - Exclude similar characters (i I l 1 o O 0 B 8 G 6 S 5 Z 2) for better readability
-- **Real-time strength indicator**: visual feedback with color-coded progress bar
-- **Protected clipboard copy**: marked as sensitive and automatically cleared after 60 seconds
+- Lowercase, uppercase, digits and special characters
+- Password length from 4 to 64 characters
+- Optional exclusion of duplicate characters
+- Optional exclusion of visually similar characters: `i I l 1 o O 0 B 8 G 6 S 5 Z 2`
+- Real-time password strength indicator
+- Sensitive clipboard copy with automatic cleanup after 60 seconds
+- Adaptive layout for different screen sizes
+- Material 3 interface with system light/dark theme
+- English and Russian localization
 
-### 🎨 Modern UI/UX
-- **Adaptive layout**: automatically switches between 1 or 2 columns based on screen height
-- **Popup tooltips**: helpful hints that float above content without disrupting layout
-- **Material 3 Design**: follows latest Google design guidelines
-- **Smooth animations**: polished transitions and micro-interactions
-- **Dark/Light theme**: automatic based on system settings
+## 🔒 Privacy & security
 
-### 🌍 Localization
-- **English** (default for all languages)
-- **Русский** (Russian)
-- Automatic language detection based on system settings
+- **100% offline** — the app does not require network access
+- **No analytics, tracking or ads**
+- Generated passwords are kept only in memory and are never persisted
+- Only generator preferences are saved
+- Legacy passwords stored by v1.4.1 and older are removed automatically after upgrade
+- Saved preferences are excluded from Android auto-backup
+- Clipboard content is marked as sensitive and cleared after 60 seconds without removing newer clipboard content
 
-### 🔒 Privacy & Security
-- **100% offline**: no network access required
-- **No data collection**: zero analytics, tracking, or ads
-- **Passwords stay in memory**: only generator settings are persisted; generated passwords are never saved
-- **Upgrade cleanup**: legacy passwords stored by v1.4.1 and older are deleted automatically
-- **Backup protection**: saved preferences explicitly excluded from Android auto-backup
-- **Source available**: full code transparency under the PolyForm Noncommercial license
-
-### 🏗️ Technical Excellence
-- **Clean Architecture**: Domain/Data/UI separation
-- **MVVM pattern**: StateFlow-based state management
-- **Hilt DI**: dependency injection for testability
-- **Jetpack Compose**: modern declarative UI
-- **Component-based**: reusable UI components
-- **Optimized performance**: minimal recomposition
-
----
+Security issues should be reported according to [SECURITY.md](SECURITY.md).
 
 ## 📦 Installation
 
-### From Source
+The recommended way to install the app is to download the APK from the latest GitHub Release:
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/StanleyLl0yd/password-generator.git
-   cd password-generator
-   ```
+[Download latest release](https://github.com/StanleyLl0yd/password-generator/releases/latest)
 
-2. **Open in Android Studio**:
-    - A current Android Studio version with Android Gradle Plugin 8.13 support
-    - JDK 17 or newer
+Android 7.0 or newer is required.
 
-3. **Sync Gradle**:
-    - Let Android Studio sync dependencies
+## 🛠️ Build from source
 
-4. **Build and Run**:
-   ```bash
-   ./gradlew assembleDebug
-   ./gradlew installDebug
-   ```
+Requirements:
 
-### APK Release
+- Current Android Studio with Android Gradle Plugin 8.13 support
+- JDK 17 or newer
+- Android SDK 36
 
-Download the latest APK from [Releases](https://github.com/StanleyLl0yd/password-generator/releases)
+```bash
+git clone https://github.com/StanleyLl0yd/password-generator.git
+cd password-generator
+./gradlew assembleDebug
+```
 
----
+To run the project checks:
 
-## 🛠️ Technology Stack
+```bash
+./gradlew testDebugUnitTest lintDebug assembleDebug bundleRelease
+```
+
+## 🧱 Technology
 
 | Category | Technology |
-|----------|------------|
-| **Language** | Kotlin 2.2.0 |
-| **UI Framework** | Jetpack Compose |
-| **Design System** | Material 3 |
-| **Architecture** | MVVM + Clean Architecture |
-| **Dependency Injection** | Hilt 2.57.2 |
-| **Async** | Kotlin Coroutines + Flow |
-| **Local Storage** | DataStore Preferences |
-| **Build System** | Gradle 8.13 (Kotlin DSL) |
+| --- | --- |
+| Language | Kotlin 2.2.0 |
+| UI | Jetpack Compose + Material 3 |
+| Architecture | MVVM + Clean Architecture |
+| Dependency injection | Hilt 2.57.2 |
+| Async | Kotlin Coroutines + Flow |
+| Storage | DataStore Preferences |
+| Build | Gradle 8.13, Kotlin DSL |
 
----
+## ✅ Quality checks
 
-## 📁 Project Structure
+GitHub Actions automatically checks pull requests and pushes to `main` with:
 
-```
-app/src/main/java/com/sl/passwordgenerator/
-├── data/
-│   └── SettingsRepository.kt          # DataStore persistence
-├── domain/
-│   ├── model/
-│   │   ├── GeneratorPreferences.kt    # User preferences model
-│   │   ├── PasswordGenerationConfig.kt
-│   │   ├── PasswordGenerationResult.kt
-│   │   └── PasswordStrength.kt        # Strength enum with logic
-│   ├── usecase/
-│   │   └── PasswordGenerator.kt       # Core generation logic
-│   └── PasswordConstants.kt           # Character sets & constants
-├── ui/
-│   ├── components/
-│   │   ├── CheckboxRow.kt             # Reusable checkbox with tooltip
-│   │   ├── LengthSlider.kt            # Password length slider
-│   │   ├── PasswordField.kt           # Read-only result with visibility toggle
-│   │   └── StrengthIndicator.kt       # Visual strength indicator
-│   ├── theme/
-│   │   ├── Color.kt                   # Material 3 color palette
-│   │   ├── Theme.kt                   # Theme configuration
-│   │   └── Type.kt                    # Typography system
-│   ├── PasswordGeneratorScreen.kt     # Main composable screen
-│   ├── PasswordGeneratorViewModel.kt  # State & business logic
-│   └── PasswordGeneratorUiState.kt    # UI state data class
-├── util/
-│   ├── HapticFeedback.kt              # Vibration utility
-│   └── SecureClipboard.kt             # Sensitive copy and timed cleanup
-├── MainActivity.kt                     # Entry point
-└── PasswordGeneratorApplication.kt    # Hilt application class
-```
+- unit tests
+- Android Lint
+- debug APK assembly
+- release AAB assembly with R8/resource shrinking
 
----
+## 🌍 Languages
 
-## 🎯 Key Features Explained
+- English — default
+- Русский
 
-### Adaptive Layout
+Translations follow the device language automatically.
 
-The app intelligently adapts to different screen sizes:
+## 📊 Changelog
 
-- **Small screens (< 700dp height)**: 2-column checkbox grid for space efficiency
-- **Large screens (≥ 700dp height)**: 1-column layout for better readability
-
-```kotlin
-BoxWithConstraints {
-    val useTwoColumns = maxHeight < 700.dp
-    // Render the checkbox grid for the available content height.
-}
-```
-
-### Password Strength Algorithm
-
-The strength indicator uses a conservative entropy-based heuristic for generated output:
-
-1. **Character space calculation**: aligned with the generator's actual 89-character pool
-2. **Entropy formula**: `length × log₂(charSpace)`
-3. **Repeated-block detection**: repeated content is scored using the effective unit length
-4. **Normalization**: scaled so a 20-character full-pool password ≈ 100
-5. **Penalties applied for**:
-    - Short length (< 8 characters)
-    - Digit-only short passwords
-    - Sequential patterns (123456, abcdef)
-    - Heavy repetition
-    - Common patterns such as `password`, `qwerty`, and `admin`
-
-**Result**: 0-100 score mapped to 5 levels (Very Weak → Very Strong)
-
-### Popup Tooltips
-
-Tooltips use Compose `Popup` for floating behavior:
-
-```kotlin
-Popup(
-    alignment = Alignment.TopCenter,
-    onDismissRequest = { showTooltip = false },
-    properties = PopupProperties(focusable = true)
-) {
-    // Tooltip content
-}
-```
-
-Benefits:
-- ✅ Floats above content
-- ✅ Doesn't shift layout
-- ✅ Auto-dismisses on outside click
-- ✅ Smooth fade animations
-
----
-
-## 🔧 Configuration
-
-### Gradle
-
-Key dependencies in `app/build.gradle.kts`:
-
-```kotlin
-android {
-    namespace = "com.sl.passwordgenerator"
-    compileSdk = 36
-    
-    defaultConfig {
-        minSdk = 24
-        targetSdk = 36
-        versionCode = 10
-        versionName = "1.4.4"
-    }
-}
-
-dependencies {
-    // Compose
-    implementation(platform("androidx.compose:compose-bom:2025.12.01"))
-    implementation("androidx.compose.material3:material3")
-    
-    // Hilt
-    implementation("com.google.dagger:hilt-android:2.57.2")
-    kapt("com.google.dagger:hilt-android-compiler:2.57.2")
-    implementation("androidx.hilt:hilt-lifecycle-viewmodel-compose:1.3.0")
-    
-    // DataStore
-    implementation("androidx.datastore:datastore-preferences:1.2.0")
-}
-```
-
-### App Configuration
-
-Settings are stored in DataStore Preferences:
-
-- Password length (4-64)
-- Character set selections
-- Exclude options
-
-Generated passwords are never persisted. On upgrade, v1.4.4 also removes the legacy
-`password` preference written by v1.4.1 and older.
-
----
-
-## 🧪 Testing
-
-### Unit Tests
-
-Run unit tests:
-```bash
-./gradlew test
-```
-
-The suite covers generation invariants, filtered/unique pools, invalid configurations,
-strength regressions, length clamping, and legacy password cleanup. GitHub Actions runs
-the unit tests, Android Lint, and debug assembly for every push and pull request.
-
-### UI Tests
-
-Run instrumented tests:
-```bash
-./gradlew connectedAndroidTest
-```
-
-The instrumented smoke test launches `MainActivity`, waits for initial password generation,
-and checks that the primary screen actions remain available.
-
----
-
-## 📊 Version History
-
-See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
-
-**Latest:** v1.4.4
-- Privacy migration deletes passwords persisted by v1.4.1 and older
-- Clipboard content is sensitive and clears automatically after 60 seconds
-- Strength scoring detects repeated blocks and common weak patterns
-- Gradle Wrapper is complete again and domain regression tests replace placeholder tests
-
----
+- [English changelog](CHANGELOG.md)
+- [Русский changelog](CHANGELOG.ru.md)
+- [GitHub Releases](https://github.com/StanleyLl0yd/password-generator/releases)
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please follow these steps:
+Contributions and bug reports are welcome. Use the GitHub issue forms for bugs and feature requests, or open a pull request with a focused change.
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
-
-### Code Style
-
-- Follow [Kotlin Coding Conventions](https://kotlinlang.org/docs/coding-conventions.html)
-- Use meaningful variable/function names
-- Add comments for complex logic
-- Keep functions small and focused
-
----
-
-## 📄 License
-
-This project is licensed under the **PolyForm Noncommercial License 1.0.0**.
-
-**Copyright (c) 2025 Stanley Lloyd.**
-
-**Noncommercial use, copying, modification, and distribution are permitted.** Commercial use requires a separate agreement; contact me for licensing.
-
-See [LICENSE](LICENSE) file for full terms.
-
-For commercial licensing inquiries, please contact Stanley Lloyd.
-
----
-
-## 👨‍💻 Author
-
-**Stanley Lloyd**
-
-- GitHub: [@StanleyLl0yd](https://github.com/StanleyLl0yd)
-- Repository: [password-generator](https://github.com/StanleyLl0yd/password-generator)
-
----
-
-## 🙏 Acknowledgments
-
-- Google Material Design team for Material 3 guidelines
-- Jetpack Compose team for amazing declarative UI framework
-- Android community for valuable feedback and contributions
-
----
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/StanleyLl0yd/password-generator/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/StanleyLl0yd/password-generator/discussions)
-
----
+Please keep changes small, follow Kotlin coding conventions, and include tests for behavior changes where practical.
 
 ## 🔮 Roadmap
-
-Future improvements planned:
 
 - [ ] Password history (opt-in)
 - [ ] Passphrase generator
@@ -343,11 +117,20 @@ Future improvements planned:
 - [ ] Backup/restore settings
 - [ ] Widget support
 - [ ] Wear OS companion app
-- [ ] More languages (German, French, Spanish, Chinese)
+- [ ] More languages
+
+## 📄 License
+
+Licensed under the **PolyForm Noncommercial License 1.0.0**.
+
+Noncommercial use, copying, modification and distribution are permitted. Commercial use requires a separate agreement. See [LICENSE](LICENSE) for the full terms.
+
+Copyright © 2025–2026 Stanley Lloyd.
+
+## 👨‍💻 Author
+
+Stanley Lloyd · [@StanleyLl0yd](https://github.com/StanleyLl0yd)
 
 ---
 
-<div align="center">
-  <p>Made with ❤️ for security-conscious users</p>
-  <p>⭐ Star this repo if you find it useful!</p>
-</div>
+Made with ❤️ for security-conscious users. If the project is useful to you, consider giving it a ⭐.

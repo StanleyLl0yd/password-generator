@@ -1,0 +1,79 @@
+name: Bug report
+description: Report a reproducible problem in Password Generator
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please do not include passwords, API keys, tokens or other secrets in this report.
+
+  - type: input
+    id: app-version
+    attributes:
+      label: App version
+      description: The Password Generator version where the problem occurs.
+      placeholder: "1.4.4"
+    validations:
+      required: true
+
+  - type: input
+    id: android-version
+    attributes:
+      label: Android version
+      placeholder: "Android 15"
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      placeholder: "Google Pixel 8"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the problem clearly and concisely.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the app
+        2. Enable ...
+        3. Tap ...
+        4. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Screenshots or logs are welcome if they do not contain sensitive data.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I checked that this issue is not already reported.
+          required: true
+        - label: I removed passwords, tokens and other sensitive information from this report.
+          required: true
