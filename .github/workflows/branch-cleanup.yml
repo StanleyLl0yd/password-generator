@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Delete merged branch
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const ref = `heads/${context.payload.pull_request.head.ref}`;
@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Delete already merged development branches
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const branches = [
