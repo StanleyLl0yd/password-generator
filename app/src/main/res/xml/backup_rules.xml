@@ -1,14 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    ИСПРАВЛЕНО: явно исключаем DataStore с настройками (в т.ч. сохранённый пароль)
-    из облачного и локального бэкапа.
-
-    DataStore хранит файл по пути:
-      files/datastore/generator_preferences.preferences_pb
-
-    Без этих правил Android мог бы включить файл с паролем
-    в автоматический бэкап (Google Drive / ADB).
--->
+<!-- Generator preferences stay local and are excluded from Android 6–11 backup. -->
 <full-backup-content>
     <exclude domain="file" path="datastore/generator_preferences.preferences_pb"/>
 </full-backup-content>

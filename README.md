@@ -3,21 +3,13 @@
 [![en](https://img.shields.io/badge/lang-en-red.svg)](README.md)
 [![ru](https://img.shields.io/badge/lang-ru-blue.svg)](README.ru.md)
 
-**Version:** 1.4.3  
-**Min SDK:** 24 (Android 7.0)  
+**Version:** 1.4.4
+
+**Min SDK:** 24 (Android 7.0)
+
 **Target SDK:** 36
 
 A modern, privacy-focused Android password generator with adaptive UI and clean architecture.
-
----
-
-## 📱 Screenshots
-
-<div align="center">
-  <img src="screenshots/main_en.png" width="250" alt="Main Screen (English)"/>
-  <img src="screenshots/main_ru.png" width="250" alt="Main Screen (Russian)"/>
-  <img src="screenshots/adaptive.png" width="250" alt="Adaptive Layout"/>
-</div>
 
 ---
 
@@ -28,9 +20,9 @@ A modern, privacy-focused Android password generator with adaptive UI and clean 
 - **Customizable length**: 4-64 characters
 - **Smart options**:
     - Exclude duplicate characters
-    - Exclude similar characters (i I 1 l o O 0) for better readability
+    - Exclude similar characters (i I l 1 o O 0 B 8 G 6 S 5 Z 2) for better readability
 - **Real-time strength indicator**: visual feedback with color-coded progress bar
-- **One-tap copy to clipboard** with haptic feedback
+- **Protected clipboard copy**: marked as sensitive and automatically cleared after 60 seconds
 
 ### 🎨 Modern UI/UX
 - **Adaptive layout**: automatically switches between 1 or 2 columns based on screen height
@@ -47,9 +39,10 @@ A modern, privacy-focused Android password generator with adaptive UI and clean 
 ### 🔒 Privacy & Security
 - **100% offline**: no network access required
 - **No data collection**: zero analytics, tracking, or ads
-- **Local storage only**: passwords generated in memory, optionally saved locally
+- **Passwords stay in memory**: only generator settings are persisted; generated passwords are never saved
+- **Upgrade cleanup**: legacy passwords stored by v1.4.1 and older are deleted automatically
 - **Backup protection**: saved preferences explicitly excluded from Android auto-backup
-- **Open source**: full code transparency
+- **Source available**: full code transparency under the PolyForm Noncommercial license
 
 ### 🏗️ Technical Excellence
 - **Clean Architecture**: Domain/Data/UI separation
@@ -72,8 +65,8 @@ A modern, privacy-focused Android password generator with adaptive UI and clean 
    ```
 
 2. **Open in Android Studio**:
-    - Android Studio Hedgehog (2023.1.1) or newer
-    - JDK 11 or higher
+    - A current Android Studio version with Android Gradle Plugin 8.13 support
+    - JDK 17 or newer
 
 3. **Sync Gradle**:
     - Let Android Studio sync dependencies
@@ -124,7 +117,7 @@ app/src/main/java/com/sl/passwordgenerator/
 │   ├── components/
 │   │   ├── CheckboxRow.kt             # Reusable checkbox with tooltip
 │   │   ├── LengthSlider.kt            # Password length slider
-│   │   ├── PasswordField.kt           # Password input with visibility toggle
+│   │   ├── PasswordField.kt           # Read-only result with visibility toggle
 │   │   └── StrengthIndicator.kt       # Visual strength indicator
 │   ├── theme/
 │   │   ├── Color.kt                   # Material 3 color palette
@@ -134,7 +127,8 @@ app/src/main/java/com/sl/passwordgenerator/
 │   ├── PasswordGeneratorViewModel.kt  # State & business logic
 │   └── PasswordGeneratorUiState.kt    # UI state data class
 ├── util/
-│   └── HapticFeedback.kt              # Vibration utility
+│   ├── HapticFeedback.kt              # Vibration utility
+│   └── SecureClipboard.kt             # Sensitive copy and timed cleanup
 ├── MainActivity.kt                     # Entry point
 └── PasswordGeneratorApplication.kt    # Hilt application class
 ```
@@ -151,21 +145,26 @@ The app intelligently adapts to different screen sizes:
 - **Large screens (≥ 700dp height)**: 1-column layout for better readability
 
 ```kotlin
-val useTwoColumns = configuration.screenHeightDp.dp < 700.dp
+BoxWithConstraints {
+    val useTwoColumns = maxHeight < 700.dp
+    // Render the checkbox grid for the available content height.
+}
 ```
 
 ### Password Strength Algorithm
 
-The strength indicator uses entropy-based scoring:
+The strength indicator uses a conservative entropy-based heuristic for generated output:
 
-1. **Character space calculation**: based on selected character sets
+1. **Character space calculation**: aligned with the generator's actual 89-character pool
 2. **Entropy formula**: `length × log₂(charSpace)`
-3. **Normalization**: scaled so 20-char full-charset password ≈ 100
-4. **Penalties applied for**:
+3. **Repeated-block detection**: repeated content is scored using the effective unit length
+4. **Normalization**: scaled so a 20-character full-pool password ≈ 100
+5. **Penalties applied for**:
     - Short length (< 8 characters)
     - Digit-only short passwords
     - Sequential patterns (123456, abcdef)
     - Heavy repetition
+    - Common patterns such as `password`, `qwerty`, and `admin`
 
 **Result**: 0-100 score mapped to 5 levels (Very Weak → Very Strong)
 
@@ -205,8 +204,8 @@ android {
     defaultConfig {
         minSdk = 24
         targetSdk = 36
-        versionCode = 9
-        versionName = "1.4.3"
+        versionCode = 10
+        versionName = "1.4.4"
     }
 }
 
@@ -232,7 +231,9 @@ Settings are stored in DataStore Preferences:
 - Password length (4-64)
 - Character set selections
 - Exclude options
-- Last generated password (optional)
+
+Generated passwords are never persisted. On upgrade, v1.4.4 also removes the legacy
+`password` preference written by v1.4.1 and older.
 
 ---
 
@@ -245,6 +246,10 @@ Run unit tests:
 ./gradlew test
 ```
 
+The suite covers generation invariants, filtered/unique pools, invalid configurations,
+strength regressions, length clamping, and legacy password cleanup. GitHub Actions runs
+the unit tests, Android Lint, and debug assembly for every push and pull request.
+
 ### UI Tests
 
 Run instrumented tests:
@@ -252,17 +257,20 @@ Run instrumented tests:
 ./gradlew connectedAndroidTest
 ```
 
+The instrumented smoke test launches `MainActivity`, waits for initial password generation,
+and checks that the primary screen actions remain available.
+
 ---
 
 ## 📊 Version History
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
-**Latest:** v1.4.3
-- Architecture & performance: `generate()` moved off Main thread, DataStore writes debounced, length clamp in domain layer
-- Release build hardened: minification + shrinking enabled, `proguard-rules.pro` written
-- Dead code removed: `EstimatePasswordStrengthUseCase`, `isLoading`, `password` key in DataStore
-- UI fixes: `PasswordField` read-only during generation, similar-chars strings updated
+**Latest:** v1.4.4
+- Privacy migration deletes passwords persisted by v1.4.1 and older
+- Clipboard content is sensitive and clears automatically after 60 seconds
+- Strength scoring detects repeated blocks and common weak patterns
+- Gradle Wrapper is complete again and domain regression tests replace placeholder tests
 
 ---
 
@@ -328,6 +336,8 @@ For commercial licensing inquiries, please contact Stanley Lloyd.
 Future improvements planned:
 
 - [ ] Password history (opt-in)
+- [ ] Passphrase generator
+- [ ] Quick profiles (PIN, Wi-Fi, 16/24/32 characters)
 - [ ] Custom character sets
 - [ ] Password templates
 - [ ] Backup/restore settings

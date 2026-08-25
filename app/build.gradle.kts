@@ -14,15 +14,14 @@ android {
         applicationId = "com.sl.passwordgenerator"
         minSdk = 24
         targetSdk = 36
-        versionCode = 9
-        versionName = "1.4.3"
+        versionCode = 10
+        versionName = "1.4.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            // FIX #7: включена минификация и обфускация для release-сборки.
-            // Уменьшает размер APK и затрудняет декомпиляцию криптографической логики.
+            // Optimize release size and remove unused bytecode/resources.
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -58,6 +57,7 @@ kapt {
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
@@ -68,11 +68,7 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
-    // ИЗМЕНЕНО: заменяем hilt-navigation-compose на hilt-lifecycle-viewmodel-compose.
-    // Старый артефакт помечает hiltViewModel() как @Deprecated начиная с версии 1.3.0.
-    // Новый артефакт содержит актуальную реализацию без Navigation-зависимости.
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
-    implementation(libs.javapoet)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

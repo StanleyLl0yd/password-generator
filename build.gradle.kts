@@ -8,6 +8,7 @@ plugins {
 subprojects {
     configurations.configureEach {
         resolutionStrategy {
+            // Keep Hilt's annotation processor on a compatible JavaPoet release.
             force("com.squareup:javapoet:1.13.0")
         }
     }

@@ -30,6 +30,7 @@ replay_pid*
 
 # Java packages / archives
 *.jar
+!gradle/wrapper/gradle-wrapper.jar
 *.war
 *.nar
 *.ear
@@ -44,6 +45,7 @@ replay_pid*
 *.aar
 *.dex
 captures/
+/app/release/
 
 # Keystore files (signing keys - do not commit)
 *.jks

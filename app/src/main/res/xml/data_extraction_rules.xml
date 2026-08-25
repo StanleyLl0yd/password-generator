@@ -1,12 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    ИСПРАВЛЕНО: исключаем DataStore из облачного бэкапа и переноса между устройствами.
-    Применяется на Android 12+ (API 31+).
-
-    DataStore хранит данные в files/datastore/.
-    Исключение предотвращает попадание сохранённого пароля в бэкап Google
-    или при переносе через USB/ADB.
--->
+<!-- Generator preferences stay local and are excluded from Android 12+ backup/transfer. -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="file" path="datastore/generator_preferences.preferences_pb"/>

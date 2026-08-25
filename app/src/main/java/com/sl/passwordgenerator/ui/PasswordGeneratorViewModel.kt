@@ -8,11 +8,18 @@ import com.sl.passwordgenerator.domain.model.PasswordGenerationConfig
 import com.sl.passwordgenerator.domain.model.PasswordGenerationResult
 import com.sl.passwordgenerator.domain.usecase.PasswordGenerator
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.io.IOException
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -25,10 +32,9 @@ class PasswordGeneratorViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(PasswordGeneratorUiState())
     val uiState: StateFlow<PasswordGeneratorUiState> = _uiState.asStateFlow()
 
-    private val _events = MutableSharedFlow<PasswordGeneratorUiEvent>()
-    val events: SharedFlow<PasswordGeneratorUiEvent> = _events.asSharedFlow()
+    private val _events = Channel<PasswordGeneratorUiEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
 
-    // FIX #9: одна Job для debounce сохранения — предыдущая отменяется при каждом изменении
     private var saveJob: Job? = null
 
     // Блокирует сохранение и действия пользователя до завершения первичной загрузки
@@ -40,20 +46,21 @@ class PasswordGeneratorViewModel @Inject constructor(
             _uiState.value = preferences.toUiState().withStrength()
             isInitialized = true
 
-            // Первый запуск — нет сохранённого пароля, генерируем сразу
             if (_uiState.value.password.isEmpty()) {
                 generatePassword()
             }
         }
     }
 
-    fun onPasswordChanged(value: String) {
-        updateState { it.copy(password = value) }
+    fun onLengthChanged(value: Float) {
+        updateState(saveMode = SaveMode.DEBOUNCED) {
+            it.copy(length = passwordGenerator.clampLength(value))
+        }
     }
 
-    fun onLengthChanged(value: Float) {
-        // FIX #8: clamp вынесен в PasswordGenerator.clampLength() — бизнес-правило в domain
-        updateState { it.copy(length = passwordGenerator.clampLength(value)) }
+    fun onLengthChangeFinished() {
+        if (!isInitialized) return
+        persistPreferences(_uiState.value, delayMillis = 0)
     }
 
     fun onLowercaseChanged(enabled: Boolean) {
@@ -80,11 +87,6 @@ class PasswordGeneratorViewModel @Inject constructor(
         updateState { it.copy(excludeSimilar = enabled) }
     }
 
-    // FIX #10 + #2: generatePassword запускается в корутине на Dispatchers.Default.
-    // Это решает три проблемы разом:
-    //   - SecureRandom + строковые операции не блокируют Main-поток (#2)
-    //   - При onCleared() корутина отменяется автоматически (#10)
-    //   - Повторный вызов во время генерации игнорируется через isGenerating
     fun generatePassword() {
         if (!isInitialized) return
         if (_uiState.value.isGenerating) return
@@ -94,48 +96,68 @@ class PasswordGeneratorViewModel @Inject constructor(
         val config = _uiState.value.toGenerationConfig()
 
         viewModelScope.launch {
-            // FIX #2: тяжёлая работа (SecureRandom, string ops) — на Default dispatcher
             val result = withContext(Dispatchers.Default) {
                 passwordGenerator.generate(config)
             }
 
             when (result) {
                 is PasswordGenerationResult.Success ->
-                    // updateState вернётся на Main через StateFlow — это безопасно
-                    updateState { it.copy(password = result.password, isGenerating = false) }
+                    updateState(saveMode = SaveMode.NONE) {
+                        it.copy(password = result.password, isGenerating = false)
+                    }
 
                 is PasswordGenerationResult.Error -> {
                     _uiState.update { it.copy(isGenerating = false) }
-                    _events.emit(PasswordGeneratorUiEvent.Error(result.reason))
+                    _events.send(PasswordGeneratorUiEvent.Error(result.reason))
                 }
             }
         }
     }
 
-    private fun updateState(transform: (PasswordGeneratorUiState) -> PasswordGeneratorUiState) {
+    private fun updateState(
+        saveMode: SaveMode = SaveMode.IMMEDIATE,
+        transform: (PasswordGeneratorUiState) -> PasswordGeneratorUiState
+    ) {
+        if (!isInitialized) return
+
         val newState = transform(_uiState.value).withStrength()
         _uiState.value = newState
 
-        if (!isInitialized) return
+        when (saveMode) {
+            SaveMode.NONE -> Unit
+            SaveMode.IMMEDIATE -> persistPreferences(newState, delayMillis = 0)
+            SaveMode.DEBOUNCED -> persistPreferences(newState, delayMillis = 300)
+        }
+    }
 
-        // FIX #9: debounce 300ms — при быстром движении слайдера отменяем предыдущий save,
-        // записываем в DataStore только финальное значение
+    private fun persistPreferences(
+        state: PasswordGeneratorUiState,
+        delayMillis: Long
+    ) {
         saveJob?.cancel()
         saveJob = viewModelScope.launch {
-            delay(300)
-            settingsRepository.savePreferences(newState.toPreferences())
+            if (delayMillis > 0) delay(delayMillis)
+            try {
+                settingsRepository.savePreferences(state.toPreferences())
+            } catch (_: IOException) {
+                _events.send(PasswordGeneratorUiEvent.SettingsSaveError)
+            }
         }
     }
 
     private fun PasswordGeneratorUiState.withStrength(): PasswordGeneratorUiState =
         copy(strengthScore = passwordGenerator.estimatePasswordScore(password))
+
+    private enum class SaveMode {
+        NONE,
+        IMMEDIATE,
+        DEBOUNCED
+    }
 }
 
 // ── Mapping functions ────────────────────────────────────────────────────────
 
 private fun GeneratorPreferences.toUiState() = PasswordGeneratorUiState(
-    // FIX #1: поле password в GeneratorPreferences удалено — стартуем с пустым паролем,
-    // generatePassword() вызовется в init и заполнит его
     password          = "",
     length            = length,
     useLowercase      = useLowercase,
@@ -156,7 +178,6 @@ private fun PasswordGeneratorUiState.toGenerationConfig() = PasswordGenerationCo
     excludeDuplicates = excludeDuplicates
 )
 
-// FIX #1: пароль не сохраняется — GeneratorPreferences больше не имеет поля password
 private fun PasswordGeneratorUiState.toPreferences() = GeneratorPreferences(
     length            = length,
     useLowercase      = useLowercase,

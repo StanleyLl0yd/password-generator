@@ -10,6 +10,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.4] - 2026-08-25
+
+### 🔒 Security & Privacy
+- **Legacy password cleanup** (`SettingsRepository`): v1.4.1 and older stored the generated password under the `password` Preferences DataStore key. The key is now explicitly removed before preferences are exposed and on every later settings write.
+- **DataStore recovery** (`SettingsRepository`): corrupted preference files are replaced with safe defaults; recoverable I/O read failures also fall back to defaults.
+- **Protected clipboard** (`SecureClipboard`): copied passwords are marked as sensitive, receive a per-copy token, and are cleared after 60 seconds without overwriting newer clipboard content.
+
+### 🐛 Fixed
+- **Repeated passwords rated as strong** (`PasswordGenerator`): exact repeated blocks now use their effective unit length. Values such as `"a" × 32` and `"password" × 4` no longer receive Very Strong scores.
+- **Common weak patterns** (`PasswordGenerator`): added penalties for patterns including `password`, `qwerty`, `admin`, and `welcome`.
+- **Character-space mismatch** (`PasswordConstants`, `PasswordGenerator`): strength normalization now uses the generator's actual 89-character pool instead of assuming all 95 printable ASCII characters.
+- **Editable generated output** (`PasswordField`): the result field is now always read-only, keeping the strength indicator scoped to generator output; every newly generated password starts hidden.
+- **Invalid direct generation requests** (`PasswordGenerator`): lengths outside the 4–64 domain range now return `INVALID_LENGTH` instead of succeeding with an invalid result.
+- **Lost UI events and settings writes** (`PasswordGeneratorViewModel`): one-shot events use a buffered channel, save failures are reported, checkbox changes persist immediately, and releasing the length slider flushes its debounced value.
+- **Lifecycle/layout correctness** (`PasswordGeneratorScreen`): state collection is lifecycle-aware, responsive layout uses actual Compose constraints, and length labels use locale-aware plurals.
+
+### 🧪 Tests & Build
+- Replaced template tests with regression coverage for generation invariants, exclusions, error cases, strength scoring, length clamping, and legacy-key deletion; added an instrumented launch/generation smoke test.
+- Added GitHub Actions validation for unit tests, Android Lint, and debug assembly on pushes and pull requests.
+- Restored the official `gradle-wrapper.jar`; `./gradlew` now works from a clean clone.
+- Removed stale generated `app/release` metadata and baseline-profile artifacts left from v1.4.0; the output directory is now ignored.
+- Updated `versionCode` to 10 and `versionName` to `1.4.4`.
+
+### 📚 Documentation
+- Updated English and Russian README files for v1.4.4, corrected password-storage claims, documented clipboard cleanup and tests, and removed broken screenshot references.
+
+---
+
 ## [1.4.3] - 2026-03-01
 
 ### 🗑️ Removed

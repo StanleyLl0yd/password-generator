@@ -24,7 +24,6 @@ class PasswordGenerator @Inject constructor() {
     // Явное преобразование SecureRandom → kotlin.random.Random
     private val kotlinRandom = secureRandom.asKotlinRandom()
 
-    // FIX #8: бизнес-правило длины живёт в domain, а не в ViewModel
     fun clampLength(value: Float): Float =
         value.coerceIn(
             PasswordConstants.MIN_LENGTH.toFloat(),
@@ -32,6 +31,10 @@ class PasswordGenerator @Inject constructor() {
         )
 
     fun generate(config: PasswordGenerationConfig): PasswordGenerationResult {
+        if (config.length !in PasswordConstants.MIN_LENGTH..PasswordConstants.MAX_LENGTH) {
+            return PasswordGenerationResult.Error(PasswordGenerationError.INVALID_LENGTH)
+        }
+
         val pool = buildCharPool(
             useLowercase  = config.useLowercase,
             useUppercase  = config.useUppercase,
@@ -60,10 +63,10 @@ class PasswordGenerator @Inject constructor() {
 
     fun estimatePasswordScore(password: String): Int {
         if (password.isEmpty()) return 0
-        val length       = password.length
-        val charSpace    = calculateCharSpace(password)
-        val entropyScore = calculateEntropyScore(length, charSpace)
-        val penalty      = calculatePasswordPenalty(password, length)
+        val effectiveLength = calculateEffectiveLength(password)
+        val charSpace        = calculateCharSpace(password)
+        val entropyScore     = calculateEntropyScore(effectiveLength, charSpace)
+        val penalty          = calculatePasswordPenalty(password, effectiveLength)
         return (entropyScore + penalty).coerceIn(0, 100)
     }
 
@@ -134,8 +137,25 @@ class PasswordGenerator @Inject constructor() {
         if (password.any { it.isLowerCase() })       space += 26
         if (password.any { it.isUpperCase() })       space += 26
         if (password.any { it.isDigit() })           space += 10
-        if (password.any { !it.isLetterOrDigit() })  space += 33
+        if (password.any { !it.isLetterOrDigit() })  space += PasswordConstants.SYMBOL_CHARS.length
         return if (space == 0) 1 else space
+    }
+
+    /**
+     * Repeating a short block does not add the entropy implied by the displayed length.
+     * For example, "password" repeated four times is still based on an eight-character unit.
+     */
+    private fun calculateEffectiveLength(password: String): Int {
+        for (unitLength in 1..password.length / 2) {
+            if (password.length % unitLength != 0) continue
+            if (password.indices.all { index ->
+                    password[index] == password[index % unitLength]
+                }
+            ) {
+                return unitLength
+            }
+        }
+        return password.length
     }
 
     private fun calculateEntropyScore(length: Int, charSpace: Int): Int {
@@ -145,20 +165,18 @@ class PasswordGenerator @Inject constructor() {
         return (entropyBits * 100.0 / maxEntropy).toInt()
     }
 
-    private fun calculatePasswordPenalty(password: String, length: Int): Int {
+    private fun calculatePasswordPenalty(password: String, effectiveLength: Int): Int {
         var adj = 0
 
         when {
-            length < 6 -> adj -= 35
-            length < 8 -> adj -= 25
+            effectiveLength < 6 -> adj -= 35
+            effectiveLength < 8 -> adj -= 25
         }
 
-        // FIX #6: hasLower и hasUpper больше не объявляются отдельными переменными —
-        // они использовались только внутри одного if, поэтому встраиваем их напрямую
         val hasDigit  = password.any { it.isDigit() }
         val hasSymbol = password.any { !it.isLetterOrDigit() }
 
-        if (length < 10 && hasDigit
+        if (effectiveLength < 10 && hasDigit
             && !password.any { it.isLowerCase() }
             && !password.any { it.isUpperCase() }
             && !hasSymbol
@@ -168,7 +186,8 @@ class PasswordGenerator @Inject constructor() {
 
         if (containsSequentialSubstring(password, minLength = 4)) adj -= 20
         if (hasManyRepeats(password))                              adj -= 10
-        if (password.toSet().size == 1 && length >= 3)            adj -= 10
+        if (password.toSet().size == 1 && password.length >= 3)   adj -= 10
+        if (containsCommonPattern(password))                       adj -= 30
 
         return adj
     }
@@ -189,5 +208,22 @@ class PasswordGenerator @Inject constructor() {
     private fun hasManyRepeats(password: String): Boolean {
         if (password.length < 4) return false
         return password.toSet().size.toDouble() / password.length < 0.5
+    }
+
+    private fun containsCommonPattern(password: String): Boolean {
+        val normalized = password.lowercase()
+        return COMMON_PATTERNS.any { it in normalized }
+    }
+
+    private companion object {
+        val COMMON_PATTERNS = listOf(
+            "password",
+            "qwerty",
+            "asdf",
+            "zxcv",
+            "letmein",
+            "admin",
+            "welcome"
+        )
     }
 }

@@ -24,12 +24,15 @@ import com.sl.passwordgenerator.R
 @Composable
 fun PasswordField(
     password: String,
-    onPasswordChange: (String) -> Unit,
     label: String,
     modifier: Modifier = Modifier,
     isGenerating: Boolean = false
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
+
+    LaunchedEffect(password) {
+        passwordVisible = false
+    }
 
     AnimatedContent(
         targetState = password,
@@ -46,15 +49,14 @@ fun PasswordField(
     ) { animatedPassword ->
         OutlinedTextField(
             value = animatedPassword,
-            onValueChange = onPasswordChange,
+            onValueChange = {},
             label = { Text(text = label) },
             modifier = modifier
                 .fillMaxWidth()
                 .heightIn(min = 48.dp),
             singleLine = true,
-            // FIX #12: поле нередактируемо пока идёт генерация —
-            // исключает гонку между вводом пользователя и новым паролем
-            readOnly = isGenerating,
+            // Strength is calculated for generator output, not arbitrary user-entered text.
+            readOnly = true,
             textStyle = MaterialTheme.typography.bodyMedium,
             visualTransformation = if (passwordVisible) {
                 VisualTransformation.None

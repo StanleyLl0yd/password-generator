@@ -1,8 +1,7 @@
 package com.sl.passwordgenerator.ui
 
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
+import android.content.res.Resources
 import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -14,35 +13,40 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sl.passwordgenerator.R
 import com.sl.passwordgenerator.domain.model.PasswordGenerationError
 import com.sl.passwordgenerator.domain.model.PasswordStrength
 import com.sl.passwordgenerator.ui.components.*
 import com.sl.passwordgenerator.util.HapticFeedback
+import com.sl.passwordgenerator.util.SecureClipboard
 
 @Composable
 fun PasswordGeneratorScreen(
     viewModel: PasswordGeneratorViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val resources = LocalResources.current
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // FIX #1: ключ — сам flow-объект вместо Unit.
-    // Корутина корректно отменяется при уходе с экрана и перезапускается
-    // если flow заменится (пересоздание ViewModel).
     val events = viewModel.events
-    LaunchedEffect(events) {
+    LaunchedEffect(events, resources) {
         events.collect { event ->
             when (event) {
                 is PasswordGeneratorUiEvent.Error -> {
-                    val message = event.reason.toErrorMessage(context)
+                    val message = event.reason.toErrorMessage(resources)
                     snackbarHostState.showSnackbar(message)
+                }
+                PasswordGeneratorUiEvent.SettingsSaveError -> {
+                    snackbarHostState.showSnackbar(
+                        resources.getString(R.string.error_settings_save)
+                    )
                 }
             }
         }
@@ -95,47 +99,53 @@ private fun PasswordGeneratorContent(
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
+    val copiedMessage = stringResource(R.string.copied_to_clipboard)
 
-    val configuration = LocalConfiguration.current
-    val useTwoColumns = configuration.screenHeightDp.dp < 700.dp
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val useTwoColumns = maxHeight < 700.dp
 
-    // FIX #3: isGenerating убран из локального remember{} — теперь берётся из state
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        CheckboxGrid(state = state, viewModel = viewModel, useTwoColumns = useTwoColumns)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            CheckboxGrid(state = state, viewModel = viewModel, useTwoColumns = useTwoColumns)
 
-        LengthSliderCard(
-            length = state.length,
-            onLengthChange = viewModel::onLengthChanged,
-            title = stringResource(R.string.length_title, state.length.toInt())
-        )
+            LengthSliderCard(
+                length = state.length,
+                onLengthChange = viewModel::onLengthChanged,
+                onLengthChangeFinished = viewModel::onLengthChangeFinished,
+                title = pluralStringResource(
+                    R.plurals.length_title,
+                    state.length.toInt(),
+                    state.length.toInt()
+                )
+            )
 
-        PasswordCard(
-            password = state.password,
-            isGenerating = state.isGenerating,
-            onPasswordChange = viewModel::onPasswordChanged,
-            onCopyClick = {
-                copyPasswordToClipboard(context = context, password = state.password)
-            },
-            onGenerateClick = {
-                // FIX #3: убраны искусственные delay(100/200).
-                // isGenerating управляется из ViewModel атомарно.
-                // Haptic синхронный — вызываем до генерации.
-                HapticFeedback.performMedium(context)
-                viewModel.generatePassword()
-            }
-        )
+            PasswordCard(
+                password = state.password,
+                isGenerating = state.isGenerating,
+                onCopyClick = {
+                    copyPasswordToClipboard(
+                        context = context,
+                        password = state.password,
+                        message = copiedMessage
+                    )
+                },
+                onGenerateClick = {
+                    HapticFeedback.performMedium(context)
+                    viewModel.generatePassword()
+                }
+            )
 
-        StrengthIndicator(
-            strengthScore = state.strengthScore,
-            strengthLabel = state.strengthScore.toStrengthLabel(context),
-            title = stringResource(R.string.strength_title)
-        )
+            StrengthIndicator(
+                strengthScore = state.strengthScore,
+                strengthLabel = state.strengthScore.toStrengthLabel(),
+                title = stringResource(R.string.strength_title)
+            )
+        }
     }
 }
 
@@ -259,7 +269,6 @@ private fun SingleColumnCheckboxGrid(
 private fun PasswordCard(
     password: String,
     isGenerating: Boolean,
-    onPasswordChange: (String) -> Unit,
     onCopyClick: () -> Unit,
     onGenerateClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -274,7 +283,6 @@ private fun PasswordCard(
         ) {
             PasswordField(
                 password = password,
-                onPasswordChange = onPasswordChange,
                 label = stringResource(R.string.password_label),
                 isGenerating = isGenerating
             )
@@ -310,25 +318,25 @@ private fun PasswordCard(
     }
 }
 
-private fun copyPasswordToClipboard(context: Context, password: String) {
+private fun copyPasswordToClipboard(context: Context, password: String, message: String) {
     if (password.isEmpty()) return
-    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    val clipData = ClipData.newPlainText(context.getString(R.string.password_label), password)
-    clipboardManager.setPrimaryClip(clipData)
+    SecureClipboard.copyPassword(context, password)
     HapticFeedback.performLight(context)
-    Toast.makeText(context, context.getString(R.string.copied_to_clipboard), Toast.LENGTH_SHORT).show()
+    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
 }
 
-private fun PasswordGenerationError.toErrorMessage(context: Context): String = when (this) {
-    PasswordGenerationError.NO_CHARSETS -> context.getString(R.string.error_no_charsets)
-    PasswordGenerationError.NOT_ENOUGH_UNIQUE_CHARS -> context.getString(R.string.error_no_enough_unique_chars)
+private fun PasswordGenerationError.toErrorMessage(resources: Resources): String = when (this) {
+    PasswordGenerationError.INVALID_LENGTH -> resources.getString(R.string.error_invalid_length)
+    PasswordGenerationError.NO_CHARSETS -> resources.getString(R.string.error_no_charsets)
+    PasswordGenerationError.NOT_ENOUGH_UNIQUE_CHARS -> resources.getString(R.string.error_no_enough_unique_chars)
 }
 
-private fun Int.toStrengthLabel(context: Context): String =
+@Composable
+private fun Int.toStrengthLabel(): String =
     when (PasswordStrength.fromScore(this)) {
-        PasswordStrength.VERY_WEAK -> context.getString(R.string.strength_very_weak)
-        PasswordStrength.WEAK -> context.getString(R.string.strength_weak)
-        PasswordStrength.MEDIUM -> context.getString(R.string.strength_medium)
-        PasswordStrength.STRONG -> context.getString(R.string.strength_strong)
-        PasswordStrength.VERY_STRONG -> context.getString(R.string.strength_very_strong)
+        PasswordStrength.VERY_WEAK -> stringResource(R.string.strength_very_weak)
+        PasswordStrength.WEAK -> stringResource(R.string.strength_weak)
+        PasswordStrength.MEDIUM -> stringResource(R.string.strength_medium)
+        PasswordStrength.STRONG -> stringResource(R.string.strength_strong)
+        PasswordStrength.VERY_STRONG -> stringResource(R.string.strength_very_strong)
     }

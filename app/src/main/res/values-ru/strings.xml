@@ -7,7 +7,6 @@
     <string name="digits_label">Цифры (0–9)</string>
     <string name="symbols_label">Спецсимволы (!@#…)</string>
     <string name="exclude_duplicates_label">Исключать повторы</string>
-    <!-- FIX #5: обновлён список похожих символов — теперь соответствует PasswordConstants.SIMILAR_CHARS -->
     <string name="exclude_similar_label">Исключать похожие (i I l 1 o O 0 B 8…)</string>
 
     <string name="lowercase_hint">Добавляет базовый набор строчных букв для баланса читаемости и сложности.</string>
@@ -15,10 +14,14 @@
     <string name="digits_hint">Добавляет цифры 0–9, чтобы пароль соответствовал типичным требованиям сервисов.</string>
     <string name="symbols_hint">Подмешивает спецсимволы и заметно увеличивает пространство перебора.</string>
     <string name="exclude_duplicates_hint">Не повторяет символы в одном пароле. Удобно для чтения, но может ограничить максимальную длину.</string>
-    <!-- FIX #5: полный список: i I l 1 o O 0 B 8 G 6 S 5 Z 2 -->
     <string name="exclude_similar_hint">Удаляет визуально схожие символы (i I l 1 o O 0 B 8 G 6 S 5 Z 2), чтобы пароль проще читался и набирался вручную.</string>
 
-    <string name="length_title">Длина: %1$d символов</string>
+    <plurals name="length_title">
+        <item quantity="one">Длина: %1$d символ</item>
+        <item quantity="few">Длина: %1$d символа</item>
+        <item quantity="many">Длина: %1$d символов</item>
+        <item quantity="other">Длина: %1$d символа</item>
+    </plurals>
 
     <string name="password_label">Пароль</string>
     <string name="copy_button">Копировать</string>
@@ -34,7 +37,9 @@
     <string name="strength_strong">Сильный пароль</string>
     <string name="strength_very_strong">Очень сильный пароль</string>
 
+    <string name="error_invalid_length">Длина пароля должна быть от 4 до 64 символов</string>
     <string name="error_no_charsets">Выберите хотя бы один набор символов</string>
     <string name="error_no_enough_unique_chars">Недостаточно уникальных символов для такой длины без повторов</string>
-    <string name="copied_to_clipboard">Пароль скопирован в буфер обмена</string>
+    <string name="error_settings_save">Не удалось сохранить настройки генератора</string>
+    <string name="copied_to_clipboard">Пароль скопирован; буфер очистится через 60 секунд</string>
 </resources>

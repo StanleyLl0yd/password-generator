@@ -30,7 +30,7 @@ object HapticFeedback {
             } else {
                 vibrator.vibrate(duration)
             }
-        } catch (_: Exception) {  // ← ИСПРАВЛЕНО: e → _
+        } catch (_: Exception) {
             // Ignore vibration errors
         }
     }

@@ -16,6 +16,7 @@ import kotlin.math.roundToInt
 fun LengthSliderCard(
     length: Float,
     onLengthChange: (Float) -> Unit,
+    onLengthChangeFinished: () -> Unit,
     title: String,
     modifier: Modifier = Modifier
 ) {
@@ -40,7 +41,8 @@ fun LengthSliderCard(
 
             LengthSlider(
                 length = length,
-                onLengthChange = onLengthChange
+                onLengthChange = onLengthChange,
+                onLengthChangeFinished = onLengthChangeFinished
             )
         }
     }
@@ -49,7 +51,8 @@ fun LengthSliderCard(
 @Composable
 private fun LengthSlider(
     length: Float,
-    onLengthChange: (Float) -> Unit
+    onLengthChange: (Float) -> Unit,
+    onLengthChangeFinished: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -89,6 +92,7 @@ private fun LengthSlider(
             },
             valueRange = PasswordConstants.MIN_LENGTH.toFloat()..PasswordConstants.MAX_LENGTH.toFloat(),
             steps = PasswordConstants.MAX_LENGTH - PasswordConstants.MIN_LENGTH - 1,
+            onValueChangeFinished = onLengthChangeFinished,
             modifier = Modifier.fillMaxWidth(),
             colors = SliderDefaults.colors(
                 activeTrackColor = MaterialTheme.colorScheme.primary,
