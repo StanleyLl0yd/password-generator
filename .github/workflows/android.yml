@@ -2,7 +2,7 @@ name: Android CI
 
 on:
   push:
-    branches: [main]
+    branches: [build-aab-1.4.4]
   pull_request:
 
 permissions:
@@ -30,8 +30,8 @@ jobs:
       - name: Install Android 36 platform
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Verify project
-        run: ./gradlew testDebugUnitTest lintDebug assembleDebug --stacktrace
+      - name: Verify project and build release bundle
+        run: ./gradlew testDebugUnitTest lintDebug assembleDebug bundleRelease --stacktrace
 
       - name: Upload verification reports
         if: always()
@@ -43,3 +43,10 @@ jobs:
             app/build/reports/tests/testDebugUnitTest/
             app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: ignore
+
+      - name: Upload release AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: password-generator-v1.4.4-aab
+          path: app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
