@@ -16,6 +16,6 @@
 
 -dontwarn androidx.compose.**
 
-# Preserve source locations in obfuscated stack traces.
+# Preserve line numbers in obfuscated stack traces.
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
