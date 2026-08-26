@@ -2,6 +2,17 @@
 <resources>
     <string name="app_name">Password Generator</string>
 
+    <string name="about_open">О приложении</string>
+    <string name="about_version">Версия %1$s</string>
+    <string name="about_description">Приватный офлайн-генератор паролей. Пароли создаются только на устройстве, никогда не сохраняются, а скопированные пароли автоматически удаляются из буфера обмена через 60 секунд.</string>
+    <string name="about_author_label">Автор</string>
+    <string name="about_author">Stanley Lloyd</string>
+    <string name="about_license_label">Лицензия</string>
+    <string name="about_license">PolyForm Noncommercial 1.0.0</string>
+    <string name="about_github_label">GitHub</string>
+    <string name="about_github">github.com/StanleyLl0yd/password-generator</string>
+    <string name="about_required_notice">Required Notice: Copyright (c) 2025-2026 Stanley Lloyd</string>
+
     <string name="privacy_note">100% офлайн · Пароли никогда не сохраняются</string>
     <string name="character_sets_title">Наборы символов</string>
     <string name="advanced_options_title">Дополнительно</string>
