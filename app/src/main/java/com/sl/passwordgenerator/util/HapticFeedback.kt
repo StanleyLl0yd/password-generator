@@ -31,7 +31,6 @@ object HapticFeedback {
                 vibrator.vibrate(duration)
             }
         } catch (_: Exception) {
-            // Ignore vibration errors
         }
     }
 

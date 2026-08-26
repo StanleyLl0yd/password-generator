@@ -18,10 +18,7 @@ private data class CharPool(
 @Singleton
 class PasswordGenerator @Inject constructor() {
 
-    // SecureRandom — thread-safe синглтон, намеренно не создаётся локально
     private val secureRandom = SecureRandom()
-
-    // Явное преобразование SecureRandom → kotlin.random.Random
     private val kotlinRandom = secureRandom.asKotlinRandom()
 
     fun clampLength(value: Float): Float =
@@ -103,7 +100,6 @@ class PasswordGenerator @Inject constructor() {
         val result    = StringBuilder(length)
         val usedChars = if (excludeDuplicates) mutableSetOf<Char>() else null
 
-        // Гарантируем хотя бы по одному символу из каждой группы
         for (group in pool.groups) {
             if (result.length >= length) break
             val available = if (excludeDuplicates) group.filterNot { it in usedChars!! } else group
@@ -113,7 +109,6 @@ class PasswordGenerator @Inject constructor() {
             usedChars?.add(ch)
         }
 
-        // Добираем оставшиеся символы
         while (result.length < length) {
             val available = if (excludeDuplicates) {
                 val a = pool.allChars.filterNot { it in usedChars!! }
@@ -141,10 +136,7 @@ class PasswordGenerator @Inject constructor() {
         return if (space == 0) 1 else space
     }
 
-    /**
-     * Repeating a short block does not add the entropy implied by the displayed length.
-     * For example, "password" repeated four times is still based on an eight-character unit.
-     */
+    // Exact repeated blocks count as their shortest repeating unit.
     private fun calculateEffectiveLength(password: String): Int {
         for (unitLength in 1..password.length / 2) {
             if (password.length % unitLength != 0) continue
@@ -192,7 +184,6 @@ class PasswordGenerator @Inject constructor() {
         return adj
     }
 
-    // Ищет любую последовательную подстроку заданной длины (ascending или descending)
     private fun containsSequentialSubstring(password: String, minLength: Int): Boolean {
         if (password.length < minLength) return false
         var ascLen  = 1
