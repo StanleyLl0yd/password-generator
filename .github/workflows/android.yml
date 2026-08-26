@@ -36,8 +36,8 @@ jobs:
       - name: Install Android 36 platform
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Verify project and build release bundle
-        run: ./gradlew testDebugUnitTest lintDebug assembleDebug bundleRelease --stacktrace
+      - name: Verify project and build release artifacts
+        run: ./gradlew testDebugUnitTest lintDebug assembleDebug assembleRelease bundleRelease --stacktrace
 
       - name: Upload verification reports
         if: always()
@@ -49,6 +49,15 @@ jobs:
             app/build/reports/tests/testDebugUnitTest/
             app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload unsigned release APK
+        if: success()
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-apk-unsigned-${{ github.sha }}
+          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          if-no-files-found: error
           retention-days: 14
 
       - name: Upload release AAB
