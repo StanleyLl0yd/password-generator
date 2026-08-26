@@ -36,7 +36,7 @@ jobs:
       - name: Install Android 36 platform
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Export Android Build Tools
+      - name: Export official Android Build Tools
         uses: actions/upload-artifact@v7
         with:
           name: android-build-tools-36
