@@ -2,12 +2,18 @@
 <resources>
     <string name="app_name">Password Generator</string>
 
+    <string name="privacy_note">100% офлайн · Пароли никогда не сохраняются</string>
+    <string name="character_sets_title">Наборы символов</string>
+    <string name="advanced_options_title">Дополнительно</string>
+
     <string name="lowercase_label">Строчные буквы (a–z)</string>
     <string name="uppercase_label">Заглавные буквы (A–Z)</string>
     <string name="digits_label">Цифры (0–9)</string>
     <string name="symbols_label">Спецсимволы (!@#…)</string>
     <string name="exclude_duplicates_label">Исключать повторы</string>
-    <string name="exclude_similar_label">Исключать похожие (i I l 1 o O 0 B 8…)</string>
+    <string name="exclude_similar_label">Исключать похожие символы</string>
+    <string name="exclude_duplicates_summary">Каждый символ используется не более одного раза</string>
+    <string name="exclude_similar_summary">Убирает i, I, l, 1, o, O, 0, B, 8 и другие неоднозначные символы</string>
 
     <string name="lowercase_hint">Добавляет базовый набор строчных букв для баланса читаемости и сложности.</string>
     <string name="uppercase_hint">Включает заглавные буквы — повышает сложность и помогает удовлетворить политики.</string>
@@ -22,20 +28,22 @@
         <item quantity="many">Длина: %1$d символов</item>
         <item quantity="other">Длина: %1$d символа</item>
     </plurals>
+    <string name="decrease_length">Уменьшить длину пароля</string>
+    <string name="increase_length">Увеличить длину пароля</string>
 
     <string name="password_label">Пароль</string>
     <string name="copy_button">Копировать</string>
-    <string name="generate_button">Сгенерировать</string>
+    <string name="generate_button">Сгенерировать пароль</string>
 
     <string name="show_password">Показать пароль</string>
     <string name="hide_password">Скрыть пароль</string>
 
     <string name="strength_title">Надёжность пароля</string>
-    <string name="strength_very_weak">Очень слабый пароль</string>
-    <string name="strength_weak">Слабый пароль</string>
-    <string name="strength_medium">Средний пароль</string>
-    <string name="strength_strong">Сильный пароль</string>
-    <string name="strength_very_strong">Очень сильный пароль</string>
+    <string name="strength_very_weak">Очень слабый</string>
+    <string name="strength_weak">Слабый</string>
+    <string name="strength_medium">Средний</string>
+    <string name="strength_strong">Сильный</string>
+    <string name="strength_very_strong">Очень сильный</string>
 
     <string name="error_invalid_length">Длина пароля должна быть от 4 до 64 символов</string>
     <string name="error_no_charsets">Выберите хотя бы один набор символов</string>
