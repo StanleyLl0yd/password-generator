@@ -2,12 +2,18 @@
 <resources>
     <string name="app_name">Password Generator</string>
 
+    <string name="privacy_note">100% offline · Passwords are never saved</string>
+    <string name="character_sets_title">Character sets</string>
+    <string name="advanced_options_title">Advanced</string>
+
     <string name="lowercase_label">Lowercase (a–z)</string>
     <string name="uppercase_label">Uppercase (A–Z)</string>
     <string name="digits_label">Digits (0–9)</string>
     <string name="symbols_label">Special chars (!@#…)</string>
     <string name="exclude_duplicates_label">Exclude duplicates</string>
-    <string name="exclude_similar_label">Exclude similar (i I l 1 o O 0 B 8…)</string>
+    <string name="exclude_similar_label">Exclude similar characters</string>
+    <string name="exclude_duplicates_summary">Use each character at most once</string>
+    <string name="exclude_similar_summary">Removes i, I, l, 1, o, O, 0, B, 8 and other ambiguous characters</string>
 
     <string name="lowercase_hint">Adds basic lowercase letters for balance of readability and complexity.</string>
     <string name="uppercase_hint">Includes uppercase letters — increases complexity and helps meet policy requirements.</string>
@@ -20,20 +26,22 @@
         <item quantity="one">Length: %1$d character</item>
         <item quantity="other">Length: %1$d characters</item>
     </plurals>
+    <string name="decrease_length">Decrease password length</string>
+    <string name="increase_length">Increase password length</string>
 
     <string name="password_label">Password</string>
     <string name="copy_button">Copy</string>
-    <string name="generate_button">Generate</string>
+    <string name="generate_button">Generate password</string>
 
     <string name="show_password">Show password</string>
     <string name="hide_password">Hide password</string>
 
     <string name="strength_title">Password strength</string>
-    <string name="strength_very_weak">Very weak password</string>
-    <string name="strength_weak">Weak password</string>
-    <string name="strength_medium">Medium password</string>
-    <string name="strength_strong">Strong password</string>
-    <string name="strength_very_strong">Very strong password</string>
+    <string name="strength_very_weak">Very weak</string>
+    <string name="strength_weak">Weak</string>
+    <string name="strength_medium">Medium</string>
+    <string name="strength_strong">Strong</string>
+    <string name="strength_very_strong">Very strong</string>
 
     <string name="error_invalid_length">Password length must be between 4 and 64 characters</string>
     <string name="error_no_charsets">Select at least one character set</string>

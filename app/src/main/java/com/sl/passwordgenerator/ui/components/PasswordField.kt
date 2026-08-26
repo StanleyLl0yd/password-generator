@@ -7,24 +7,29 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.sl.passwordgenerator.R
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun PasswordField(
     password: String,
     label: String,
+    copyLabel: String,
+    showPasswordContentDescription: String,
+    hidePasswordContentDescription: String,
+    onCopyClick: () -> Unit,
     modifier: Modifier = Modifier,
     isGenerating: Boolean = false
 ) {
@@ -34,51 +39,102 @@ fun PasswordField(
         passwordVisible = false
     }
 
-    AnimatedContent(
-        targetState = password,
-        transitionSpec = {
-            if (isGenerating) {
-                (fadeIn(animationSpec = tween(300)) + slideInVertically { it / 2 })
-                    .togetherWith(fadeOut(animationSpec = tween(150)) + slideOutVertically { -it / 2 })
-            } else {
-                fadeIn(animationSpec = tween(150))
-                    .togetherWith(fadeOut(animationSpec = tween(150)))
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.weight(1f)
+            )
+
+            IconButton(
+                onClick = { passwordVisible = !passwordVisible },
+                enabled = password.isNotEmpty()
+            ) {
+                Icon(
+                    imageVector = if (passwordVisible) {
+                        Icons.Outlined.VisibilityOff
+                    } else {
+                        Icons.Outlined.Visibility
+                    },
+                    contentDescription = if (passwordVisible) {
+                        hidePasswordContentDescription
+                    } else {
+                        showPasswordContentDescription
+                    }
+                )
             }
-        },
-        label = "password_animation"
-    ) { animatedPassword ->
-        OutlinedTextField(
-            value = animatedPassword,
-            onValueChange = {},
-            label = { Text(text = label) },
-            modifier = modifier
-                .fillMaxWidth()
-                .heightIn(min = 48.dp),
-            singleLine = true,
-            // Strength is calculated for generator output, not arbitrary user-entered text.
-            readOnly = true,
-            textStyle = MaterialTheme.typography.bodyMedium,
-            visualTransformation = if (passwordVisible) {
-                VisualTransformation.None
-            } else {
-                PasswordVisualTransformation()
+
+            FilledTonalButton(
+                onClick = onCopyClick,
+                enabled = password.isNotEmpty() && !isGenerating
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.ContentCopy,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(text = copyLabel)
+            }
+        }
+
+        AnimatedContent(
+            targetState = password,
+            transitionSpec = {
+                if (isGenerating) {
+                    (fadeIn(animationSpec = tween(250)) + slideInVertically { it / 3 })
+                        .togetherWith(fadeOut(animationSpec = tween(120)) + slideOutVertically { -it / 3 })
+                } else {
+                    fadeIn(animationSpec = tween(150))
+                        .togetherWith(fadeOut(animationSpec = tween(120)))
+                }
             },
-            trailingIcon = {
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(
-                        imageVector = if (passwordVisible) {
-                            Icons.Filled.Visibility
+            label = "password_animation"
+        ) { animatedPassword ->
+            val displayedPassword = when {
+                animatedPassword.isEmpty() -> "—"
+                passwordVisible -> animatedPassword
+                else -> "•".repeat(animatedPassword.length)
+            }
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 76.dp)
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Text(
+                        text = displayedPassword,
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 18.sp,
+                            lineHeight = 25.sp,
+                            fontWeight = FontWeight.Medium
+                        ),
+                        color = if (animatedPassword.isEmpty()) {
+                            MaterialTheme.colorScheme.onSurfaceVariant
                         } else {
-                            Icons.Filled.VisibilityOff
+                            MaterialTheme.colorScheme.onSurface
                         },
-                        contentDescription = if (passwordVisible) {
-                            stringResource(R.string.hide_password)
-                        } else {
-                            stringResource(R.string.show_password)
-                        }
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
-        )
+        }
     }
 }
