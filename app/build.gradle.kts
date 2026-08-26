@@ -21,7 +21,6 @@ android {
 
     buildTypes {
         release {
-            // Optimize release size and remove unused bytecode/resources.
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
