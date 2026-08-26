@@ -18,10 +18,7 @@ private data class CharPool(
 @Singleton
 class PasswordGenerator @Inject constructor() {
 
-    // SecureRandom — thread-safe синглтон, намеренно не создаётся локально
     private val secureRandom = SecureRandom()
-
-    // Явное преобразование SecureRandom → kotlin.random.Random
     private val kotlinRandom = secureRandom.asKotlinRandom()
 
     fun clampLength(value: Float): Float =
@@ -36,10 +33,10 @@ class PasswordGenerator @Inject constructor() {
         }
 
         val pool = buildCharPool(
-            useLowercase  = config.useLowercase,
-            useUppercase  = config.useUppercase,
-            useDigits     = config.useDigits,
-            useSymbols    = config.useSymbols,
+            useLowercase = config.useLowercase,
+            useUppercase = config.useUppercase,
+            useDigits = config.useDigits,
+            useSymbols = config.useSymbols,
             excludeSimilar = config.excludeSimilar
         )
 
@@ -53,8 +50,8 @@ class PasswordGenerator @Inject constructor() {
         }
 
         val password = generatePassword(
-            length           = config.length,
-            pool             = pool,
+            length = config.length,
+            pool = pool,
             excludeDuplicates = config.excludeDuplicates
         )
 
@@ -64,17 +61,17 @@ class PasswordGenerator @Inject constructor() {
     fun estimatePasswordScore(password: String): Int {
         if (password.isEmpty()) return 0
         val effectiveLength = calculateEffectiveLength(password)
-        val charSpace        = calculateCharSpace(password)
-        val entropyScore     = calculateEntropyScore(effectiveLength, charSpace)
-        val penalty          = calculatePasswordPenalty(password, effectiveLength)
+        val charSpace = calculateCharSpace(password)
+        val entropyScore = calculateEntropyScore(effectiveLength, charSpace)
+        val penalty = calculatePasswordPenalty(password, effectiveLength)
         return (entropyScore + penalty).coerceIn(0, 100)
     }
 
     private fun buildCharPool(
-        useLowercase:  Boolean,
-        useUppercase:  Boolean,
-        useDigits:     Boolean,
-        useSymbols:    Boolean,
+        useLowercase: Boolean,
+        useUppercase: Boolean,
+        useDigits: Boolean,
+        useSymbols: Boolean,
         excludeSimilar: Boolean
     ): CharPool {
         fun String.filterSimilar(): String =
@@ -83,27 +80,26 @@ class PasswordGenerator @Inject constructor() {
         val groups = buildList {
             if (useLowercase) add(PasswordConstants.LOWERCASE_CHARS.filterSimilar())
             if (useUppercase) add(PasswordConstants.UPPERCASE_CHARS.filterSimilar())
-            if (useDigits)    add(PasswordConstants.DIGIT_CHARS.filterSimilar())
-            if (useSymbols)   add(PasswordConstants.SYMBOL_CHARS.filterSimilar())
+            if (useDigits) add(PasswordConstants.DIGIT_CHARS.filterSimilar())
+            if (useSymbols) add(PasswordConstants.SYMBOL_CHARS.filterSimilar())
         }.filter { it.isNotEmpty() }
 
         return CharPool(
-            groups   = groups,
+            groups = groups,
             allChars = groups.joinToString("")
         )
     }
 
     private fun generatePassword(
-        length:           Int,
-        pool:             CharPool,
+        length: Int,
+        pool: CharPool,
         excludeDuplicates: Boolean
     ): String {
         if (pool.groups.isEmpty() || pool.allChars.isEmpty() || length <= 0) return ""
 
-        val result    = StringBuilder(length)
+        val result = StringBuilder(length)
         val usedChars = if (excludeDuplicates) mutableSetOf<Char>() else null
 
-        // Гарантируем хотя бы по одному символу из каждой группы
         for (group in pool.groups) {
             if (result.length >= length) break
             val available = if (excludeDuplicates) group.filterNot { it in usedChars!! } else group
@@ -113,7 +109,6 @@ class PasswordGenerator @Inject constructor() {
             usedChars?.add(ch)
         }
 
-        // Добираем оставшиеся символы
         while (result.length < length) {
             val available = if (excludeDuplicates) {
                 val a = pool.allChars.filterNot { it in usedChars!! }
@@ -134,17 +129,14 @@ class PasswordGenerator @Inject constructor() {
 
     private fun calculateCharSpace(password: String): Int {
         var space = 0
-        if (password.any { it.isLowerCase() })       space += 26
-        if (password.any { it.isUpperCase() })       space += 26
-        if (password.any { it.isDigit() })           space += 10
-        if (password.any { !it.isLetterOrDigit() })  space += PasswordConstants.SYMBOL_CHARS.length
+        if (password.any { it.isLowerCase() }) space += 26
+        if (password.any { it.isUpperCase() }) space += 26
+        if (password.any { it.isDigit() }) space += 10
+        if (password.any { !it.isLetterOrDigit() }) space += PasswordConstants.SYMBOL_CHARS.length
         return if (space == 0) 1 else space
     }
 
-    /**
-     * Repeating a short block does not add the entropy implied by the displayed length.
-     * For example, "password" repeated four times is still based on an eight-character unit.
-     */
+    // Exact repeated blocks count as their shortest repeating unit.
     private fun calculateEffectiveLength(password: String): Int {
         for (unitLength in 1..password.length / 2) {
             if (password.length % unitLength != 0) continue
@@ -160,8 +152,8 @@ class PasswordGenerator @Inject constructor() {
 
     private fun calculateEntropyScore(length: Int, charSpace: Int): Int {
         val entropyBits = length * (ln(charSpace.toDouble()) / ln(2.0))
-        val maxEntropy  = PasswordConstants.REF_LENGTH_FOR_MAX_SCORE *
-                (ln(PasswordConstants.FULL_CHARSPACE) / ln(2.0))
+        val maxEntropy = PasswordConstants.REF_LENGTH_FOR_MAX_SCORE *
+            (ln(PasswordConstants.FULL_CHARSPACE) / ln(2.0))
         return (entropyBits * 100.0 / maxEntropy).toInt()
     }
 
@@ -173,7 +165,7 @@ class PasswordGenerator @Inject constructor() {
             effectiveLength < 8 -> adj -= 25
         }
 
-        val hasDigit  = password.any { it.isDigit() }
+        val hasDigit = password.any { it.isDigit() }
         val hasSymbol = password.any { !it.isLetterOrDigit() }
 
         if (effectiveLength < 10 && hasDigit
@@ -185,22 +177,29 @@ class PasswordGenerator @Inject constructor() {
         }
 
         if (containsSequentialSubstring(password, minLength = 4)) adj -= 20
-        if (hasManyRepeats(password))                              adj -= 10
-        if (password.toSet().size == 1 && password.length >= 3)   adj -= 10
-        if (containsCommonPattern(password))                       adj -= 30
+        if (hasManyRepeats(password)) adj -= 10
+        if (password.toSet().size == 1 && password.length >= 3) adj -= 10
+        if (containsCommonPattern(password)) adj -= 30
 
         return adj
     }
 
-    // Ищет любую последовательную подстроку заданной длины (ascending или descending)
     private fun containsSequentialSubstring(password: String, minLength: Int): Boolean {
         if (password.length < minLength) return false
-        var ascLen  = 1
+        var ascLen = 1
         var descLen = 1
         for (i in 1 until password.length) {
             val diff = password[i] - password[i - 1]
-            if (diff ==  1) { if (++ascLen  >= minLength) return true } else ascLen  = 1
-            if (diff == -1) { if (++descLen >= minLength) return true } else descLen = 1
+            if (diff == 1) {
+                if (++ascLen >= minLength) return true
+            } else {
+                ascLen = 1
+            }
+            if (diff == -1) {
+                if (++descLen >= minLength) return true
+            } else {
+                descLen = 1
+            }
         }
         return false
     }
