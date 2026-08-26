@@ -36,8 +36,6 @@ class PasswordGeneratorViewModel @Inject constructor(
     val events = _events.receiveAsFlow()
 
     private var saveJob: Job? = null
-
-    // Блокирует сохранение и действия пользователя до завершения первичной загрузки
     private var isInitialized = false
 
     init {
@@ -154,8 +152,6 @@ class PasswordGeneratorViewModel @Inject constructor(
         DEBOUNCED
     }
 }
-
-// ── Mapping functions ────────────────────────────────────────────────────────
 
 private fun GeneratorPreferences.toUiState() = PasswordGeneratorUiState(
     password          = "",
