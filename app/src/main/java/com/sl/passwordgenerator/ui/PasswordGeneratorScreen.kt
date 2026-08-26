@@ -2,30 +2,34 @@ package com.sl.passwordgenerator.ui
 
 import android.content.Context
 import android.content.res.Resources
-import android.widget.Toast
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sl.passwordgenerator.R
 import com.sl.passwordgenerator.domain.model.PasswordGenerationError
 import com.sl.passwordgenerator.domain.model.PasswordStrength
-import com.sl.passwordgenerator.ui.components.*
+import com.sl.passwordgenerator.ui.components.CheckboxRow
+import com.sl.passwordgenerator.ui.components.LengthSliderCard
+import com.sl.passwordgenerator.ui.components.PasswordField
+import com.sl.passwordgenerator.ui.components.StrengthIndicator
 import com.sl.passwordgenerator.util.HapticFeedback
 import com.sl.passwordgenerator.util.SecureClipboard
+import kotlinx.coroutines.launch
 
 @Composable
 fun PasswordGeneratorScreen(
@@ -33,15 +37,17 @@ fun PasswordGeneratorScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val resources = LocalResources.current
+    val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val copiedMessage = stringResource(R.string.copied_to_clipboard)
 
     val events = viewModel.events
     LaunchedEffect(events, resources) {
         events.collect { event ->
             when (event) {
                 is PasswordGeneratorUiEvent.Error -> {
-                    val message = event.reason.toErrorMessage(resources)
-                    snackbarHostState.showSnackbar(message)
+                    snackbarHostState.showSnackbar(event.reason.toErrorMessage(resources))
                 }
                 PasswordGeneratorUiEvent.SettingsSaveError -> {
                     snackbarHostState.showSnackbar(
@@ -56,11 +62,29 @@ fun PasswordGeneratorScreen(
         topBar = {
             PasswordGeneratorTopBar(title = stringResource(R.string.app_name))
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+        bottomBar = {
+            GeneratorBottomBar(
+                isGenerating = uiState.isGenerating,
+                buttonText = stringResource(R.string.generate_button),
+                onGenerateClick = {
+                    HapticFeedback.performMedium(context)
+                    viewModel.generatePassword()
+                }
+            )
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         PasswordGeneratorContent(
             state = uiState,
             viewModel = viewModel,
+            onCopyClick = {
+                copyPasswordToClipboard(context, uiState.password)
+                scope.launch {
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                    snackbarHostState.showSnackbar(copiedMessage)
+                }
+            },
             modifier = Modifier.padding(innerPadding)
         )
     }
@@ -73,20 +97,64 @@ private fun PasswordGeneratorTopBar(
 ) {
     Surface(
         modifier = modifier.windowInsetsPadding(WindowInsets.statusBars),
-        color = MaterialTheme.colorScheme.primary,
-        shadowElevation = 2.dp
+        color = MaterialTheme.colorScheme.background
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 14.dp)
+        )
+    }
+}
+
+@Composable
+private fun GeneratorBottomBar(
+    isGenerating: Boolean,
+    buttonText: String,
+    onGenerateClick: () -> Unit
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.background,
+        tonalElevation = 3.dp
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            contentAlignment = Alignment.Center
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(horizontal = 16.dp, vertical = 10.dp)
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimary
-            )
+            Button(
+                onClick = onGenerateClick,
+                enabled = !isGenerating,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 52.dp),
+                shape = MaterialTheme.shapes.large
+            ) {
+                if (isGenerating) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Rounded.Refresh,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = buttonText,
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
         }
     }
 }
@@ -95,23 +163,30 @@ private fun PasswordGeneratorTopBar(
 private fun PasswordGeneratorContent(
     state: PasswordGeneratorUiState,
     viewModel: PasswordGeneratorViewModel,
+    onCopyClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     val scrollState = rememberScrollState()
-    val copiedMessage = stringResource(R.string.copied_to_clipboard)
 
-    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        val useTwoColumns = maxHeight < 700.dp
-
+    Box(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
+                .widthIn(max = 600.dp)
+                .align(Alignment.TopCenter)
                 .verticalScroll(scrollState)
-                .padding(horizontal = 10.dp, vertical = 6.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            CheckboxGrid(state = state, viewModel = viewModel, useTwoColumns = useTwoColumns)
+            PrivacyBanner(text = stringResource(R.string.privacy_note))
+
+            PasswordCard(
+                password = state.password,
+                strengthScore = state.strengthScore,
+                strengthLabel = state.strengthScore.toStrengthLabel(),
+                isGenerating = state.isGenerating,
+                onCopyClick = onCopyClick
+            )
 
             LengthSliderCard(
                 length = state.length,
@@ -121,28 +196,125 @@ private fun PasswordGeneratorContent(
                     R.plurals.length_title,
                     state.length.toInt(),
                     state.length.toInt()
-                )
+                ),
+                decreaseContentDescription = stringResource(R.string.decrease_length),
+                increaseContentDescription = stringResource(R.string.increase_length)
             )
 
-            PasswordCard(
-                password = state.password,
-                isGenerating = state.isGenerating,
-                onCopyClick = {
-                    copyPasswordToClipboard(
-                        context = context,
-                        password = state.password,
-                        message = copiedMessage
-                    )
-                },
-                onGenerateClick = {
-                    HapticFeedback.performMedium(context)
-                    viewModel.generatePassword()
-                }
+            OptionsCard(title = stringResource(R.string.character_sets_title)) {
+                CheckboxRow(
+                    checked = state.useLowercase,
+                    onCheckedChange = viewModel::onLowercaseChanged,
+                    text = stringResource(R.string.lowercase_label)
+                )
+                OptionDivider()
+                CheckboxRow(
+                    checked = state.useUppercase,
+                    onCheckedChange = viewModel::onUppercaseChanged,
+                    text = stringResource(R.string.uppercase_label)
+                )
+                OptionDivider()
+                CheckboxRow(
+                    checked = state.useDigits,
+                    onCheckedChange = viewModel::onDigitsChanged,
+                    text = stringResource(R.string.digits_label)
+                )
+                OptionDivider()
+                CheckboxRow(
+                    checked = state.useSymbols,
+                    onCheckedChange = viewModel::onSymbolsChanged,
+                    text = stringResource(R.string.symbols_label)
+                )
+            }
+
+            OptionsCard(title = stringResource(R.string.advanced_options_title)) {
+                CheckboxRow(
+                    checked = state.excludeSimilar,
+                    onCheckedChange = viewModel::onExcludeSimilarChanged,
+                    text = stringResource(R.string.exclude_similar_label),
+                    supportingText = stringResource(R.string.exclude_similar_summary)
+                )
+                OptionDivider()
+                CheckboxRow(
+                    checked = state.excludeDuplicates,
+                    onCheckedChange = viewModel::onExcludeDuplicatesChanged,
+                    text = stringResource(R.string.exclude_duplicates_label),
+                    supportingText = stringResource(R.string.exclude_duplicates_summary)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(2.dp))
+        }
+    }
+}
+
+@Composable
+private fun PrivacyBanner(
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Lock,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(18.dp)
             )
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
+private fun PasswordCard(
+    password: String,
+    strengthScore: Int,
+    strengthLabel: String,
+    isGenerating: Boolean,
+    onCopyClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            PasswordField(
+                password = password,
+                label = stringResource(R.string.password_label),
+                copyLabel = stringResource(R.string.copy_button),
+                showPasswordContentDescription = stringResource(R.string.show_password),
+                hidePasswordContentDescription = stringResource(R.string.hide_password),
+                onCopyClick = onCopyClick,
+                isGenerating = isGenerating
+            )
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
             StrengthIndicator(
-                strengthScore = state.strengthScore,
-                strengthLabel = state.strengthScore.toStrengthLabel(),
+                strengthScore = strengthScore,
+                strengthLabel = strengthLabel,
                 title = stringResource(R.string.strength_title)
             )
         }
@@ -150,179 +322,42 @@ private fun PasswordGeneratorContent(
 }
 
 @Composable
-private fun CheckboxGrid(
-    state: PasswordGeneratorUiState,
-    viewModel: PasswordGeneratorViewModel,
-    useTwoColumns: Boolean
-) {
-    if (useTwoColumns) {
-        TwoColumnCheckboxGrid(state = state, viewModel = viewModel)
-    } else {
-        SingleColumnCheckboxGrid(state = state, viewModel = viewModel)
-    }
-}
-
-@Composable
-private fun TwoColumnCheckboxGrid(
-    state: PasswordGeneratorUiState,
-    viewModel: PasswordGeneratorViewModel
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            CheckboxRow(
-                checked = state.useLowercase,
-                onCheckedChange = viewModel::onLowercaseChanged,
-                text = stringResource(R.string.lowercase_label),
-                tooltipText = stringResource(R.string.lowercase_hint),
-                compact = true
-            )
-            CheckboxRow(
-                checked = state.useDigits,
-                onCheckedChange = viewModel::onDigitsChanged,
-                text = stringResource(R.string.digits_label),
-                tooltipText = stringResource(R.string.digits_hint),
-                compact = true
-            )
-            CheckboxRow(
-                checked = state.excludeDuplicates,
-                onCheckedChange = viewModel::onExcludeDuplicatesChanged,
-                text = stringResource(R.string.exclude_duplicates_label),
-                tooltipText = stringResource(R.string.exclude_duplicates_hint),
-                compact = true
-            )
-        }
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            CheckboxRow(
-                checked = state.useUppercase,
-                onCheckedChange = viewModel::onUppercaseChanged,
-                text = stringResource(R.string.uppercase_label),
-                tooltipText = stringResource(R.string.uppercase_hint),
-                compact = true
-            )
-            CheckboxRow(
-                checked = state.useSymbols,
-                onCheckedChange = viewModel::onSymbolsChanged,
-                text = stringResource(R.string.symbols_label),
-                tooltipText = stringResource(R.string.symbols_hint),
-                compact = true
-            )
-            CheckboxRow(
-                checked = state.excludeSimilar,
-                onCheckedChange = viewModel::onExcludeSimilarChanged,
-                text = stringResource(R.string.exclude_similar_label),
-                tooltipText = stringResource(R.string.exclude_similar_hint),
-                compact = true
-            )
-        }
-    }
-}
-
-@Composable
-private fun SingleColumnCheckboxGrid(
-    state: PasswordGeneratorUiState,
-    viewModel: PasswordGeneratorViewModel
-) {
-    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        CheckboxRow(
-            checked = state.useLowercase,
-            onCheckedChange = viewModel::onLowercaseChanged,
-            text = stringResource(R.string.lowercase_label),
-            tooltipText = stringResource(R.string.lowercase_hint)
-        )
-        CheckboxRow(
-            checked = state.useUppercase,
-            onCheckedChange = viewModel::onUppercaseChanged,
-            text = stringResource(R.string.uppercase_label),
-            tooltipText = stringResource(R.string.uppercase_hint)
-        )
-        CheckboxRow(
-            checked = state.useDigits,
-            onCheckedChange = viewModel::onDigitsChanged,
-            text = stringResource(R.string.digits_label),
-            tooltipText = stringResource(R.string.digits_hint)
-        )
-        CheckboxRow(
-            checked = state.useSymbols,
-            onCheckedChange = viewModel::onSymbolsChanged,
-            text = stringResource(R.string.symbols_label),
-            tooltipText = stringResource(R.string.symbols_hint)
-        )
-        CheckboxRow(
-            checked = state.excludeDuplicates,
-            onCheckedChange = viewModel::onExcludeDuplicatesChanged,
-            text = stringResource(R.string.exclude_duplicates_label),
-            tooltipText = stringResource(R.string.exclude_duplicates_hint)
-        )
-        CheckboxRow(
-            checked = state.excludeSimilar,
-            onCheckedChange = viewModel::onExcludeSimilarChanged,
-            text = stringResource(R.string.exclude_similar_label),
-            tooltipText = stringResource(R.string.exclude_similar_hint)
-        )
-    }
-}
-
-@Composable
-private fun PasswordCard(
-    password: String,
-    isGenerating: Boolean,
-    onCopyClick: () -> Unit,
-    onGenerateClick: () -> Unit,
-    modifier: Modifier = Modifier
+private fun OptionsCard(
+    title: String,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            PasswordField(
-                password = password,
-                label = stringResource(R.string.password_label),
-                isGenerating = isGenerating
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
             )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Кнопка Copy: disabled пока пароль пуст или идёт генерация
-                TextButton(
-                    onClick = onCopyClick,
-                    enabled = password.isNotEmpty() && !isGenerating
-                ) {
-                    Text(text = stringResource(R.string.copy_button))
-                }
-
-                val buttonScale by animateFloatAsState(
-                    targetValue = if (isGenerating) 0.95f else 1f,
-                    animationSpec = spring(),
-                    label = "button_scale"
-                )
-
-                Button(
-                    onClick = onGenerateClick,
-                    enabled = !isGenerating,
-                    modifier = Modifier.scale(buttonScale)
-                ) {
-                    Text(text = stringResource(R.string.generate_button))
-                }
-            }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            content()
         }
     }
 }
 
-private fun copyPasswordToClipboard(context: Context, password: String, message: String) {
+@Composable
+private fun OptionDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(horizontal = 12.dp),
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)
+    )
+}
+
+private fun copyPasswordToClipboard(context: Context, password: String) {
     if (password.isEmpty()) return
     SecureClipboard.copyPassword(context, password)
     HapticFeedback.performLight(context)
-    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
 }
 
 private fun PasswordGenerationError.toErrorMessage(resources: Resources): String = when (this) {
