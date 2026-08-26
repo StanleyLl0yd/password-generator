@@ -1,7 +1,5 @@
 package com.sl.passwordgenerator.domain.model
 
-// #1: поле password удалено — пароль больше не хранится на диске.
-// Сохраняются только пользовательские настройки генератора.
 data class GeneratorPreferences(
     val length: Float = 16f,
     val useLowercase: Boolean = true,
