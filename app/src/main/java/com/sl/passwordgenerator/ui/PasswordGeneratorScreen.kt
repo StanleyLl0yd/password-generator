@@ -6,10 +6,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -41,6 +43,7 @@ fun PasswordGeneratorScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val copiedMessage = stringResource(R.string.copied_to_clipboard)
+    var showAbout by rememberSaveable { mutableStateOf(false) }
 
     val events = viewModel.events
     LaunchedEffect(events, resources) {
@@ -60,7 +63,11 @@ fun PasswordGeneratorScreen(
 
     Scaffold(
         topBar = {
-            PasswordGeneratorTopBar(title = stringResource(R.string.app_name))
+            PasswordGeneratorTopBar(
+                title = stringResource(R.string.app_name),
+                aboutContentDescription = stringResource(R.string.about_open),
+                onAboutClick = { showAbout = true }
+            )
         },
         bottomBar = {
             GeneratorBottomBar(
@@ -88,26 +95,45 @@ fun PasswordGeneratorScreen(
             modifier = Modifier.padding(innerPadding)
         )
     }
+
+    if (showAbout) {
+        AboutSheet(onDismiss = { showAbout = false })
+    }
 }
 
 @Composable
 private fun PasswordGeneratorTopBar(
     title: String,
+    aboutContentDescription: String,
+    onAboutClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
         modifier = modifier.windowInsetsPadding(WindowInsets.statusBars),
         color = MaterialTheme.colorScheme.background
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground,
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 14.dp)
-        )
+                .padding(start = 20.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.weight(1f)
+            )
+
+            IconButton(onClick = onAboutClick) {
+                Icon(
+                    imageVector = Icons.Outlined.Info,
+                    contentDescription = aboutContentDescription,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     }
 }
 
