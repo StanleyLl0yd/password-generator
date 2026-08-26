@@ -1,9 +1,8 @@
 name: Export Android Build Tools
 
 on:
-  push:
-    branches:
-      - temp/export-apksigner
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: read
