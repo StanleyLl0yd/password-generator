@@ -41,7 +41,7 @@ fun PasswordField(
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        verticalArrangement = Arrangement.spacedBy(5.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -59,30 +59,20 @@ fun PasswordField(
                 enabled = password.isNotEmpty()
             ) {
                 Icon(
-                    imageVector = if (passwordVisible) {
-                        Icons.Outlined.VisibilityOff
-                    } else {
-                        Icons.Outlined.Visibility
-                    },
-                    contentDescription = if (passwordVisible) {
-                        hidePasswordContentDescription
-                    } else {
-                        showPasswordContentDescription
-                    }
+                    imageVector = if (passwordVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                    contentDescription = if (passwordVisible) hidePasswordContentDescription else showPasswordContentDescription
                 )
             }
 
-            FilledTonalButton(
+            IconButton(
                 onClick = onCopyClick,
                 enabled = password.isNotEmpty() && !isGenerating
             ) {
                 Icon(
                     imageVector = Icons.Outlined.ContentCopy,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
+                    contentDescription = copyLabel,
+                    tint = MaterialTheme.colorScheme.primary
                 )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(text = copyLabel)
             }
         }
 
@@ -90,11 +80,10 @@ fun PasswordField(
             targetState = password,
             transitionSpec = {
                 if (isGenerating) {
-                    (fadeIn(animationSpec = tween(250)) + slideInVertically { it / 3 })
-                        .togetherWith(fadeOut(animationSpec = tween(120)) + slideOutVertically { -it / 3 })
+                    (fadeIn(animationSpec = tween(200)) + slideInVertically { it / 4 })
+                        .togetherWith(fadeOut(animationSpec = tween(100)) + slideOutVertically { -it / 4 })
                 } else {
-                    fadeIn(animationSpec = tween(150))
-                        .togetherWith(fadeOut(animationSpec = tween(120)))
+                    fadeIn(animationSpec = tween(120)).togetherWith(fadeOut(animationSpec = tween(100)))
                 }
             },
             label = "password_animation"
@@ -107,22 +96,22 @@ fun PasswordField(
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 76.dp)
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                        .heightIn(min = 52.dp)
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
                     contentAlignment = Alignment.CenterStart
                 ) {
                     Text(
                         text = displayedPassword,
                         style = MaterialTheme.typography.bodyLarge.copy(
                             fontFamily = FontFamily.Monospace,
-                            fontSize = 18.sp,
-                            lineHeight = 25.sp,
+                            fontSize = if (passwordVisible) 16.sp else 15.sp,
+                            lineHeight = 21.sp,
                             fontWeight = FontWeight.Medium
                         ),
                         color = if (animatedPassword.isEmpty()) {
@@ -130,7 +119,7 @@ fun PasswordField(
                         } else {
                             MaterialTheme.colorScheme.onSurface
                         },
-                        maxLines = 3,
+                        maxLines = if (passwordVisible) 2 else 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }

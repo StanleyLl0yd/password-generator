@@ -13,14 +13,18 @@
     <string name="about_github">github.com/StanleyLl0yd/password-generator</string>
     <string name="about_required_notice">Required Notice: Copyright (c) 2025-2026 Stanley Lloyd</string>
 
-    <string name="privacy_note">100% offline · Passwords are never saved</string>
     <string name="character_sets_title">Character sets</string>
     <string name="advanced_options_title">Advanced</string>
+    <string name="length_label">Length</string>
 
     <string name="lowercase_label">Lowercase (a–z)</string>
     <string name="uppercase_label">Uppercase (A–Z)</string>
     <string name="digits_label">Digits (0–9)</string>
     <string name="symbols_label">Special chars (!@#…)</string>
+    <string name="lowercase_compact">a–z · Lowercase</string>
+    <string name="uppercase_compact">A–Z · Uppercase</string>
+    <string name="digits_compact">0–9 · Digits</string>
+    <string name="symbols_compact">!@# · Symbols</string>
     <string name="exclude_duplicates_label">Exclude duplicates</string>
     <string name="exclude_similar_label">Exclude similar characters</string>
     <string name="exclude_duplicates_summary">Use each character at most once</string>

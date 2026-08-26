@@ -16,11 +16,11 @@ import com.sl.passwordgenerator.domain.PasswordConstants
 import kotlin.math.roundToInt
 
 @Composable
-fun LengthSliderCard(
+fun LengthControl(
     length: Float,
     onLengthChange: (Float) -> Unit,
     onLengthChangeFinished: () -> Unit,
-    title: String,
+    label: String,
     decreaseContentDescription: String,
     increaseContentDescription: String,
     modifier: Modifier = Modifier
@@ -31,105 +31,89 @@ fun LengthSliderCard(
         onLengthChangeFinished()
     }
 
-    Card(
+    Surface(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surface
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
+                    text = label,
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.weight(1f)
                 )
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                IconButton(
+                    onClick = { setLength(length.toInt() - 1) },
+                    enabled = length > PasswordConstants.MIN_LENGTH
                 ) {
-                    IconButton(
-                        onClick = { setLength(length.toInt() - 1) },
-                        enabled = length > PasswordConstants.MIN_LENGTH
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Remove,
-                            contentDescription = decreaseContentDescription
-                        )
-                    }
+                    Icon(Icons.Rounded.Remove, decreaseContentDescription)
+                }
 
-                    Surface(
-                        shape = MaterialTheme.shapes.medium,
-                        color = MaterialTheme.colorScheme.primaryContainer
-                    ) {
-                        Text(
-                            text = length.toInt().toString(),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .widthIn(min = 48.dp)
-                                .padding(horizontal = 10.dp, vertical = 6.dp)
-                        )
-                    }
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Text(
+                        text = length.toInt().toString(),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .widthIn(min = 42.dp)
+                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                    )
+                }
 
-                    IconButton(
-                        onClick = { setLength(length.toInt() + 1) },
-                        enabled = length < PasswordConstants.MAX_LENGTH
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Add,
-                            contentDescription = increaseContentDescription
-                        )
-                    }
+                IconButton(
+                    onClick = { setLength(length.toInt() + 1) },
+                    enabled = length < PasswordConstants.MAX_LENGTH
+                ) {
+                    Icon(Icons.Rounded.Add, increaseContentDescription)
                 }
             }
 
-            Slider(
-                value = length,
-                onValueChange = { newValue ->
-                    val clamped = newValue
-                        .coerceIn(
-                            PasswordConstants.MIN_LENGTH.toFloat(),
-                            PasswordConstants.MAX_LENGTH.toFloat()
-                        )
-                        .roundToInt()
-                        .toFloat()
-                    onLengthChange(clamped)
-                },
-                valueRange = PasswordConstants.MIN_LENGTH.toFloat()..PasswordConstants.MAX_LENGTH.toFloat(),
-                steps = PasswordConstants.MAX_LENGTH - PasswordConstants.MIN_LENGTH - 1,
-                onValueChangeFinished = onLengthChangeFinished,
-                modifier = Modifier.fillMaxWidth(),
-                colors = SliderDefaults.colors(
-                    activeTrackColor = MaterialTheme.colorScheme.primary,
-                    inactiveTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.22f),
-                    thumbColor = MaterialTheme.colorScheme.primary,
-                    activeTickColor = Color.Transparent,
-                    inactiveTickColor = Color.Transparent
-                )
-            )
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = PasswordConstants.MIN_LENGTH.toString(),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Slider(
+                    value = length,
+                    onValueChange = { newValue ->
+                        onLengthChange(
+                            newValue.coerceIn(
+                                PasswordConstants.MIN_LENGTH.toFloat(),
+                                PasswordConstants.MAX_LENGTH.toFloat()
+                            ).roundToInt().toFloat()
+                        )
+                    },
+                    valueRange = PasswordConstants.MIN_LENGTH.toFloat()..PasswordConstants.MAX_LENGTH.toFloat(),
+                    steps = PasswordConstants.MAX_LENGTH - PasswordConstants.MIN_LENGTH - 1,
+                    onValueChangeFinished = onLengthChangeFinished,
+                    modifier = Modifier.weight(1f),
+                    colors = SliderDefaults.colors(
+                        activeTrackColor = MaterialTheme.colorScheme.primary,
+                        inactiveTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.22f),
+                        thumbColor = MaterialTheme.colorScheme.primary,
+                        activeTickColor = Color.Transparent,
+                        inactiveTickColor = Color.Transparent
+                    )
                 )
                 Text(
                     text = PasswordConstants.MAX_LENGTH.toString(),
@@ -140,7 +124,7 @@ fun LengthSliderCard(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 listOf(16, 24, 32).forEach { preset ->
                     FilterChip(
@@ -153,7 +137,9 @@ fun LengthSliderCard(
                                 textAlign = TextAlign.Center
                             )
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(36.dp)
                     )
                 }
             }
