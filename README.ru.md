@@ -13,7 +13,7 @@
 
 [⬇️ Скачать последнюю версию APK](https://github.com/StanleyLl0yd/password-generator/releases/latest)
 
-Текущая версия: **1.4.4** · Min SDK: **24 (Android 7.0)** · Target SDK: **36**
+Текущая версия: **1.5.0** · Min SDK: **24 (Android 7.0)** · Target SDK: **36**
 
 ## ✨ Возможности
 
@@ -72,12 +72,12 @@ cd password-generator
 
 ## 🧪 Проверка проекта
 
-GitHub Actions запускает unit-тесты, Android Lint, debug-сборку и release AAB для каждого push в `main` и каждого Pull Request.
+GitHub Actions запускает unit-тесты, Android Lint, debug-сборку, release APK и release AAB для каждого push в `main` и каждого Pull Request.
 
 Локально основные проверки можно запустить так:
 
 ```bash
-./gradlew testDebugUnitTest lintDebug assembleDebug bundleRelease
+./gradlew testDebugUnitTest lintDebug assembleDebug assembleRelease bundleRelease
 ```
 
 Инструментальные тесты требуют эмулятор или реальное устройство:
