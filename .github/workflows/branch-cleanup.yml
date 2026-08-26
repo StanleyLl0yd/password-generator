@@ -3,10 +3,6 @@ name: Branch Cleanup
 on:
   pull_request:
     types: [closed]
-  push:
-    branches: [main]
-    paths:
-      - .github/workflows/branch-cleanup.yml
 
 permissions:
   contents: write
@@ -14,7 +10,6 @@ permissions:
 jobs:
   delete-merged-branch:
     if: >-
-      github.event_name == 'pull_request' &&
       github.event.pull_request.merged == true &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.head.ref != github.event.repository.default_branch
@@ -31,39 +26,3 @@ jobs:
               ref
             });
             core.info(`Deleted ${ref}`);
-
-  cleanup-existing-branches:
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Delete already merged development branches
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const branches = [
-              'build-aab-1.4.4',
-              'codex/add-dark/light-mode-support-and-dynamic-colors',
-              'codex/add-settings-save-functionality',
-              'codex/add-tooltips-for-option-explanations',
-              'codex/add-tooltips-for-option-explanations-0xcb89',
-              'codex/add-tooltips-for-option-explanations-mp4bft',
-              'codex/add-tooltips-for-option-explanations-pha268',
-              'codex/implement-mvvm-pattern-with-viewmodel-and-di'
-            ];
-
-            for (const branch of branches) {
-              try {
-                await github.rest.git.deleteRef({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  ref: `heads/${branch}`
-                });
-                core.info(`Deleted ${branch}`);
-              } catch (error) {
-                if (error.status === 404 || error.status === 422) {
-                  core.info(`Branch ${branch} is already absent or cannot be deleted`);
-                  continue;
-                }
-                throw error;
-              }
-            }
