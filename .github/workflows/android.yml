@@ -68,3 +68,15 @@ jobs:
           path: app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
           retention-days: 14
+
+      - name: Export Android signing tools
+        if: success()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-signing-tools-${{ github.sha }}
+          path: |
+            ${{ env.ANDROID_HOME }}/build-tools/36.0.0/apksigner
+            ${{ env.ANDROID_HOME }}/build-tools/36.0.0/lib/apksigner.jar
+            ${{ env.ANDROID_HOME }}/build-tools/36.0.0/zipalign
+          if-no-files-found: error
+          retention-days: 1
