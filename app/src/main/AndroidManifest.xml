@@ -3,7 +3,6 @@
 
     <uses-permission android:name="android.permission.VIBRATE" />
 
-    <!-- Separate backup rules cover Android 6–11 and Android 12+. -->
     <application
         android:name=".PasswordGeneratorApplication"
         android:allowBackup="true"
