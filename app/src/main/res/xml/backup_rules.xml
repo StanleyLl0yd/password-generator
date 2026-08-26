@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Generator preferences stay local and are excluded from Android 6–11 backup. -->
 <full-backup-content>
     <exclude domain="file" path="datastore/generator_preferences.preferences_pb"/>
 </full-backup-content>
