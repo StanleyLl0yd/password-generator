@@ -13,7 +13,6 @@
     <string name="about_github">github.com/StanleyLl0yd/password-generator</string>
     <string name="about_required_notice">Required Notice: Copyright (c) 2025-2026 Stanley Lloyd</string>
 
-    <string name="privacy_note">100% offline · Passwords are never saved</string>
     <string name="character_sets_title">Character sets</string>
     <string name="advanced_options_title">Advanced</string>
     <string name="length_label">Length</string>
