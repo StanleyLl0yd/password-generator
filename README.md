@@ -1,59 +1,51 @@
 # Password Generator
 
 [![Android CI](https://github.com/StanleyLl0yd/password-generator/actions/workflows/android.yml/badge.svg?branch=main)](https://github.com/StanleyLl0yd/password-generator/actions/workflows/android.yml)
-[![Latest release](https://img.shields.io/github/v/release/StanleyLl0yd/password-generator)](https://github.com/StanleyLl0yd/password-generator/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/StanleyLl0yd/password-generator/total)](https://github.com/StanleyLl0yd/password-generator/releases)
-[![Android 7+](https://img.shields.io/badge/Android-7.0%2B-3DDC84?logo=android&logoColor=white)](https://github.com/StanleyLl0yd/password-generator/releases/latest)
+[![Android 7+](https://img.shields.io/badge/Android-7.0%2B-3DDC84?logo=android&logoColor=white)](https://github.com/StanleyLl0yd/password-generator/releases)
 [![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-blue)](LICENSE)
 
-[![en](https://img.shields.io/badge/lang-en-red.svg)](README.md)
-[![ru](https://img.shields.io/badge/lang-ru-blue.svg)](README.ru.md)
+[English](README.md) · [Русский](README.ru.md)
 
-A privacy-focused offline password generator for Android, built with Kotlin, Jetpack Compose and Material 3.
+A privacy-focused offline password generator for Android. Passwords are generated locally with `SecureRandom`; the app has no Internet permission and does not send generated data anywhere.
 
-[⬇️ Download the latest APK](https://github.com/StanleyLl0yd/password-generator/releases/latest)
+**Source version:** 1.5.0 (`versionCode 11`) · **Android:** 7.0+ (API 24) · **Target SDK:** 36
 
-Current version: **1.5.0** · Min SDK: **24 (Android 7.0)** · Target SDK: **36**
+[GitHub Releases](https://github.com/StanleyLl0yd/password-generator/releases)
 
-## ✨ Features
+## Features
 
-- Lowercase, uppercase, digits and special characters
-- Password length from 4 to 64 characters
-- Optional exclusion of duplicate characters
-- Optional exclusion of visually similar characters: `i I l 1 o O 0 B 8 G 6 S 5 Z 2`
-- Real-time password strength indicator
-- Sensitive clipboard copy with automatic cleanup after 60 seconds
-- Adaptive layout for different screen sizes
-- Material 3 interface with system light/dark theme
-- English and Russian localization
+- Password length from **4 to 64** characters.
+- Four independently selectable character groups:
+  - lowercase letters `a-z`;
+  - uppercase letters `A-Z`;
+  - digits `0-9`;
+  - symbols `!@#$%^&*()-_=+[]{};:,.<>?/|`.
+- At least one character from every enabled group is included in a generated password.
+- Optional exclusion of visually ambiguous characters: `i I l 1 o O 0 B 8 G 6 S 5 Z 2`.
+- Optional exclusion of duplicate characters; if the selected pool is too small for the requested length, the app reports an error instead of weakening the rule.
+- Length control with a slider, `-` / `+` buttons, and presets for **16**, **24**, and **32** characters.
+- Generated password is read-only, hidden by default, and can be revealed or copied.
+- Password-strength indicator based on the generated password; the score penalizes short passwords, sequences, heavy repetition, repeated blocks, and common weak patterns.
+- Generator settings are saved between launches.
+- Material 3 UI with system light/dark mode and Dynamic Color on Android 12+.
+- English and Russian interface languages.
+- **About** sheet with the installed version, description, author, license, and GitHub repository link.
 
-## 🔒 Privacy & security
+## Privacy and clipboard
 
-- **100% offline** — the app does not require network access
-- **No analytics, tracking or ads**
-- Generated passwords are kept only in memory and are never persisted
-- Only generator preferences are saved
-- Legacy passwords stored by v1.4.1 and older are removed automatically after upgrade
-- Saved preferences are excluded from Android auto-backup
-- Clipboard content is marked as sensitive and cleared after 60 seconds without removing newer clipboard content
+- The app has **no `INTERNET` permission**.
+- No analytics, advertising, or tracking SDKs are included.
+- Generated passwords are kept only in memory and are **not saved to persistent storage**.
+- Only generator preferences are stored in DataStore.
+- Generator preferences are excluded from Android cloud backup and device-to-device transfer.
+- A copied password is marked as sensitive and scheduled for clipboard removal after **60 seconds**.
+- Clipboard cleanup only removes the app's own still-current copied value; newer clipboard content is left untouched.
 
-Security issues should be reported according to [SECURITY.md](SECURITY.md).
+For security-related reports, see [SECURITY.md](SECURITY.md).
 
-## 📦 Installation
+## Build from source
 
-The recommended way to install the app is to download the APK from the latest GitHub Release:
-
-[Download latest release](https://github.com/StanleyLl0yd/password-generator/releases/latest)
-
-Android 7.0 or newer is required.
-
-## 🛠️ Build from source
-
-Requirements:
-
-- Current Android Studio with Android Gradle Plugin 8.13 support
-- JDK 17 or newer
-- Android SDK 36
+Requirements: JDK 17 and Android SDK 36.
 
 ```bash
 git clone https://github.com/StanleyLl0yd/password-generator.git
@@ -61,76 +53,24 @@ cd password-generator
 ./gradlew assembleDebug
 ```
 
-To run the project checks:
+Project checks used by CI:
 
 ```bash
 ./gradlew testDebugUnitTest lintDebug assembleDebug assembleRelease bundleRelease
 ```
 
-## 🧱 Technology
+Main stack: Kotlin 2.2.0, Jetpack Compose, Material 3, Hilt, Coroutines/Flow, and DataStore Preferences.
 
-| Category | Technology |
-| --- | --- |
-| Language | Kotlin 2.2.0 |
-| UI | Jetpack Compose + Material 3 |
-| Architecture | MVVM + Clean Architecture |
-| Dependency injection | Hilt 2.57.2 |
-| Async | Kotlin Coroutines + Flow |
-| Storage | DataStore Preferences |
-| Build | Gradle 8.13, Kotlin DSL |
+## Changelog
 
-## ✅ Quality checks
+[English](CHANGELOG.md) · [Русский](CHANGELOG.ru.md)
 
-GitHub Actions automatically checks pull requests and pushes to `main` with:
+## License
 
-- unit tests
-- Android Lint
-- debug APK assembly
-- release APK and AAB assembly with R8/resource shrinking
-
-## 🌍 Languages
-
-- English — default
-- Русский
-
-Translations follow the device language automatically.
-
-## 📊 Changelog
-
-- [English changelog](CHANGELOG.md)
-- [Русский changelog](CHANGELOG.ru.md)
-- [GitHub Releases](https://github.com/StanleyLl0yd/password-generator/releases)
-
-## 🤝 Contributing
-
-Contributions and bug reports are welcome. Use the GitHub issue forms for bugs and feature requests, or open a pull request with a focused change.
-
-Please keep changes small, follow Kotlin coding conventions, and include tests for behavior changes where practical.
-
-## 🔮 Roadmap
-
-- [ ] Password history (opt-in)
-- [ ] Passphrase generator
-- [ ] Quick profiles (PIN, Wi-Fi, 16/24/32 characters)
-- [ ] Custom character sets
-- [ ] Password templates
-- [ ] Backup/restore settings
-- [ ] Widget support
-- [ ] Wear OS companion app
-- [ ] More languages
-
-## 📄 License
-
-Licensed under the **PolyForm Noncommercial License 1.0.0**.
-
-Noncommercial use, copying, modification and distribution are permitted. Commercial use requires a separate agreement. See [LICENSE](LICENSE) for the full terms.
+Licensed under the **PolyForm Noncommercial License 1.0.0**. See [LICENSE](LICENSE) for the full terms.
 
 Copyright © 2025–2026 Stanley Lloyd.
 
-## 👨‍💻 Author
+## Author
 
-Stanley Lloyd · [@StanleyLl0yd](https://github.com/StanleyLl0yd)
-
----
-
-Made with ❤️ for security-conscious users. If the project is useful to you, consider giving it a ⭐.
+**Stanley Lloyd**
