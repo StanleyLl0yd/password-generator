@@ -16,9 +16,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -26,7 +26,7 @@ import com.sl.passwordgenerator.R
 import com.sl.passwordgenerator.domain.model.PasswordGenerationError
 import com.sl.passwordgenerator.domain.model.PasswordStrength
 import com.sl.passwordgenerator.ui.components.CheckboxRow
-import com.sl.passwordgenerator.ui.components.LengthSliderCard
+import com.sl.passwordgenerator.ui.components.LengthControl
 import com.sl.passwordgenerator.ui.components.PasswordField
 import com.sl.passwordgenerator.ui.components.StrengthIndicator
 import com.sl.passwordgenerator.util.HapticFeedback
@@ -53,9 +53,7 @@ fun PasswordGeneratorScreen(
                     snackbarHostState.showSnackbar(event.reason.toErrorMessage(resources))
                 }
                 PasswordGeneratorUiEvent.SettingsSaveError -> {
-                    snackbarHostState.showSnackbar(
-                        resources.getString(R.string.error_settings_save)
-                    )
+                    snackbarHostState.showSnackbar(resources.getString(R.string.error_settings_save))
                 }
             }
         }
@@ -96,9 +94,7 @@ fun PasswordGeneratorScreen(
         )
     }
 
-    if (showAbout) {
-        AboutSheet(onDismiss = { showAbout = false })
-    }
+    if (showAbout) AboutSheet(onDismiss = { showAbout = false })
 }
 
 @Composable
@@ -115,17 +111,18 @@ private fun PasswordGeneratorTopBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 20.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+                .padding(start = 16.dp, end = 4.dp, top = 2.dp, bottom = 2.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f)
             )
-
             IconButton(onClick = onAboutClick) {
                 Icon(
                     imageVector = Icons.Outlined.Info,
@@ -143,27 +140,24 @@ private fun GeneratorBottomBar(
     buttonText: String,
     onGenerateClick: () -> Unit
 ) {
-    Surface(
-        color = MaterialTheme.colorScheme.background,
-        tonalElevation = 3.dp
-    ) {
+    Surface(color = MaterialTheme.colorScheme.background) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(horizontal = 16.dp, vertical = 10.dp)
+                .padding(horizontal = 12.dp, vertical = 6.dp)
         ) {
             Button(
                 onClick = onGenerateClick,
                 enabled = !isGenerating,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 52.dp),
+                    .height(48.dp),
                 shape = MaterialTheme.shapes.large
             ) {
                 if (isGenerating) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(18.dp),
                         strokeWidth = 2.dp,
                         color = MaterialTheme.colorScheme.onPrimary
                     )
@@ -171,15 +165,11 @@ private fun GeneratorBottomBar(
                     Icon(
                         imageVector = Icons.Rounded.Refresh,
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                 }
-
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = buttonText,
-                    style = MaterialTheme.typography.labelLarge
-                )
+                Text(text = buttonText, style = MaterialTheme.typography.labelLarge)
             }
         }
     }
@@ -194,114 +184,96 @@ private fun PasswordGeneratorContent(
 ) {
     val scrollState = rememberScrollState()
 
-    Box(modifier = modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .widthIn(max = 600.dp)
-                .align(Alignment.TopCenter)
-                .verticalScroll(scrollState)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            PrivacyBanner(text = stringResource(R.string.privacy_note))
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .widthIn(max = 560.dp)
+            .verticalScroll(scrollState)
+            .padding(horizontal = 14.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        PrivacyNote(text = stringResource(R.string.privacy_note))
 
-            PasswordCard(
-                password = state.password,
-                strengthScore = state.strengthScore,
-                strengthLabel = state.strengthScore.toStrengthLabel(),
-                isGenerating = state.isGenerating,
-                onCopyClick = onCopyClick
+        PasswordCard(
+            password = state.password,
+            strengthScore = state.strengthScore,
+            strengthLabel = state.strengthScore.toStrengthLabel(),
+            isGenerating = state.isGenerating,
+            onCopyClick = onCopyClick
+        )
+
+        LengthControl(
+            length = state.length,
+            onLengthChange = viewModel::onLengthChanged,
+            onLengthChangeFinished = viewModel::onLengthChangeFinished,
+            label = stringResource(R.string.length_label),
+            decreaseContentDescription = stringResource(R.string.decrease_length),
+            increaseContentDescription = stringResource(R.string.increase_length)
+        )
+
+        CompactSection(title = stringResource(R.string.character_sets_title)) {
+            CharacterSetGrid(
+                lowercase = state.useLowercase,
+                uppercase = state.useUppercase,
+                digits = state.useDigits,
+                symbols = state.useSymbols,
+                onLowercaseChanged = viewModel::onLowercaseChanged,
+                onUppercaseChanged = viewModel::onUppercaseChanged,
+                onDigitsChanged = viewModel::onDigitsChanged,
+                onSymbolsChanged = viewModel::onSymbolsChanged
             )
-
-            LengthSliderCard(
-                length = state.length,
-                onLengthChange = viewModel::onLengthChanged,
-                onLengthChangeFinished = viewModel::onLengthChangeFinished,
-                title = pluralStringResource(
-                    R.plurals.length_title,
-                    state.length.toInt(),
-                    state.length.toInt()
-                ),
-                decreaseContentDescription = stringResource(R.string.decrease_length),
-                increaseContentDescription = stringResource(R.string.increase_length)
-            )
-
-            OptionsCard(title = stringResource(R.string.character_sets_title)) {
-                CheckboxRow(
-                    checked = state.useLowercase,
-                    onCheckedChange = viewModel::onLowercaseChanged,
-                    text = stringResource(R.string.lowercase_label)
-                )
-                OptionDivider()
-                CheckboxRow(
-                    checked = state.useUppercase,
-                    onCheckedChange = viewModel::onUppercaseChanged,
-                    text = stringResource(R.string.uppercase_label)
-                )
-                OptionDivider()
-                CheckboxRow(
-                    checked = state.useDigits,
-                    onCheckedChange = viewModel::onDigitsChanged,
-                    text = stringResource(R.string.digits_label)
-                )
-                OptionDivider()
-                CheckboxRow(
-                    checked = state.useSymbols,
-                    onCheckedChange = viewModel::onSymbolsChanged,
-                    text = stringResource(R.string.symbols_label)
-                )
-            }
-
-            OptionsCard(title = stringResource(R.string.advanced_options_title)) {
-                CheckboxRow(
-                    checked = state.excludeSimilar,
-                    onCheckedChange = viewModel::onExcludeSimilarChanged,
-                    text = stringResource(R.string.exclude_similar_label),
-                    supportingText = stringResource(R.string.exclude_similar_summary)
-                )
-                OptionDivider()
-                CheckboxRow(
-                    checked = state.excludeDuplicates,
-                    onCheckedChange = viewModel::onExcludeDuplicatesChanged,
-                    text = stringResource(R.string.exclude_duplicates_label),
-                    supportingText = stringResource(R.string.exclude_duplicates_summary)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(2.dp))
         }
+
+        CompactSection(title = stringResource(R.string.advanced_options_title)) {
+            Surface(
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                Column {
+                    CheckboxRow(
+                        checked = state.excludeSimilar,
+                        onCheckedChange = viewModel::onExcludeSimilarChanged,
+                        text = stringResource(R.string.exclude_similar_label)
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+                    )
+                    CheckboxRow(
+                        checked = state.excludeDuplicates,
+                        onCheckedChange = viewModel::onExcludeDuplicatesChanged,
+                        text = stringResource(R.string.exclude_duplicates_label)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(2.dp))
     }
 }
 
 @Composable
-private fun PrivacyBanner(
-    text: String,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+private fun PrivacyNote(text: String, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 2.dp, vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Lock,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.size(18.dp)
-            )
-            Text(
-                text = text,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                fontWeight = FontWeight.Medium
-            )
-        }
+        Icon(
+            imageVector = Icons.Outlined.Lock,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(16.dp)
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -316,15 +288,13 @@ private fun PasswordCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             PasswordField(
                 password = password,
@@ -335,9 +305,6 @@ private fun PasswordCard(
                 onCopyClick = onCopyClick,
                 isGenerating = isGenerating
             )
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
             StrengthIndicator(
                 strengthScore = strengthScore,
                 strengthLabel = strengthLabel,
@@ -348,35 +315,68 @@ private fun PasswordCard(
 }
 
 @Composable
-private fun OptionsCard(
+private fun CompactSection(
     title: String,
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Card(
+    Column(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        verticalArrangement = Arrangement.spacedBy(5.dp)
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            content()
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = 2.dp)
+        )
+        content()
+    }
+}
+
+@Composable
+private fun CharacterSetGrid(
+    lowercase: Boolean,
+    uppercase: Boolean,
+    digits: Boolean,
+    symbols: Boolean,
+    onLowercaseChanged: (Boolean) -> Unit,
+    onUppercaseChanged: (Boolean) -> Unit,
+    onDigitsChanged: (Boolean) -> Unit,
+    onSymbolsChanged: (Boolean) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            CharacterSetChip(lowercase, stringResource(R.string.lowercase_compact), onLowercaseChanged, Modifier.weight(1f))
+            CharacterSetChip(uppercase, stringResource(R.string.uppercase_compact), onUppercaseChanged, Modifier.weight(1f))
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            CharacterSetChip(digits, stringResource(R.string.digits_compact), onDigitsChanged, Modifier.weight(1f))
+            CharacterSetChip(symbols, stringResource(R.string.symbols_compact), onSymbolsChanged, Modifier.weight(1f))
         }
     }
 }
 
 @Composable
-private fun OptionDivider() {
-    HorizontalDivider(
-        modifier = Modifier.padding(horizontal = 12.dp),
-        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)
+private fun CharacterSetChip(
+    selected: Boolean,
+    label: String,
+    onSelectedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    FilterChip(
+        selected = selected,
+        onClick = { onSelectedChange(!selected) },
+        label = {
+            Text(text = label, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        },
+        modifier = modifier.height(40.dp)
     )
 }
 

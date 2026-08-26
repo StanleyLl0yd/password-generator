@@ -16,11 +16,16 @@
     <string name="privacy_note">100% офлайн · Пароли никогда не сохраняются</string>
     <string name="character_sets_title">Наборы символов</string>
     <string name="advanced_options_title">Дополнительно</string>
+    <string name="length_label">Длина</string>
 
     <string name="lowercase_label">Строчные буквы (a–z)</string>
     <string name="uppercase_label">Заглавные буквы (A–Z)</string>
     <string name="digits_label">Цифры (0–9)</string>
     <string name="symbols_label">Спецсимволы (!@#…)</string>
+    <string name="lowercase_compact">a–z · строчные</string>
+    <string name="uppercase_compact">A–Z · заглавные</string>
+    <string name="digits_compact">0–9 · цифры</string>
+    <string name="symbols_compact">!@# · спец.</string>
     <string name="exclude_duplicates_label">Исключать повторы</string>
     <string name="exclude_similar_label">Исключать похожие символы</string>
     <string name="exclude_duplicates_summary">Каждый символ используется не более одного раза</string>
