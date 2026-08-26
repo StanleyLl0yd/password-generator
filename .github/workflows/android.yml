@@ -36,6 +36,14 @@ jobs:
       - name: Install Android 36 platform
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
+      - name: Export Android Build Tools
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-build-tools-36
+          path: ${{ env.ANDROID_HOME }}/build-tools/36.0.0/
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Verify project and build release artifacts
         run: ./gradlew testDebugUnitTest lintDebug assembleDebug assembleRelease bundleRelease --stacktrace
 
