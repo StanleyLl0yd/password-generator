@@ -36,6 +36,25 @@ jobs:
       - name: Install Android 36 platform
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
+      - name: Configure temporary CI signing
+        run: |
+          keystore_path="$RUNNER_TEMP/ci-release.jks"
+          keytool -genkeypair \
+            -keystore "$keystore_path" \
+            -storepass android \
+            -keypass android \
+            -alias ci \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 1 \
+            -dname "CN=CI"
+          {
+            echo "storeFile=$keystore_path"
+            echo "storePassword=android"
+            echo "keyAlias=ci"
+            echo "keyPassword=android"
+          } > key.properties
+
       - name: Verify project and build release artifacts
         run: ./gradlew testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest assembleRelease bundleRelease --stacktrace
 
@@ -52,20 +71,8 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-      - name: Upload unsigned release APK
-        if: success()
-        uses: actions/upload-artifact@v7
-        with:
-          name: release-apk-unsigned-${{ github.sha }}
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
-          if-no-files-found: error
-          retention-days: 14
-
-      - name: Upload release AAB
-        if: success()
-        uses: actions/upload-artifact@v7
-        with:
-          name: release-aab-${{ github.sha }}
-          path: app/build/outputs/bundle/release/app-release.aab
-          if-no-files-found: error
-          retention-days: 14
+      - name: Remove temporary signing material
+        if: always()
+        run: |
+          rm -f key.properties
+          rm -f "$RUNNER_TEMP/ci-release.jks"
