@@ -37,7 +37,7 @@ jobs:
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
       - name: Verify project and build release artifacts
-        run: ./gradlew testDebugUnitTest lintDebug assembleDebug assembleRelease bundleRelease --stacktrace
+        run: ./gradlew testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest assembleRelease bundleRelease --stacktrace
 
       - name: Upload verification reports
         if: always()
@@ -48,6 +48,7 @@ jobs:
             app/build/reports/lint-results-debug.*
             app/build/reports/tests/testDebugUnitTest/
             app/build/outputs/apk/debug/app-debug.apk
+            app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
           if-no-files-found: ignore
           retention-days: 14
 

@@ -2,6 +2,7 @@ package com.sl.passwordgenerator
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -23,10 +24,10 @@ class PasswordGeneratorInstrumentedTest {
         val copyLabel = context.getString(R.string.copy_button)
 
         composeRule.onNodeWithText(context.getString(R.string.app_name)).assertIsDisplayed()
-        composeRule.onNodeWithText(copyLabel).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(copyLabel).assertIsDisplayed()
         composeRule.waitUntil(timeoutMillis = 5_000) {
             runCatching {
-                composeRule.onNodeWithText(copyLabel).assertIsEnabled()
+                composeRule.onNodeWithContentDescription(copyLabel).assertIsEnabled()
             }.isSuccess
         }
         composeRule.onNodeWithText(generateLabel).assertIsDisplayed().performClick()

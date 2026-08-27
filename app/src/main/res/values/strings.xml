@@ -4,7 +4,7 @@
 
     <string name="about_open">About this app</string>
     <string name="about_version">Version %1$s</string>
-    <string name="about_description">A privacy-focused offline password generator. Passwords are generated locally, never stored, and copied passwords are automatically cleared from the clipboard after 60 seconds.</string>
+    <string name="about_description">A privacy-focused offline password generator. Passwords are generated locally and never stored. Copied passwords are marked as sensitive, and the app attempts to clear its own clipboard value after 60 seconds when Android allows access.</string>
     <string name="about_author_label">Author</string>
     <string name="about_author">Stanley Lloyd</string>
     <string name="about_license_label">License</string>
@@ -17,30 +17,13 @@
     <string name="advanced_options_title">Advanced</string>
     <string name="length_label">Length</string>
 
-    <string name="lowercase_label">Lowercase (a–z)</string>
-    <string name="uppercase_label">Uppercase (A–Z)</string>
-    <string name="digits_label">Digits (0–9)</string>
-    <string name="symbols_label">Special chars (!@#…)</string>
     <string name="lowercase_compact">a–z · Lowercase</string>
     <string name="uppercase_compact">A–Z · Uppercase</string>
     <string name="digits_compact">0–9 · Digits</string>
     <string name="symbols_compact">!@# · Symbols</string>
     <string name="exclude_duplicates_label">Exclude duplicates</string>
     <string name="exclude_similar_label">Exclude similar characters</string>
-    <string name="exclude_duplicates_summary">Use each character at most once</string>
-    <string name="exclude_similar_summary">Removes i, I, l, 1, o, O, 0, B, 8 and other ambiguous characters</string>
 
-    <string name="lowercase_hint">Adds basic lowercase letters for balance of readability and complexity.</string>
-    <string name="uppercase_hint">Includes uppercase letters — increases complexity and helps meet policy requirements.</string>
-    <string name="digits_hint">Adds digits 0–9 so the password meets typical service requirements.</string>
-    <string name="symbols_hint">Mixes in special characters and significantly increases the search space.</string>
-    <string name="exclude_duplicates_hint">Does not repeat characters in one password. Convenient for reading, but may limit maximum length.</string>
-    <string name="exclude_similar_hint">Removes visually ambiguous characters (i I l 1 o O 0 B 8 G 6 S 5 Z 2) to make the password easier to read and type.</string>
-
-    <plurals name="length_title">
-        <item quantity="one">Length: %1$d character</item>
-        <item quantity="other">Length: %1$d characters</item>
-    </plurals>
     <string name="decrease_length">Decrease password length</string>
     <string name="increase_length">Increase password length</string>
 
@@ -62,5 +45,5 @@
     <string name="error_no_charsets">Select at least one character set</string>
     <string name="error_no_enough_unique_chars">Not enough unique characters for this length without duplicates</string>
     <string name="error_settings_save">Could not save generator settings</string>
-    <string name="copied_to_clipboard">Password copied; clipboard clears in 60 seconds</string>
+    <string name="copied_to_clipboard">Password copied. It will be cleared after 60 seconds if Android still allows clipboard access.</string>
 </resources>

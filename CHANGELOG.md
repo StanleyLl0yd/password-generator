@@ -3,215 +3,124 @@
 [![en](https://img.shields.io/badge/lang-en-red.svg)](CHANGELOG.md)
 [![ru](https://img.shields.io/badge/lang-ru-blue.svg)](CHANGELOG.ru.md)
 
-All notable changes to this project will be documented in this file.
+All notable changes to this project are documented here.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+---
+
+## [1.5.0] - 2026-08-26
+
+### Added
+- Added an About sheet with the installed version, author **Stanley Lloyd**, PolyForm Noncommercial 1.0.0 license and GitHub repository link.
+- Added `-` / `+` length controls and quick presets for 16, 24 and 32 characters.
+
+### Changed
+- Redesigned the main screen into a more compact Material 3 layout optimized for phones.
+- Moved the password and strength indicator into one result card and kept generated passwords read-only and hidden by default.
+- Replaced the long character-set list with a compact 2×2 selection grid.
+- Simplified advanced options and made each option row fully tappable.
+- Kept the Generate action fixed at the bottom for easier access.
+- Removed the redundant offline banner from the working screen.
+- Updated English and Russian documentation to match the current application behavior.
+
+### Privacy
+- Password generation remains local and uses `SecureRandom`.
+- Generated passwords are not persisted; only generator preferences are stored.
+- Copied passwords are marked as sensitive. The app schedules its own copied value for removal after 60 seconds when Android still allows clipboard access and does not overwrite newer clipboard content.
+
+### Technical
+- Updated `versionCode` to 11 and `versionName` to `1.5.0`.
 
 ---
 
 ## [1.4.4] - 2026-08-25
 
-### 🔒 Security & Privacy
-- **Legacy password cleanup** (`SettingsRepository`): v1.4.1 and older stored the generated password under the `password` Preferences DataStore key. The key is now explicitly removed before preferences are exposed and on every later settings write.
-- **DataStore recovery** (`SettingsRepository`): corrupted preference files are replaced with safe defaults; recoverable I/O read failures also fall back to defaults.
-- **Protected clipboard** (`SecureClipboard`): copied passwords are marked as sensitive, receive a per-copy token, and are cleared after 60 seconds without overwriting newer clipboard content.
+### Security & privacy
+- Removed the legacy persisted-password key used by v1.4.1 and older before preferences are exposed and on later settings writes.
+- Added safe DataStore recovery for corrupted files and recoverable I/O failures.
+- Marked copied passwords as sensitive and added guarded clipboard cleanup that never replaces newer clipboard content.
+- Excluded generator preferences from Android cloud backup and device-to-device transfer.
 
-### 🐛 Fixed
-- **Repeated passwords rated as strong** (`PasswordGenerator`): exact repeated blocks now use their effective unit length. Values such as `"a" × 32` and `"password" × 4` no longer receive Very Strong scores.
-- **Common weak patterns** (`PasswordGenerator`): added penalties for patterns including `password`, `qwerty`, `admin`, and `welcome`.
-- **Character-space mismatch** (`PasswordConstants`, `PasswordGenerator`): strength normalization now uses the generator's actual 89-character pool instead of assuming all 95 printable ASCII characters.
-- **Editable generated output** (`PasswordField`): the result field is now always read-only, keeping the strength indicator scoped to generator output; every newly generated password starts hidden.
-- **Invalid direct generation requests** (`PasswordGenerator`): lengths outside the 4–64 domain range now return `INVALID_LENGTH` instead of succeeding with an invalid result.
-- **Lost UI events and settings writes** (`PasswordGeneratorViewModel`): one-shot events use a buffered channel, save failures are reported, checkbox changes persist immediately, and releasing the length slider flushes its debounced value.
-- **Lifecycle/layout correctness** (`PasswordGeneratorScreen`): state collection is lifecycle-aware, responsive layout uses actual Compose constraints, and length labels use locale-aware plurals.
+### Fixed
+- Repeated blocks and common weak patterns no longer receive unrealistically high strength scores.
+- Strength normalization now uses the generator's actual 89-character pool.
+- Generated output is always read-only and every newly generated password starts hidden.
+- Invalid direct generation lengths now return `INVALID_LENGTH`.
+- Improved one-shot event delivery, preference persistence and lifecycle-aware UI state collection.
 
-### 🧪 Tests & Build
-- Replaced template tests with regression coverage for generation invariants, exclusions, error cases, strength scoring, length clamping, and legacy-key deletion; added an instrumented launch/generation smoke test.
-- Added GitHub Actions validation for unit tests, Android Lint, and debug assembly on pushes and pull requests.
-- Restored the official `gradle-wrapper.jar`; `./gradlew` now works from a clean clone.
-- Removed stale generated `app/release` metadata and baseline-profile artifacts left from v1.4.0; the output directory is now ignored.
+### Tests & build
+- Added regression tests for generation invariants, exclusions, error cases, strength scoring, length clamping and legacy-key deletion.
+- Added an instrumented launch/generation smoke test.
+- Added GitHub Actions checks for unit tests, Android Lint and build artifacts.
+- Restored the official Gradle Wrapper JAR and removed stale generated release metadata.
 - Updated `versionCode` to 10 and `versionName` to `1.4.4`.
-
-### 📚 Documentation
-- Updated English and Russian README files for v1.4.4, corrected password-storage claims, documented clipboard cleanup and tests, and removed broken screenshot references.
 
 ---
 
 ## [1.4.3] - 2026-03-01
 
-### 🗑️ Removed
-- **Dead code** (`EstimatePasswordStrengthUseCase`): `@Singleton` use-case that was never called removed — ViewModel already used `passwordGenerator.estimatePasswordScore()` directly; delete the file from `domain/usecase/`
-- **`isLoading` flag** (`PasswordGeneratorUiState`): declared but never read in UI; caused a flash of default checkbox values on startup while DataStore loaded
-- **`password` field** (`GeneratorPreferences`, `SettingsRepository`): `Keys.PASSWORD` and all reads/writes removed — password was already not being written since v1.4.2; now the field and key are fully gone from the data layer
+### Changed
+- Removed unused generation and UI state code.
+- Moved password generation off the main thread.
+- Debounced preference writes while the length slider is moving.
+- Moved length clamping into the domain layer.
+- Enabled release minification and resource shrinking.
 
-### ⚡ Performance / Threading
-- **`generatePassword()` on Main thread** (`PasswordGeneratorViewModel`): moved to `viewModelScope.launch { withContext(Dispatchers.Default) { ... } }` — SecureRandom and string operations no longer block the UI thread
-- **`savePreferences` debounce** (`PasswordGeneratorViewModel`): replaced fire-and-forget `viewModelScope.launch` with a cancellable `saveJob` + `delay(300)` — rapid slider movement now produces a single DataStore write instead of dozens
-
-### 🏗️ Architecture
-- **Length clamp moved to domain** (`PasswordGenerator.clampLength()`, `PasswordGeneratorViewModel`): `coerceIn(MIN_LENGTH, MAX_LENGTH)` extracted to `PasswordGenerator` — business rule no longer leaks into the ViewModel layer
-
-### 🔒 Security
-- **Release minification enabled** (`build.gradle.kts`, `proguard-rules.pro`): `isMinifyEnabled = true`, `isShrinkResources = true` for release builds; `proguard-rules.pro` written with rules for Hilt, DataStore, Kotlin Coroutines, and domain models
-
-### 🐛 Fixed
-- **`PasswordField` editable during generation** (`PasswordField`): added `readOnly = isGenerating` — user input can no longer race with an incoming generated password
-- **`SIMILAR_CHARS` mismatch in UI strings** (`strings.xml`, `strings-ru.xml`): label and hint updated to reflect full exclusion set `i I l 1 o O 0 B 8 G 6 S 5 Z 2`
-- **Unused variables `hasLower` / `hasUpper`** (`PasswordGenerator`): inlined directly into the penalty condition — no dangling declarations
-
-### 📦 Technical Details
-- Updated `versionCode` to 9
-- Updated `versionName` to "1.4.3"
+### Fixed
+- Completed removal of the persisted password field from preferences.
+- Updated the visually similar character set to `i I l 1 o O 0 B 8 G 6 S 5 Z 2`.
+- Updated `versionCode` to 9 and `versionName` to `1.4.3`.
 
 ---
 
 ## [1.4.2] - 2026-03-01
 
-### 🐛 Fixed — Critical bugs
-- **Coroutine leak** (`PasswordGeneratorScreen`): `LaunchedEffect(Unit)` replaced with `LaunchedEffect(events)` — the coroutine now correctly cancels on screen exit and restarts if the ViewModel is recreated
-- **`excludeDuplicates` silent contract violation** (`PasswordGenerator`): removed the `.ifEmpty { pool.allChars }` fallback that silently allowed duplicate characters when the pool ran out; violation now throws a clear `IllegalStateException` pointing to a logic inconsistency
-- **`isGenerating` survives recomposition** (`PasswordGeneratorViewModel`, `PasswordGeneratorUiState`, `PasswordGeneratorScreen`): flag moved from local Composable `remember{}` into `UiState`; artificial `delay(100/200)` removed; double-tap protection added in ViewModel; state resets atomically with the new password
-- **Double `withStrength()` call on init** (`PasswordGeneratorViewModel`): strength score computed exactly once during initialization; `isInitialized = true` is set before `generatePassword()` so the first password also triggers a settings save
-- **Password written to disk** (`PasswordGeneratorViewModel`): password no longer persisted to DataStore — only settings (length, charsets, options) are saved, matching the README claim *"passwords generated in memory"*
-
-### 🔒 Security / Correctness
-- **Incomplete `SIMILAR_CHARS`** (`PasswordConstants`): added `B8`, `G6`, `S5`, `Z2` — full standard set of visually ambiguous characters now excluded
-- **Implicit `SecureRandom` adapter** (`PasswordGenerator`): replaced implicit stdlib coercion with explicit `secureRandom.asKotlinRandom()`
-
-### ⚙️ Improved
-- **Sequential pattern detection** (`PasswordGenerator`): `isSequential()` replaced by `containsSequentialSubstring(minLength = 4)` — passwords like `"abc12345xyz"` now correctly receive a strength penalty
-- **Copy button** (`PasswordGeneratorScreen`): disabled while password is empty or generation is in progress
-
-### 📦 Technical Details
-- Updated `versionCode` to 8
-- Updated `versionName` to "1.4.2"
+### Fixed
+- Corrected duplicate-exclusion behavior so the generator never silently falls back to repeated characters.
+- Moved generation progress into persistent UI state and prevented double generation.
+- Stopped persisting generated passwords to DataStore.
+- Improved sequential-pattern detection and explicit `SecureRandom` integration.
+- Updated `versionCode` to 8 and `versionName` to `1.4.2`.
 
 ---
 
 ## [1.4.1] - 2026-02-25
 
-### 🔧 Fixed
-- **Compiler warnings eliminated**: build is now warning-free
-- **`@param:ApplicationContext`**: fixed Hilt annotation target in `SettingsRepository` for Kotlin 2.2.0+ compatibility (KT-73255)
-- **`hiltViewModel()` deprecation**: migrated from `hilt-navigation-compose` to `hilt-lifecycle-viewmodel-compose` artifact
-- **Hardcoded strings**: password visibility toggle labels (`show_password`, `hide_password`) moved to `strings.xml` / `strings-ru.xml`
-- **Backup rules**: DataStore preferences file now explicitly excluded from Android auto-backup and device transfer to prevent password leakage
-
-### 📦 Technical Details
-- Updated `versionCode` to 7
-- Updated `versionName` to "1.4.1"
-- Replaced dependency: `hilt-navigation-compose` → `hilt-lifecycle-viewmodel-compose:1.3.0`
+### Fixed
+- Cleaned compiler and Hilt annotation warnings for Kotlin 2.2.0+.
+- Migrated to `hilt-lifecycle-viewmodel-compose`.
+- Moved password visibility labels into localized resources.
+- Added backup rules for generator preferences.
+- Updated `versionCode` to 7 and `versionName` to `1.4.1`.
 
 ---
 
 ## [1.4.0] - 2025-12-19
 
-### 🌍 Added - Localization
-- **English localization** (default for all languages)
-- **Russian localization** (for Russian system language)
-- Automatic language detection based on system settings
-- English used as fallback for all non-Russian languages
-
-### 🎨 Added - UI/UX Improvements
-- **Adaptive layout**: Automatically switches between 1-column (large screens ≥700dp) and 2-column (small screens <700dp) checkbox grid
-- **Popup tooltips**: Helpful hints now float above content without disrupting layout
-- **Compact design**: Optimized spacing and margins for better screen utilization
-- **Renamed label**: "Исключать повторяющиеся" → "Исключать повторы" (Russian) / "Exclude duplicates" (English)
-
-### 🏗️ Changed - Architecture Refactoring
-- **Clean Architecture**: Complete restructure into Domain/Data/UI layers
-- **Component-based UI**: Created reusable components:
-    - `CheckboxRow.kt` - Unified checkbox with tooltip popup
-    - `PasswordField.kt` - Password input with visibility toggle
-    - `LengthSlider.kt` - Compact slider for password length
-    - `StrengthIndicator.kt` - Visual strength indicator with animations
-- **StateFlow migration**: Replaced LiveData with StateFlow for state management
-- **ViewModel improvements**: Better separation of concerns with extension functions
-- **Hilt DI integration**: Proper dependency injection throughout the app
-
-### 🛠️ Changed - Technical Improvements
-- **HapticFeedback utility**: Extracted haptic feedback logic into separate utility class
-- **PasswordStrength enum**: Created enum with companion object for strength calculations
-- **Extension functions**: Added mapping functions between layers for cleaner code
-- **Minimized recomposition**: Optimized Compose performance
-- **Updated dependencies**: Kotlin 2.2.0, AGP 8.13.2, Compose BOM 2025.12.01
-
-### 🔧 Fixed
-- **Clipboard API**: Updated to use standard Android ClipboardManager instead of deprecated Compose Clipboard
-- **Text overflow**: Fixed checkbox labels cutting off text
-- **Import cleanup**: Removed unused imports from all files
-- **AndroidManifest warning**: Removed deprecated package attribute
-- **Annotation warnings**: Fixed Hilt annotation targets for Kotlin 2.2.0 compatibility
-
-### 📦 Technical Details
-- Updated `versionCode` to 6
-- Updated `versionName` to "1.4.0"
-- Target SDK: 36
-- Kotlin: 2.2.0
-- AGP: 8.13.2
-- Compose BOM: 2025.12.01
-- Hilt: 2.57.2
-
----
-
-## [1.2.0] - 2024-XX-XX
-
 ### Added
-- Password strength indicator with color-coded visual feedback
-- Real-time strength calculation based on entropy
-- Exclude similar characters option (i I 1 l o O 0)
-- Exclude duplicate characters option
-- Haptic feedback on button press and copy
-- Material 3 design implementation
-- DataStore Preferences for settings persistence
+- Added English as the default localization and Russian localization for Russian system language.
+- Added Material 3 UI components, password-strength feedback and haptic feedback.
 
 ### Changed
-- Improved UI layout and spacing
-- Enhanced password field with show/hide toggle
-- Updated to Jetpack Compose
-- Migrated to Material 3 components
-
-### Technical
-- Implemented MVVM architecture
-- Added ViewModel with LiveData
-- Integrated Hilt for dependency injection
-- Added DataStore for local storage
+- Restructured the application into Domain/Data/UI layers with StateFlow and Hilt dependency injection.
+- Migrated the UI to reusable Compose components.
+- Updated the Android toolchain and dependencies used by the project.
+- Updated `versionCode` to 6 and `versionName` to `1.4.0`.
 
 ---
 
-## [1.1.0] - 2024-XX-XX
+## Historical versions
 
-### Added
-- Password length slider (4-64 characters)
-- Special characters support
-- One-tap copy to clipboard
-- Toast notification on copy
+Exact release dates for the early versions below are not recorded in this changelog.
 
-### Changed
-- Improved password generation algorithm
-- Enhanced UI with better visual hierarchy
+### 1.2.0
+- Added password-strength feedback, similar-character exclusion, duplicate exclusion, haptic feedback and DataStore-backed settings.
+- Migrated the interface to Jetpack Compose and Material 3.
 
----
+### 1.1.0
+- Added the 4–64 character length control, special characters and one-tap clipboard copy.
 
-## [1.0.0] - 2024-XX-XX
-
-### Added
-- Initial release
-- Basic password generation
-- Character set selection (lowercase, uppercase, digits)
-- Configurable password length
-- Material Design UI
-- Offline functionality
-- No data collection or tracking
-
----
-
-## Version Naming Convention
-
-- **Major (X.0.0)**: Breaking changes, major architecture refactoring
-- **Minor (1.X.0)**: New features, significant improvements
-- **Patch (1.4.X)**: Bug fixes, minor improvements
+### 1.0.0
+- Initial Android password generator with lowercase, uppercase and digit selection.
 
 ---
 
@@ -220,12 +129,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Repository](https://github.com/StanleyLl0yd/password-generator)
 - [Issues](https://github.com/StanleyLl0yd/password-generator/issues)
 - [Releases](https://github.com/StanleyLl0yd/password-generator/releases)
-- [Discussions](https://github.com/StanleyLl0yd/password-generator/discussions)
-
----
 
 ## License
 
-Copyright (c) 2025 Stanley Lloyd.
+Copyright © 2025–2026 Stanley Lloyd.
 
-Licensed under the PolyForm Noncommercial 1.0.0 license. Noncommercial use, copying, modification, and distribution are permitted. Commercial use requires a separate agreement; contact Stanley Lloyd for licensing.
+Licensed under the PolyForm Noncommercial License 1.0.0. See [LICENSE](LICENSE) for the authoritative terms.

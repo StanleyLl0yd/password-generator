@@ -4,7 +4,7 @@
 
     <string name="about_open">О приложении</string>
     <string name="about_version">Версия %1$s</string>
-    <string name="about_description">Приватный офлайн-генератор паролей. Пароли создаются только на устройстве, никогда не сохраняются, а скопированные пароли автоматически удаляются из буфера обмена через 60 секунд.</string>
+    <string name="about_description">Приватный офлайн-генератор паролей. Пароли создаются только на устройстве и никогда не сохраняются. Скопированные пароли помечаются как конфиденциальные, а приложение пытается удалить собственное значение из буфера через 60 секунд, если Android разрешает доступ.</string>
     <string name="about_author_label">Автор</string>
     <string name="about_author">Stanley Lloyd</string>
     <string name="about_license_label">Лицензия</string>
@@ -17,32 +17,13 @@
     <string name="advanced_options_title">Дополнительно</string>
     <string name="length_label">Длина</string>
 
-    <string name="lowercase_label">Строчные буквы (a–z)</string>
-    <string name="uppercase_label">Заглавные буквы (A–Z)</string>
-    <string name="digits_label">Цифры (0–9)</string>
-    <string name="symbols_label">Спецсимволы (!@#…)</string>
     <string name="lowercase_compact">a–z · строчные</string>
     <string name="uppercase_compact">A–Z · заглавные</string>
     <string name="digits_compact">0–9 · цифры</string>
     <string name="symbols_compact">!@# · спец.</string>
     <string name="exclude_duplicates_label">Исключать повторы</string>
     <string name="exclude_similar_label">Исключать похожие символы</string>
-    <string name="exclude_duplicates_summary">Каждый символ используется не более одного раза</string>
-    <string name="exclude_similar_summary">Убирает i, I, l, 1, o, O, 0, B, 8 и другие неоднозначные символы</string>
 
-    <string name="lowercase_hint">Добавляет базовый набор строчных букв для баланса читаемости и сложности.</string>
-    <string name="uppercase_hint">Включает заглавные буквы — повышает сложность и помогает удовлетворить политики.</string>
-    <string name="digits_hint">Добавляет цифры 0–9, чтобы пароль соответствовал типичным требованиям сервисов.</string>
-    <string name="symbols_hint">Подмешивает спецсимволы и заметно увеличивает пространство перебора.</string>
-    <string name="exclude_duplicates_hint">Не повторяет символы в одном пароле. Удобно для чтения, но может ограничить максимальную длину.</string>
-    <string name="exclude_similar_hint">Удаляет визуально схожие символы (i I l 1 o O 0 B 8 G 6 S 5 Z 2), чтобы пароль проще читался и набирался вручную.</string>
-
-    <plurals name="length_title">
-        <item quantity="one">Длина: %1$d символ</item>
-        <item quantity="few">Длина: %1$d символа</item>
-        <item quantity="many">Длина: %1$d символов</item>
-        <item quantity="other">Длина: %1$d символа</item>
-    </plurals>
     <string name="decrease_length">Уменьшить длину пароля</string>
     <string name="increase_length">Увеличить длину пароля</string>
 
@@ -64,5 +45,5 @@
     <string name="error_no_charsets">Выберите хотя бы один набор символов</string>
     <string name="error_no_enough_unique_chars">Недостаточно уникальных символов для такой длины без повторов</string>
     <string name="error_settings_save">Не удалось сохранить настройки генератора</string>
-    <string name="copied_to_clipboard">Пароль скопирован; буфер очистится через 60 секунд</string>
+    <string name="copied_to_clipboard">Пароль скопирован. Через 60 секунд он будет удалён, если Android всё ещё разрешает доступ к буферу.</string>
 </resources>

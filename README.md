@@ -39,8 +39,9 @@ Passwords are generated locally with `SecureRandom`.
 - Generated passwords are kept only in memory and are never saved to persistent storage
 - Only generator preferences are stored in DataStore
 - Generator preferences are excluded from Android cloud backup and device-to-device transfer
-- Copied passwords are marked as sensitive and scheduled for clipboard removal after **60 seconds**
-- Clipboard cleanup removes the password only if the app's copied value is still current; newer clipboard content is not touched
+- Copied passwords are marked as sensitive
+- The app schedules its own copied value for removal after **60 seconds** and removes it only if Android still allows clipboard access and that value is still current; newer clipboard content is not touched
+- Android may restrict clipboard access after the app leaves the foreground; Android 13+ also provides system clipboard auto-clear behavior
 - Passwords that may have been stored by v1.4.1 and older are removed automatically when preferences are read or saved
 
 The GitHub and license links in About are opened by Android in an external app such as a web browser.
@@ -72,7 +73,7 @@ cd password-generator
 To run the same main checks used by CI:
 
 ```bash
-./gradlew testDebugUnitTest lintDebug assembleDebug assembleRelease bundleRelease
+./gradlew testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest assembleRelease bundleRelease
 ```
 
 Release signing is not configured in the repository. Official signed APKs are signed separately.
@@ -96,6 +97,7 @@ GitHub Actions automatically checks pull requests and pushes to `main` with:
 - unit tests
 - Android Lint
 - debug APK assembly
+- instrumentation-test APK compilation
 - release APK assembly with R8/resource shrinking
 - release AAB assembly
 

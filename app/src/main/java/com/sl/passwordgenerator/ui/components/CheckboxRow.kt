@@ -1,6 +1,5 @@
 package com.sl.passwordgenerator.ui.components
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,8 +19,7 @@ fun CheckboxRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     text: String,
-    modifier: Modifier = Modifier,
-    supportingText: String? = null
+    modifier: Modifier = Modifier
 ) {
     Row(
         modifier = modifier
@@ -40,25 +38,13 @@ fun CheckboxRow(
             onCheckedChange = null
         )
 
-        Column(
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier
                 .weight(1f)
                 .padding(start = 4.dp)
-        ) {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            if (!supportingText.isNullOrBlank()) {
-                Text(
-                    text = supportingText,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 1.dp)
-                )
-            }
-        }
+        )
     }
 }
