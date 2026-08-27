@@ -2,6 +2,7 @@ package com.sl.passwordgenerator.ui
 
 import android.content.Context
 import android.content.res.Resources
+import android.os.Build
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -84,9 +85,11 @@ fun PasswordGeneratorScreen(
             viewModel = viewModel,
             onCopyClick = {
                 copyPasswordToClipboard(context, uiState.password)
-                scope.launch {
-                    snackbarHostState.currentSnackbarData?.dismiss()
-                    snackbarHostState.showSnackbar(copiedMessage)
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                    scope.launch {
+                        snackbarHostState.currentSnackbarData?.dismiss()
+                        snackbarHostState.showSnackbar(copiedMessage)
+                    }
                 }
             },
             modifier = Modifier.padding(innerPadding)
