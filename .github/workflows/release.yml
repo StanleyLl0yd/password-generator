@@ -1,11 +1,6 @@
 name: Android Release
 
 on:
-  push:
-    branches:
-      - "release/v*"
-    tags:
-      - "v*"
   workflow_dispatch:
     inputs:
       tag:
@@ -13,57 +8,42 @@ on:
         required: true
         type: string
 
-permissions:
-  contents: write
+permissions: {}
 
 concurrency:
-  group: release-${{ github.ref }}
-  cancel-in-progress: true
+  group: android-release
+  cancel-in-progress: false
 
 jobs:
-  release:
-    name: Test, sign, and publish APK
+  validate:
+    name: Validate release request
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    env:
-      EXPECTED_CERT_SHA256: f02571c40741e2cb071564f5b63fd3dc38a875d0eda11a8c42269ed635bc2a58
+    timeout-minutes: 5
+    permissions:
+      contents: read
 
     steps:
+      - name: Require protected main branch
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "Releases must be started from main." >&2
+            exit 1
+          fi
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tag must use vMAJOR.MINOR.PATCH format." >&2
+            exit 1
+          fi
+
       - name: Check out repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
 
-      - name: Set up Java
-        uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: "17"
-          cache: gradle
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v4
-
-      - name: Install Android 36 platform
-        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
-
-      - name: Resolve release tag
-        id: release_info
+      - name: Match app version
         env:
-          EVENT_NAME: ${{ github.event_name }}
-          MANUAL_TAG: ${{ inputs.tag }}
-        run: |
-          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
-            release_tag="$MANUAL_TAG"
-          elif [[ "$GITHUB_REF_TYPE" == "branch" ]]; then
-            release_tag="${GITHUB_REF_NAME#release/}"
-          else
-            release_tag="$GITHUB_REF_NAME"
-          fi
-          echo "RELEASE_TAG=$release_tag" >> "$GITHUB_ENV"
-          echo "tag=$release_tag" >> "$GITHUB_OUTPUT"
-
-      - name: Validate release version
+          RELEASE_TAG: ${{ inputs.tag }}
         run: |
           app_version="$(sed -n 's/^[[:space:]]*versionName = "\([^"]*\)".*/\1/p' app/build.gradle.kts | head -n 1)"
           if [[ -z "$app_version" || "$RELEASE_TAG" != "v$app_version" ]]; then
@@ -71,17 +51,54 @@ jobs:
             exit 1
           fi
 
+  build-sign:
+    name: Test, build, and sign
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: release
+    permissions:
+      contents: read
+    env:
+      RELEASE_TAG: ${{ inputs.tag }}
+      EXPECTED_CERT_SHA256: f02571c40741e2cb071564f5b63fd3dc38a875d0eda11a8c42269ed635bc2a58
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Set up Java
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699
+
+      - name: Install Android 36 platform
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
       - name: Configure release signing
         env:
-          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: |
+          if [[ -z "$KEYSTORE_BASE64" || -z "$KEYSTORE_PASSWORD" || -z "$KEY_ALIAS" || -z "$KEY_PASSWORD" ]]; then
+            echo "Release environment signing secrets are not configured." >&2
+            exit 1
+          fi
+
+          umask 077
           keystore_path="$RUNNER_TEMP/password-generator-release.jks"
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$keystore_path"
           if [[ ! -s "$keystore_path" ]]; then
-            echo "ANDROID_KEYSTORE_BASE64 is missing or invalid." >&2
+            echo "RELEASE_KEYSTORE_BASE64 is invalid." >&2
             exit 1
           fi
 
@@ -97,11 +114,10 @@ jobs:
             -storepass "$KEYSTORE_PASSWORD" \
             -alias "$KEY_ALIAS" > /dev/null
 
-      - name: Test and build signed release APK
+      - name: Test and build signed release
         run: ./gradlew testDebugUnitTest lintDebug assembleRelease bundleRelease --stacktrace
 
-      - name: Verify certificate and package APK
-        id: package
+      - name: Verify release certificate
         run: |
           source_apk="app/build/outputs/apk/release/app-release.apk"
           apksigner="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner -print | sort -V | tail -n 1)"
@@ -122,50 +138,25 @@ jobs:
             exit 1
           fi
 
+      - name: Package signed APK
+        run: |
           mkdir -p release
-          apk_path="release/password-generator-${RELEASE_TAG#v}.apk"
-          cp "$source_apk" "$apk_path"
-          sha256sum "$apk_path" | tee "$apk_path.sha256"
-          echo "apk_path=$apk_path" >> "$GITHUB_OUTPUT"
+          apk_name="password-generator-${RELEASE_TAG#v}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "release/$apk_name"
+          (
+            cd release
+            sha256sum "$apk_name" > "$apk_name.sha256"
+          )
 
-      - name: Upload workflow artifact
-        uses: actions/upload-artifact@v7
+      - name: Upload signed package
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: password-generator-${{ steps.release_info.outputs.tag }}-signed
+          name: password-generator-${{ inputs.tag }}-signed
           path: |
-            ${{ steps.package.outputs.apk_path }}
-            ${{ steps.package.outputs.apk_path }}.sha256
+            release/password-generator-*.apk
+            release/password-generator-*.apk.sha256
           if-no-files-found: error
           retention-days: 30
-
-      - name: Publish GitHub release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          apk_path="${{ steps.package.outputs.apk_path }}"
-          checksum_path="$apk_path.sha256"
-          notes_file=".github/release-notes/$RELEASE_TAG.md"
-
-          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
-            gh release upload "$RELEASE_TAG" \
-              "$apk_path" "$checksum_path" \
-              --clobber \
-              --repo "$GITHUB_REPOSITORY"
-          elif [[ -f "$notes_file" ]]; then
-            gh release create "$RELEASE_TAG" \
-              "$apk_path" "$checksum_path" \
-              --target "$GITHUB_SHA" \
-              --title "Password Generator $RELEASE_TAG" \
-              --notes-file "$notes_file" \
-              --repo "$GITHUB_REPOSITORY"
-          else
-            gh release create "$RELEASE_TAG" \
-              "$apk_path" "$checksum_path" \
-              --target "$GITHUB_SHA" \
-              --title "Password Generator $RELEASE_TAG" \
-              --generate-notes \
-              --repo "$GITHUB_REPOSITORY"
-          fi
 
       - name: Remove signing material
         if: always()
@@ -173,11 +164,71 @@ jobs:
           rm -f key.properties
           rm -f "$RUNNER_TEMP/password-generator-release.jks"
 
-      - name: Remove temporary release branch
-        if: always() && github.ref_type == 'branch' && startsWith(github.ref_name, 'release/v')
-        env:
-          GH_TOKEN: ${{ github.token }}
+  publish:
+    name: Publish immutable-ready release
+    needs: build-sign
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Download signed package
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+        with:
+          name: password-generator-${{ inputs.tag }}-signed
+          path: release
+
+      - name: Refuse existing release or tag
         run: |
-          gh api \
-            --method DELETE \
-            "/repos/$GITHUB_REPOSITORY/git/refs/heads/$GITHUB_REF_NAME"
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "Release $RELEASE_TAG already exists." >&2
+            exit 1
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$RELEASE_TAG" > /dev/null 2>&1; then
+            echo "Tag $RELEASE_TAG already exists." >&2
+            exit 1
+          fi
+
+      - name: Create draft release
+        id: draft
+        run: |
+          notes_file=".github/release-notes/$RELEASE_TAG.md"
+          if [[ -f "$notes_file" ]]; then
+            gh release create "$RELEASE_TAG" \
+              --draft \
+              --target "$GITHUB_SHA" \
+              --title "Password Generator ${RELEASE_TAG#v}" \
+              --notes-file "$notes_file" \
+              --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$RELEASE_TAG" \
+              --draft \
+              --target "$GITHUB_SHA" \
+              --title "Password Generator ${RELEASE_TAG#v}" \
+              --generate-notes \
+              --repo "$GITHUB_REPOSITORY"
+          fi
+          echo "created=true" >> "$GITHUB_OUTPUT"
+
+      - name: Attach verified assets
+        run: |
+          apk_path="release/password-generator-${RELEASE_TAG#v}.apk"
+          gh release upload "$RELEASE_TAG" \
+            "$apk_path" "$apk_path.sha256" \
+            --repo "$GITHUB_REPOSITORY"
+
+      - name: Publish release
+        run: gh release edit "$RELEASE_TAG" --draft=false --repo "$GITHUB_REPOSITORY"
+
+      - name: Remove failed draft
+        if: failure() && steps.draft.outputs.created == 'true'
+        run: gh release delete "$RELEASE_TAG" --yes --cleanup-tag --repo "$GITHUB_REPOSITORY"
