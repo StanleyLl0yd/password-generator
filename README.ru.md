@@ -70,13 +70,15 @@ cd password-generator
 ./gradlew assembleDebug
 ```
 
-Для запуска основных проверок, используемых CI:
+Для запуска проверок, которым не требуется release-подпись:
 
 ```bash
-./gradlew testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest assembleRelease bundleRelease
+./gradlew testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest
 ```
 
-Конфигурация release-подписи в репозитории отсутствует. Официальные подписанные APK подписываются отдельно.
+CI дополнительно проверяет release APK с R8/shrink resources и release AAB, используя временный ключ только для CI. Официальный Android Release workflow восстанавливает release-keystore только из GitHub Actions Secrets, Gradle сам подписывает release-сборку, `apksigner` проверяет ожидаемый сертификат, создаётся SHA-256 checksum, после чего подписанный APK и checksum публикуются напрямую в GitHub Release Assets. Временные signing-файлы после выполнения workflow удаляются.
+
+Для локальной release-сборки нужен локальный `key.properties`, указывающий на keystore. Официальный release-ключ и его учётные данные в репозитории не хранятся.
 
 ## 🧱 Технологии
 
