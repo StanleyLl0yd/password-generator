@@ -70,13 +70,15 @@ cd password-generator
 ./gradlew assembleDebug
 ```
 
-To run the same main checks used by CI:
+To run the checks that do not require release signing:
 
 ```bash
-./gradlew testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest assembleRelease bundleRelease
+./gradlew testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest
 ```
 
-Release signing is not configured in the repository. Official signed APKs are signed separately.
+CI additionally verifies the R8/resource-shrunk release APK and AAB with a temporary CI-only signing key. The official Android Release workflow restores the release keystore only from GitHub Actions secrets, lets Gradle sign the release build, verifies the expected certificate with `apksigner`, creates a SHA-256 checksum and publishes the signed APK plus checksum directly to GitHub Release Assets. Temporary signing material is removed after the workflow finishes.
+
+A local release build requires a local `key.properties` that points to a keystore. The official release key and its credentials are not stored in the repository.
 
 ## 🧱 Technology
 
