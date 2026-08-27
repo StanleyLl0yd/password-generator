@@ -153,8 +153,8 @@ jobs:
         with:
           name: password-generator-${{ inputs.tag }}-signed
           path: |
-            release/password-generator-${{ inputs.tag }}.apk
-            release/password-generator-${{ inputs.tag }}.apk.sha256
+            release/password-generator-*.apk
+            release/password-generator-*.apk.sha256
           if-no-files-found: error
           retention-days: 30
 
@@ -199,6 +199,7 @@ jobs:
           fi
 
       - name: Create draft release
+        id: draft
         run: |
           notes_file=".github/release-notes/$RELEASE_TAG.md"
           if [[ -f "$notes_file" ]]; then
@@ -216,6 +217,7 @@ jobs:
               --generate-notes \
               --repo "$GITHUB_REPOSITORY"
           fi
+          echo "created=true" >> "$GITHUB_OUTPUT"
 
       - name: Attach verified assets
         run: |
@@ -228,8 +230,5 @@ jobs:
         run: gh release edit "$RELEASE_TAG" --draft=false --repo "$GITHUB_REPOSITORY"
 
       - name: Remove failed draft
-        if: failure()
-        run: |
-          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
-            gh release delete "$RELEASE_TAG" --yes --cleanup-tag --repo "$GITHUB_REPOSITORY"
-          fi
+        if: failure() && steps.draft.outputs.created == 'true'
+        run: gh release delete "$RELEASE_TAG" --yes --cleanup-tag --repo "$GITHUB_REPOSITORY"
