@@ -1,0 +1,85 @@
+name: Bootstrap Dependency Verification
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out feature branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
+
+      - name: Stop if verification metadata already exists
+        id: metadata
+        run: |
+          if [ -f gradle/verification-metadata.xml ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up JDK 17
+        if: steps.metadata.outputs.exists == 'false'
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        if: steps.metadata.outputs.exists == 'false'
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699
+
+      - name: Install Android 36 platform
+        if: steps.metadata.outputs.exists == 'false'
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Configure temporary signing
+        if: steps.metadata.outputs.exists == 'false'
+        run: |
+          keystore_path="$RUNNER_TEMP/ci-release.jks"
+          keytool -genkeypair \
+            -keystore "$keystore_path" \
+            -storepass android \
+            -keypass android \
+            -alias ci \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 1 \
+            -dname "CN=CI"
+          {
+            echo "storeFile=$keystore_path"
+            echo "storePassword=android"
+            echo "keyAlias=ci"
+            echo "keyPassword=android"
+          } > key.properties
+
+      - name: Generate SHA-256 verification metadata
+        if: steps.metadata.outputs.exists == 'false'
+        run: ./gradlew --write-verification-metadata sha256 testDebugUnitTest lintDebug detekt assembleRelease --stacktrace
+
+      - name: Commit verification metadata
+        if: steps.metadata.outputs.exists == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gradle/verification-metadata.xml
+          git commit -m "build: add Gradle dependency verification metadata"
+          git push origin HEAD:${{ github.head_ref || github.ref_name }}
+
+      - name: Remove temporary signing material
+        if: always()
+        run: |
+          rm -f key.properties
+          rm -f "$RUNNER_TEMP/ci-release.jks"
