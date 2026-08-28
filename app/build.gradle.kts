@@ -89,6 +89,7 @@ configure<DetektExtension> {
     buildUponDefaultConfig = true
     parallel = true
     ignoreFailures = false
+    baseline = rootProject.file("config/detekt/baseline.xml")
 }
 
 kapt {
