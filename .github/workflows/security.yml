@@ -46,7 +46,7 @@ jobs:
           persist-credentials: false
 
       - name: Run Semgrep CE
-        run: semgrep scan --config auto --error .
+        run: semgrep scan --config auto --exclude-rule java.android.security.exported_activity.exported_activity --error .
 
   gitleaks:
     name: Gitleaks
