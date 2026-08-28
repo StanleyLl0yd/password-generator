@@ -44,13 +44,14 @@ jobs:
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@cdf488f595d80d6e07e03d4674febd5ab45fa938
+        uses: github/codeql-action/init@6f5948dfacef28e207b48d0905cf90c03365536d
         with:
           languages: java-kotlin
           build-mode: manual
+          queries: security-extended
 
       - name: Build for analysis
         run: ./gradlew clean assembleDebug --stacktrace
 
       - name: Analyze
-        uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938
+        uses: github/codeql-action/analyze@6f5948dfacef28e207b48d0905cf90c03365536d
