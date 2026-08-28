@@ -45,7 +45,7 @@ android {
 
     defaultConfig {
         applicationId = "com.sl.passwordgenerator"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 11
         versionName = "1.5.0"

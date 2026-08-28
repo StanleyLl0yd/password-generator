@@ -3,7 +3,7 @@
 [![Android CI](https://github.com/StanleyLl0yd/password-generator/actions/workflows/android.yml/badge.svg?branch=main)](https://github.com/StanleyLl0yd/password-generator/actions/workflows/android.yml)
 [![Latest release](https://img.shields.io/github/v/release/StanleyLl0yd/password-generator)](https://github.com/StanleyLl0yd/password-generator/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/StanleyLl0yd/password-generator/total)](https://github.com/StanleyLl0yd/password-generator/releases)
-[![Android 7+](https://img.shields.io/badge/Android-7.0%2B-3DDC84?logo=android&logoColor=white)](https://github.com/StanleyLl0yd/password-generator/releases/latest)
+[![Android 8+](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)](https://github.com/StanleyLl0yd/password-generator/releases/latest)
 [![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-blue)](LICENSE)
 
 [![en](https://img.shields.io/badge/lang-en-red.svg)](README.md)
@@ -13,7 +13,7 @@ A privacy-focused offline password generator for Android, built with Kotlin, Jet
 
 [⬇️ Download the latest APK](https://github.com/StanleyLl0yd/password-generator/releases/latest)
 
-Current source version: **1.5.0** (`versionCode 11`) · Min SDK: **24 (Android 7.0)** · Target SDK: **36**
+Current source version: **1.5.0** (`versionCode 11`) · Min SDK: **26 (Android 8.0)** · Target SDK: **36**
 
 ## ✨ Features
 
@@ -54,7 +54,7 @@ The recommended way to install the app is to download the signed APK from the la
 
 [Download latest release](https://github.com/StanleyLl0yd/password-generator/releases/latest)
 
-Android 7.0 or newer is required.
+Android 8.0 or newer is required.
 
 ## 🛠️ Build from source
 
