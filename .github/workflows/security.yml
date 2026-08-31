@@ -20,7 +20,7 @@ jobs:
   qodana:
     name: Qodana
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -28,18 +28,28 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Set up JDK 17
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699
+
+      - name: Install Android 36 platform
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Prepare Gradle dependencies
+        run: ./gradlew :app:dependencies --stacktrace
+
       - name: Run Qodana
-        id: qodana
-        continue-on-error: true
         uses: JetBrains/qodana-action@b588768b6e7e6da579e518bc584f79de0d243692
         with:
-          args: --linter qodana-jvm-android,--print-problems
+          args: --within-docker,false,--print-problems
           upload-result: true
-          artifact-name: qodana-diagnostics
-
-      - name: Enforce Qodana result
-        if: steps.qodana.outcome == 'failure'
-        run: exit 1
+          artifact-name: qodana-report
 
   semgrep:
     name: Semgrep
