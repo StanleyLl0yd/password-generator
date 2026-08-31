@@ -3,6 +3,9 @@
    <configuration>
       <verify-metadata>true</verify-metadata>
       <verify-signatures>false</verify-signatures>
+      <trusted-artifacts>
+   <trust file=".*-sources[.]jar" regex="true" reason="IDE-only source attachments are not executed or packaged"/>
+</trusted-artifacts>
    </configuration>
    <components>
       <component group="androidx.activity" name="activity" version="1.12.2">
