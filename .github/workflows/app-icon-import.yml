@@ -32,13 +32,9 @@ jobs:
           cat .icon-upload/icon512.webp.b64.* | tr -d '\n' | base64 --decode > /tmp/password-generator-icon/app-icon.webp
           echo '2468440cc6989eb1a87538c8f5f931ea02b85f163c652cb695086de2c4db0866  /tmp/password-generator-icon/app-icon.webp' | sha256sum --check --strict
 
-          if command -v magick >/dev/null 2>&1; then
-            IMAGE_TOOL=magick
-          elif command -v convert >/dev/null 2>&1; then
-            IMAGE_TOOL=convert
-          else
-            echo 'ImageMagick is required on the runner.' >&2
-            exit 1
+          if ! command -v ffmpeg >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y ffmpeg
           fi
 
           git fetch origin main
@@ -53,7 +49,7 @@ jobs:
           mkdir -p app/src/main/res/mipmap-xxxhdpi
 
           cp /tmp/password-generator-icon/app-icon.webp branding/app-icon.webp
-          "$IMAGE_TOOL" /tmp/password-generator-icon/app-icon.webp -strip -resize 512x512 -colorspace sRGB branding/store-icon-512.png
+          ffmpeg -hide_banner -loglevel error -y -i /tmp/password-generator-icon/app-icon.webp -frames:v 1 branding/store-icon-512.png
 
           rm -f app/src/main/res/drawable-nodpi/ic_launcher_foreground.png
           cp /tmp/password-generator-icon/app-icon.webp app/src/main/res/drawable-nodpi/ic_launcher_foreground.webp
@@ -62,8 +58,9 @@ jobs:
             set -- $spec
             density=$1
             size=$2
-            "$IMAGE_TOOL" /tmp/password-generator-icon/app-icon.webp -strip -resize "${size}x${size}" -quality 95 "app/src/main/res/mipmap-${density}/ic_launcher.webp"
-            cp "app/src/main/res/mipmap-${density}/ic_launcher.webp" "app/src/main/res/mipmap-${density}/ic_launcher_round.webp"
+            rm -f "app/src/main/res/mipmap-${density}/ic_launcher.webp" "app/src/main/res/mipmap-${density}/ic_launcher_round.webp"
+            ffmpeg -hide_banner -loglevel error -y -i /tmp/password-generator-icon/app-icon.webp -vf "scale=${size}:${size}:flags=lanczos" -frames:v 1 "app/src/main/res/mipmap-${density}/ic_launcher.png"
+            cp "app/src/main/res/mipmap-${density}/ic_launcher.png" "app/src/main/res/mipmap-${density}/ic_launcher_round.png"
           done
 
           cat > app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml <<'EOF'
