@@ -31,7 +31,6 @@ class RuStoreScreenshotTest {
         val context = composeRule.activity
         val copyLabel = context.getString(R.string.copy_button)
         val showPasswordLabel = context.getString(R.string.show_password)
-        val aboutLabel = context.getString(R.string.about_open)
         val generateLabel = context.getString(R.string.generate_button)
 
         waitForGeneratedPassword(copyLabel)
@@ -47,9 +46,14 @@ class RuStoreScreenshotTest {
         composeRule.waitForIdle()
         saveScreenshot("02-custom-options.png")
 
-        composeRule.onNodeWithContentDescription(aboutLabel).performClick()
+        composeRule.onNodeWithText("24").performClick()
+        composeRule.onNodeWithText(context.getString(R.string.uppercase_compact)).performClick()
+        composeRule.onNodeWithText(context.getString(R.string.digits_compact)).performClick()
+        composeRule.onNodeWithText(generateLabel).performClick()
+        waitForGeneratedPassword(copyLabel)
+        composeRule.onNodeWithContentDescription(showPasswordLabel).performClick()
         composeRule.waitForIdle()
-        saveScreenshot("03-about.png")
+        saveScreenshot("03-lowercase-only.png")
     }
 
     private fun forceRussianLocale() {
