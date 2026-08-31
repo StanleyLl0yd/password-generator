@@ -2,15 +2,13 @@ package com.sl.passwordgenerator
 
 import android.app.LocaleManager
 import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.os.Build
 import android.os.LocaleList
-import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -77,10 +75,18 @@ class RuStoreScreenshotTest {
         val targetContext = InstrumentationRegistry.getInstrumentation().targetContext
         val outputDir = File(targetContext.getExternalFilesDir(null), "rustore")
         check(outputDir.exists() || outputDir.mkdirs())
+        val outputFile = File(outputDir, fileName)
 
-        val bitmap = composeRule.onRoot().captureToImage().asAndroidBitmap()
-        FileOutputStream(File(outputDir, fileName)).use { stream ->
-            check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream))
+        composeRule.runOnUiThread {
+            val view = composeRule.activity.window.decorView
+            check(view.width > 0 && view.height > 0)
+
+            val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
+            view.draw(Canvas(bitmap))
+            FileOutputStream(outputFile).use { stream ->
+                check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream))
+            }
+            bitmap.recycle()
         }
     }
 }
