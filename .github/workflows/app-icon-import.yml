@@ -1,4 +1,4 @@
-name: Import approved app icon
+name: Refresh dependency verification metadata
 
 on:
   push:
@@ -11,9 +11,9 @@ permissions:
   contents: write
 
 jobs:
-  import:
+  refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Check out staging branch
@@ -23,80 +23,32 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
-      - name: Create clean app icon branch
+      - name: Set up JDK 17
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699
+
+      - name: Create clean verification metadata branch
         shell: bash
         run: |
           set -euo pipefail
 
-          mkdir -p /tmp/password-generator-icon
-          cat .icon-upload/icon512.webp.b64.* | tr -d '\n' | base64 --decode > /tmp/password-generator-icon/app-icon.webp
-          echo '2468440cc6989eb1a87538c8f5f931ea02b85f163c652cb695086de2c4db0866  /tmp/password-generator-icon/app-icon.webp' | sha256sum --check --strict
-
-          if ! command -v ffmpeg >/dev/null 2>&1; then
-            sudo apt-get update
-            sudo apt-get install -y ffmpeg
-          fi
-
           git fetch origin main
-          git checkout -B branding/approved-app-icon origin/main
+          git checkout -B fix/dependency-verification-metadata origin/main
 
-          mkdir -p branding
-          mkdir -p app/src/main/res/drawable-nodpi
-          mkdir -p app/src/main/res/mipmap-mdpi
-          mkdir -p app/src/main/res/mipmap-hdpi
-          mkdir -p app/src/main/res/mipmap-xhdpi
-          mkdir -p app/src/main/res/mipmap-xxhdpi
-          mkdir -p app/src/main/res/mipmap-xxxhdpi
-
-          cp /tmp/password-generator-icon/app-icon.webp branding/app-icon.webp
-          ffmpeg -hide_banner -loglevel error -y -i /tmp/password-generator-icon/app-icon.webp -frames:v 1 branding/store-icon-512.png
-
-          rm -f app/src/main/res/drawable-nodpi/ic_launcher_foreground.png
-          cp /tmp/password-generator-icon/app-icon.webp app/src/main/res/drawable-nodpi/ic_launcher_foreground.webp
-
-          for spec in 'mdpi 48' 'hdpi 72' 'xhdpi 96' 'xxhdpi 144' 'xxxhdpi 192'; do
-            set -- $spec
-            density=$1
-            size=$2
-            rm -f "app/src/main/res/mipmap-${density}/ic_launcher.webp" "app/src/main/res/mipmap-${density}/ic_launcher_round.webp"
-            ffmpeg -hide_banner -loglevel error -y -i /tmp/password-generator-icon/app-icon.webp -vf "scale=${size}:${size}:flags=lanczos" -frames:v 1 "app/src/main/res/mipmap-${density}/ic_launcher.png"
-            cp "app/src/main/res/mipmap-${density}/ic_launcher.png" "app/src/main/res/mipmap-${density}/ic_launcher_round.png"
-          done
-
-          cat > app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml <<'EOF'
-          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-              <background android:drawable="@color/ic_launcher_background" />
-              <foreground android:drawable="@drawable/ic_launcher_foreground" />
-          </adaptive-icon>
-          EOF
-          cp app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
-
-          cat > branding/README.md <<'EOF'
-          # App icon
-
-          `app-icon.webp` is the approved canonical app icon artwork for Password Generator.
-
-          Do not redraw, recolor, restyle, crop, replace, or otherwise alter this artwork unless the project owner explicitly requests a new icon. Resizing and format conversion are allowed only when required for Android launcher resources or store assets, while preserving the artwork itself.
-
-          `store-icon-512.png` is the store-ready 512 px export generated from the same approved artwork. Android launcher resources under `app/src/main/res/mipmap-*` and the adaptive foreground under `app/src/main/res/drawable-nodpi` must always be derived from `app-icon.webp`.
-          EOF
-
-          cat > AGENTS.md <<'EOF'
-          # Project instructions
-
-          ## Branding
-
-          - `branding/app-icon.webp` is the canonical approved Password Generator app icon.
-          - Do not redraw, recolor, restyle, crop, replace, or otherwise alter the icon artwork unless the project owner explicitly requests it.
-          - Every Android release must use launcher assets derived from this exact artwork.
-          - Store listing icons must be derived from the same artwork.
-          - Resizing and format conversion are allowed only when required by Android or store specifications; the composition, colors, symbols, text, lighting, and other visual elements must remain unchanged.
-          - Before every release, verify that `@mipmap/ic_launcher` and `@mipmap/ic_launcher_round` resolve to assets derived from `branding/app-icon.webp`.
-          EOF
+          ./gradlew --write-verification-metadata sha256 help --stacktrace
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A AGENTS.md branding app/src/main/res
+          git add gradle/verification-metadata.xml
           git diff --cached --check
-          git commit -m 'branding: adopt approved app icon'
-          git push origin HEAD:refs/heads/branding/approved-app-icon
+          git diff --cached --exit-code --quiet && {
+            echo 'No verification metadata changes were generated.' >&2
+            exit 1
+          }
+          git commit -m 'build: refresh dependency verification metadata'
+          git push origin HEAD:refs/heads/fix/dependency-verification-metadata
