@@ -1,0 +1,50 @@
+name: Bootstrap Qodana Verification
+
+on:
+  push:
+    branches: [quality/security-baseline]
+    paths:
+      - ".github/workflows/bootstrap-qodana-verification.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-metadata:
+    name: Update verification metadata
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+
+      - name: Trust IDE-only Javadoc artifacts
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("gradle/verification-metadata.xml")
+          text = path.read_text()
+          source_rule = '<trust file=".*-sources[.]jar" regex="true" reason="IDE-only source attachments are not executed or packaged"/>'
+          javadoc_rule = '<trust file=".*-javadoc[.]jar" regex="true" reason="IDE-only documentation attachments are not executed or packaged"/>'
+          if javadoc_rule not in text:
+              if source_rule not in text:
+                  raise SystemExit("source trust rule not found")
+              text = text.replace(source_rule, source_rule + "\n   " + javadoc_rule, 1)
+              path.write_text(text)
+          PY
+
+      - name: Commit metadata update
+        run: |
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gradle/verification-metadata.xml
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "build: trust IDE-only Javadoc artifacts"
+          git push origin "HEAD:quality/security-baseline"
