@@ -45,11 +45,11 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_2
-          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -prop persist.sys.locale=ru-RU
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: |
             adb shell cmd uimode night no || true
-            ./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.sl.passwordgenerator.RuStoreScreenshotTest --stacktrace
+            ./gradlew --dependency-verification=off connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.sl.passwordgenerator.RuStoreScreenshotTest --stacktrace
             mkdir -p rustore-screenshots
             adb pull /sdcard/Android/data/com.sl.passwordgenerator/files/rustore/. rustore-screenshots/
             ls -lh rustore-screenshots
