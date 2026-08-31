@@ -1,0 +1,71 @@
+package com.sl.passwordgenerator
+
+import android.graphics.Bitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import java.io.File
+import java.io.FileOutputStream
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+
+@RunWith(AndroidJUnit4::class)
+class RuStoreScreenshotTest {
+
+    @get:Rule
+    val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @Test
+    fun captureRuStorePhoneScreenshots() {
+        val context = composeRule.activity
+        val copyLabel = context.getString(R.string.copy_button)
+        val showPasswordLabel = context.getString(R.string.show_password)
+        val aboutLabel = context.getString(R.string.about_open)
+        val generateLabel = context.getString(R.string.generate_button)
+
+        waitForGeneratedPassword(copyLabel)
+
+        composeRule.onNodeWithContentDescription(showPasswordLabel).performClick()
+        composeRule.waitForIdle()
+        saveScreenshot("01-generator.png")
+
+        composeRule.onNodeWithText("32").performClick()
+        composeRule.onNodeWithText(context.getString(R.string.symbols_compact)).performClick()
+        composeRule.onNodeWithText(context.getString(R.string.exclude_duplicates_label)).performClick()
+        composeRule.onNodeWithText(generateLabel).performClick()
+        waitForGeneratedPassword(copyLabel)
+        composeRule.waitForIdle()
+        saveScreenshot("02-custom-options.png")
+
+        composeRule.onNodeWithContentDescription(aboutLabel).performClick()
+        composeRule.waitForIdle()
+        saveScreenshot("03-about.png")
+    }
+
+    private fun waitForGeneratedPassword(copyLabel: String) {
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            runCatching {
+                composeRule.onNodeWithContentDescription(copyLabel).assertIsEnabled()
+            }.isSuccess
+        }
+    }
+
+    private fun saveScreenshot(fileName: String) {
+        val targetContext = InstrumentationRegistry.getInstrumentation().targetContext
+        val outputDir = File(targetContext.getExternalFilesDir(null), "rustore")
+        check(outputDir.exists() || outputDir.mkdirs())
+
+        val bitmap = composeRule.onRoot().captureToImage().asAndroidBitmap()
+        FileOutputStream(File(outputDir, fileName)).use { stream ->
+            check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream))
+        }
+    }
+}
