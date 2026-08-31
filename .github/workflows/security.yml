@@ -17,6 +17,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  gradle-source-checksum:
+    name: Gradle source checksum
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Verify Gradle 8.13 source distribution
+        run: |
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.13-src.zip.sha256 -o expected.sha256
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.13-src.zip -o gradle-8.13-src.zip
+          expected="$(tr -d '[:space:]' < expected.sha256)"
+          actual="$(sha256sum gradle-8.13-src.zip | awk '{print $1}')"
+          test "$expected" = "$actual"
+          printf 'expected=%s\nactual=%s\n' "$expected" "$actual" > gradle-source-checksum.txt
+
+      - name: Upload verified checksum
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: gradle-source-checksum
+          path: gradle-source-checksum.txt
+          retention-days: 1
+
   qodana:
     name: Qodana
     runs-on: ubuntu-latest
@@ -72,7 +93,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Check out full history
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1e
         with:
           fetch-depth: 0
           persist-credentials: false
