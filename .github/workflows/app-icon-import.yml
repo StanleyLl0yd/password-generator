@@ -23,7 +23,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
-      - name: Import approved icon into main
+      - name: Create clean app icon branch
         shell: bash
         run: |
           set -euo pipefail
@@ -38,7 +38,7 @@ jobs:
           fi
 
           git fetch origin main
-          git checkout -B main origin/main
+          git checkout -B branding/approved-app-icon origin/main
 
           mkdir -p branding
           mkdir -p app/src/main/res/drawable-nodpi
@@ -99,4 +99,4 @@ jobs:
           git add -A AGENTS.md branding app/src/main/res
           git diff --cached --check
           git commit -m 'branding: adopt approved app icon'
-          git push origin main
+          git push origin HEAD:refs/heads/branding/approved-app-icon
