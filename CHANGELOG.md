@@ -7,6 +7,19 @@ All notable changes to this project are documented here.
 
 ---
 
+## [1.5.1] - 2026-08-31
+
+### Changed
+- Replaced the application launcher icon with the finalized Password Generator artwork.
+- Added a canonical icon source so all future releases keep the same visual identity.
+
+### Technical
+- Updated launcher resources for all supported Android densities and the adaptive launcher icon.
+- Added a 512×512 store asset derived from the same artwork without redesigning it.
+- Updated `versionCode` to 12 and `versionName` to `1.5.1`.
+
+---
+
 ## [1.5.0] - 2026-08-26
 
 ### Added
