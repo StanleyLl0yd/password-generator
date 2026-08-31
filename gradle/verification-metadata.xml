@@ -5,6 +5,7 @@
       <verify-signatures>false</verify-signatures>
       <trusted-artifacts>
    <trust file=".*-sources[.]jar" regex="true" reason="IDE-only source attachments are not executed or packaged"/>
+   <trust file=".*-javadoc[.]jar" regex="true" reason="IDE-only documentation attachments are not executed or packaged"/>
 </trusted-artifacts>
    </configuration>
    <components>
