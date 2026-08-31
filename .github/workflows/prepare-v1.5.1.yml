@@ -1,0 +1,159 @@
+name: Prepare v1.5.1 metadata
+
+on:
+  push:
+    branches:
+      - feat/final-app-icon-v1.5.1
+    paths:
+      - .github/workflows/prepare-v1.5.1.yml
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Prepare release metadata
+        shell: python
+        run: |
+          from pathlib import Path
+
+          build = Path("app/build.gradle.kts")
+          text = build.read_text()
+          text = text.replace('versionCode = 11', 'versionCode = 12', 1)
+          text = text.replace('versionName = "1.5.0"', 'versionName = "1.5.1"', 1)
+          build.write_text(text)
+
+          en = Path("CHANGELOG.md")
+          en_text = en.read_text()
+          marker = "---\n\n"
+          section = """## [1.5.1] - 2026-08-31
+
+### Changed
+- Replaced the application launcher icon with the finalized Password Generator artwork.
+- Added a canonical icon source so all future releases keep the same visual identity.
+
+### Technical
+- Updated launcher resources for all supported Android densities and the adaptive launcher icon.
+- Added a 512×512 store asset derived from the same artwork without redesigning it.
+- Updated `versionCode` to 12 and `versionName` to `1.5.1`.
+
+---
+
+"""
+          en_text = en_text.replace(marker, marker + section, 1)
+          en.write_text(en_text)
+
+          ru = Path("CHANGELOG.ru.md")
+          ru_text = ru.read_text()
+          section_ru = """## [1.5.1] - 2026-08-31
+
+### Изменено
+- Иконка приложения заменена на финальный вариант Password Generator.
+- Добавлен канонический исходник иконки, который должен использоваться во всех последующих релизах.
+
+### Технические детали
+- Обновлены launcher-ресурсы для всех поддерживаемых Android density и adaptive icon.
+- Добавлена иконка магазина 512×512, полученная из того же изображения без изменения дизайна.
+- `versionCode` обновлён до 12, `versionName` — до `1.5.1`.
+
+---
+
+"""
+          ru_text = ru_text.replace(marker, marker + section_ru, 1)
+          ru.write_text(ru_text)
+
+          Path("AGENTS.md").write_text("""# Project instructions
+
+## App icon
+- The canonical Password Generator app icon is `artwork/app-icon.webp`.
+- Do not redraw, restyle, regenerate, or replace it unless explicitly requested by the project owner.
+- Every Android release must use this artwork for launcher icon resources.
+- Store listing icons must be derived from the same artwork without changing the design.
+
+## Releases
+- Keep release metadata, changelogs, and relevant documentation synchronized with every release.
+- Update `.github/release-trigger` only when intentionally publishing a release.
+
+## Comments
+- Keep comments to the minimum necessary.
+- Remove obsolete or redundant comments.
+- Code comments must be in English only.
+""")
+
+          notes = Path(".github/release-notes/v1.5.1.md")
+          notes.parent.mkdir(parents=True, exist_ok=True)
+          notes.write_text("""# Password Generator 1.5.1
+
+This patch release introduces the finalized Password Generator application icon.
+
+## Changed
+- Adopted the new final app icon across Android launcher resources.
+- Added `artwork/app-icon.webp` as the canonical icon source for future releases.
+- Added `store-assets/app-icon-512.png` for store publication.
+- Updated launcher resources for all supported Android densities.
+
+The password generation logic and privacy model are unchanged.
+""")
+
+          Path(".github/release-trigger").write_text("v1.5.1\n")
+
+          dispatcher = Path(".github/workflows/release-trigger.yml")
+          dispatcher.write_text("""name: Dispatch Android Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/release-trigger
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: release-dispatch
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Validate and dispatch release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          release_tag="$(tr -d '[:space:]' < .github/release-trigger)"
+          app_version="$(sed -n 's/^[[:space:]]*versionName = \"\\([^\"]*\\)\".*/\\1/p' app/build.gradle.kts | head -n 1)"
+          if [[ ! "$release_tag" =~ ^v[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then
+            echo "Invalid release tag: $release_tag" >&2
+            exit 1
+          fi
+          if [[ "$release_tag" != "v$app_version" ]]; then
+            echo "Release tag $release_tag does not match app version v$app_version." >&2
+            exit 1
+          fi
+          gh workflow run release.yml --repo "$GITHUB_REPOSITORY" --ref main -f tag="$release_tag"
+""")
+
+          Path(".github/workflows/prepare-v1.5.1.yml").unlink()
+
+      - name: Commit release preparation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "release: prepare Password Generator 1.5.1"
+          git push origin HEAD:feat/final-app-icon-v1.5.1
