@@ -17,26 +17,61 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  gradle-source-checksum:
-    name: Gradle source checksum
+  gradle-source-metadata:
+    name: Record Gradle source checksum
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: write
     steps:
-      - name: Verify Gradle 8.13 source distribution
+      - name: Check out pull request branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Verify and record Gradle 8.13 sources
+        env:
+          EXPECTED_SHA256: 21414d6e543139c962ea95a4c61a585eb77b7a8fd45aa16f281234ae4b02c661
         run: |
           curl -fsSL https://services.gradle.org/distributions/gradle-8.13-src.zip.sha256 -o expected.sha256
           curl -fsSL https://services.gradle.org/distributions/gradle-8.13-src.zip -o gradle-8.13-src.zip
-          expected="$(tr -d '[:space:]' < expected.sha256)"
+          official="$(tr -d '[:space:]' < expected.sha256)"
           actual="$(sha256sum gradle-8.13-src.zip | awk '{print $1}')"
-          test "$expected" = "$actual"
-          printf 'expected=%s\nactual=%s\n' "$expected" "$actual" > gradle-source-checksum.txt
+          test "$official" = "$EXPECTED_SHA256"
+          test "$actual" = "$EXPECTED_SHA256"
+          python3 - <<'PY'
+          from pathlib import Path
 
-      - name: Upload verified checksum
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: gradle-source-checksum
-          path: gradle-source-checksum.txt
-          retention-days: 1
+          path = Path("gradle/verification-metadata.xml")
+          text = path.read_text()
+          component = '<component group="gradle" name="gradle" version="8.13">'
+          if component not in text:
+              marker = "   </components>"
+              entry = '''      <component group="gradle" name="gradle" version="8.13">
+                 <artifact name="gradle-8.13-src.zip">
+                    <sha256 value="21414d6e543139c962ea95a4c61a585eb77b7a8fd45aa16f281234ae4b02c661" origin="Verified" reason="Matches the official Gradle 8.13 source distribution checksum"/>
+                 </artifact>
+              </component>
+          '''
+              if marker not in text:
+                  raise SystemExit("verification metadata components marker not found")
+              path.write_text(text.replace(marker, entry + marker, 1))
+          PY
+
+      - name: Commit verification metadata
+        env:
+          TARGET_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          if git diff --quiet -- gradle/verification-metadata.xml; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gradle/verification-metadata.xml
+          git commit -m "build: verify Gradle source distribution"
+          git push origin "HEAD:$TARGET_BRANCH"
 
   qodana:
     name: Qodana
