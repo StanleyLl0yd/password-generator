@@ -1,6 +1,9 @@
 package com.sl.passwordgenerator
 
+import android.app.LocaleManager
 import android.graphics.Bitmap
+import android.os.Build
+import android.os.LocaleList
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.captureToImage
@@ -25,6 +28,8 @@ class RuStoreScreenshotTest {
 
     @Test
     fun captureRuStorePhoneScreenshots() {
+        forceRussianLocale()
+
         val context = composeRule.activity
         val copyLabel = context.getString(R.string.copy_button)
         val showPasswordLabel = context.getString(R.string.show_password)
@@ -39,7 +44,6 @@ class RuStoreScreenshotTest {
 
         composeRule.onNodeWithText("32").performClick()
         composeRule.onNodeWithText(context.getString(R.string.symbols_compact)).performClick()
-        composeRule.onNodeWithText(context.getString(R.string.exclude_duplicates_label)).performClick()
         composeRule.onNodeWithText(generateLabel).performClick()
         waitForGeneratedPassword(copyLabel)
         composeRule.waitForIdle()
@@ -48,6 +52,17 @@ class RuStoreScreenshotTest {
         composeRule.onNodeWithContentDescription(aboutLabel).performClick()
         composeRule.waitForIdle()
         saveScreenshot("03-about.png")
+    }
+
+    private fun forceRussianLocale() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+
+        composeRule.runOnUiThread {
+            composeRule.activity
+                .getSystemService(LocaleManager::class.java)
+                .applicationLocales = LocaleList.forLanguageTags("ru-RU")
+        }
+        composeRule.waitForIdle()
     }
 
     private fun waitForGeneratedPassword(copyLabel: String) {
