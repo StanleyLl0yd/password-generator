@@ -119,41 +119,61 @@ jobs:
       - name: Test and build signed release
         run: ./gradlew testDebugUnitTest lintDebug assembleRelease bundleRelease --stacktrace
 
-      - name: Verify release certificate
+      - name: Verify release certificates
         run: |
           source_apk="app/build/outputs/apk/release/app-release.apk"
+          source_aab="app/build/outputs/bundle/release/app-release.aab"
           apksigner="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner -print | sort -V | tail -n 1)"
           if [[ -z "$apksigner" ]]; then
             echo "Android apksigner was not found." >&2
             exit 1
           fi
 
-          report="$RUNNER_TEMP/apksigner-report.txt"
-          "$apksigner" verify --verbose --print-certs "$source_apk" | tee "$report"
-          actual_fingerprint="$(
-            awk -F': ' '/certificate SHA-256 digest:/ {print $NF; exit}' "$report" |
+          apk_report="$RUNNER_TEMP/apksigner-report.txt"
+          "$apksigner" verify --verbose --print-certs "$source_apk" | tee "$apk_report"
+          apk_fingerprint="$(
+            awk -F': ' '/certificate SHA-256 digest:/ {print $NF; exit}' "$apk_report" |
               tr -d ':' |
               tr '[:upper:]' '[:lower:]'
           )"
-          if [[ "$actual_fingerprint" != "$EXPECTED_CERT_SHA256" ]]; then
+          if [[ "$apk_fingerprint" != "$EXPECTED_CERT_SHA256" ]]; then
             echo "APK certificate fingerprint does not match the release key." >&2
             exit 1
           fi
 
-      - name: Package signed APK
+          jarsigner -verify -strict "$source_aab"
+          aab_report="$RUNNER_TEMP/aab-cert-report.txt"
+          keytool -printcert -jarfile "$source_aab" | tee "$aab_report"
+          aab_fingerprint="$(
+            sed -n 's/^[[:space:]]*SHA256: //p' "$aab_report" |
+              head -n 1 |
+              tr -d ':' |
+              tr '[:upper:]' '[:lower:]'
+          )"
+          if [[ "$aab_fingerprint" != "$EXPECTED_CERT_SHA256" ]]; then
+            echo "AAB certificate fingerprint does not match the release key." >&2
+            exit 1
+          fi
+
+      - name: Package signed release
         run: |
           mkdir -p release
           apk_name="password-generator-${RELEASE_TAG#v}.apk"
+          aab_name="password-generator-${RELEASE_TAG#v}.aab"
           cp app/build/outputs/apk/release/app-release.apk "release/$apk_name"
+          cp app/build/outputs/bundle/release/app-release.aab "release/$aab_name"
           (
             cd release
             sha256sum "$apk_name" > "$apk_name.sha256"
+            sha256sum "$aab_name" > "$aab_name.sha256"
           )
 
-      - name: Attest signed APK
+      - name: Attest signed packages
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
         with:
-          subject-path: release/password-generator-*.apk
+          subject-path: |
+            release/password-generator-*.apk
+            release/password-generator-*.aab
 
       - name: Upload signed package
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -162,6 +182,8 @@ jobs:
           path: |
             release/password-generator-*.apk
             release/password-generator-*.apk.sha256
+            release/password-generator-*.aab
+            release/password-generator-*.aab.sha256
           if-no-files-found: error
           retention-days: 30
 
@@ -229,8 +251,10 @@ jobs:
       - name: Attach verified assets
         run: |
           apk_path="release/password-generator-${RELEASE_TAG#v}.apk"
+          aab_path="release/password-generator-${RELEASE_TAG#v}.aab"
           gh release upload "$RELEASE_TAG" \
             "$apk_path" "$apk_path.sha256" \
+            "$aab_path" "$aab_path.sha256" \
             --repo "$GITHUB_REPOSITORY"
 
       - name: Publish release
