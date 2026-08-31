@@ -7,7 +7,7 @@ All notable changes to this project are documented here.
 
 ---
 
-## [1.5.1] - 2026-08-31
+## [1.5.1] - 2026-09-01
 
 ### Changed
 - Replaced the application launcher icon with the finalized Password Generator artwork.
