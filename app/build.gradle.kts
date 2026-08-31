@@ -1,3 +1,4 @@
+import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import java.io.FileInputStream
 import java.util.Properties
 import org.gradle.api.GradleException
@@ -7,6 +8,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.detekt)
     id("org.jetbrains.kotlin.kapt")
 }
 
@@ -81,6 +83,13 @@ android {
     buildFeatures {
         compose = true
     }
+}
+
+configure<DetektExtension> {
+    buildUponDefaultConfig = true
+    parallel = true
+    ignoreFailures = false
+    baseline = rootProject.file("config/detekt/baseline.xml")
 }
 
 kapt {
