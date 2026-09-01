@@ -13,7 +13,20 @@ data class PasswordGeneratorUiState(
     val excludeSimilar: Boolean = true,
     val strengthScore: Int = 0,
     val isGenerating: Boolean = false
-)
+) {
+    override fun toString(): String =
+        "PasswordGeneratorUiState(" +
+            "password=<redacted>, " +
+            "length=$length, " +
+            "useLowercase=$useLowercase, " +
+            "useUppercase=$useUppercase, " +
+            "useDigits=$useDigits, " +
+            "useSymbols=$useSymbols, " +
+            "excludeDuplicates=$excludeDuplicates, " +
+            "excludeSimilar=$excludeSimilar, " +
+            "strengthScore=$strengthScore, " +
+            "isGenerating=$isGenerating)"
+}
 
 sealed class PasswordGeneratorUiEvent {
     data class Error(val reason: PasswordGenerationError) : PasswordGeneratorUiEvent()

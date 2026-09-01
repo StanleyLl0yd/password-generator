@@ -1,5 +1,10 @@
 package com.sl.passwordgenerator.ui.components
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.view.Window
+import android.view.WindowManager
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -24,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -49,6 +56,12 @@ fun PasswordField(
     isGenerating: Boolean = false
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
+    val window = LocalContext.current.findActivity()?.window
+
+    DisposableEffect(window, passwordVisible) {
+        window.setSensitiveContentProtection(passwordVisible)
+        onDispose { window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE) }
+    }
 
     LaunchedEffect(password) {
         passwordVisible = false
@@ -149,4 +162,18 @@ fun PasswordField(
             }
         }
     }
+}
+
+private fun Window?.setSensitiveContentProtection(enabled: Boolean) {
+    if (enabled) {
+        this?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+    } else {
+        this?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+    }
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
