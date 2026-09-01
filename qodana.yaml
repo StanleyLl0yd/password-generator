@@ -17,3 +17,6 @@ exclude:
   - name: UnstableApiUsage
     paths:
       - settings.gradle.kts
+  - name: UsePropertyAccessSyntax
+    paths:
+      - app/src/main/java/com/sl/passwordgenerator/util/SecureClipboard.kt
