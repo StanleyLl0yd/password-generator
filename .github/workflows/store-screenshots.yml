@@ -6,13 +6,9 @@ on:
     branches: [publish/rustore-readiness]
     paths:
       - .github/workflows/store-screenshots.yml
-      - app/src/androidTest/java/com/sl/passwordgenerator/StoreScreenshotTest.kt
-      - app/src/main/**
-      - app/build.gradle.kts
-      - gradle/libs.versions.toml
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: rustore-screenshots-${{ github.ref }}
@@ -20,21 +16,30 @@ concurrency:
 
 jobs:
   capture:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
 
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c
         with:
-          distribution: temurin
-          java-version: "17"
-          cache: gradle
+          persist-credentials: false
 
-      - name: Capture screenshots in Android emulator
+      - name: Enable KVM
+        run: |
+          test -e /dev/kvm
+          sudo chmod 666 /dev/kvm
+          ls -l /dev/kvm
+
+      - name: Download signed release APK
+        run: |
+          mkdir -p release
+          curl --fail --location --retry 3 \
+            --output release/password-generator-1.5.2.apk \
+            https://github.com/StanleyLl0yd/password-generator/releases/download/v1.5.2/password-generator-1.5.2.apk
+          test -s release/password-generator-1.5.2.apk
+
+      - name: Capture screenshots from release APK
         uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
         with:
           api-level: 36
@@ -42,30 +47,44 @@ jobs:
           arch: x86_64
           profile: pixel_2
           disable-animations: true
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -no-metrics
           script: |
-            ./gradlew assembleDebug assembleDebugAndroidTest --stacktrace
-            adb install -r app/build/outputs/apk/debug/app-debug.apk
-            adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-            adb shell settings put system system_locales ru-RU || true
-            adb shell am broadcast -a android.intent.action.LOCALE_CHANGED || true
-            adb shell am instrument -w -r \
-              -e class com.sl.passwordgenerator.StoreScreenshotTest \
-              com.sl.passwordgenerator.test/androidx.test.runner.AndroidJUnitRunner
-            rm -rf store-assets/rustore/screenshots
-            mkdir -p store-assets/rustore/screenshots
-            adb pull /sdcard/Android/data/com.sl.passwordgenerator/files/screenshots/. store-assets/rustore/screenshots/
-            test "$(find store-assets/rustore/screenshots -maxdepth 1 -name '*.png' | wc -l)" -ge 3
+            set -euo pipefail
+            APK=release/password-generator-1.5.2.apk
+            OUT=store-assets/rustore/screenshots
+            rm -rf "$OUT"
+            mkdir -p "$OUT"
 
-      - name: Commit generated screenshots
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add store-assets/rustore/screenshots
-          if git diff --cached --quiet; then
-            echo "Screenshots are unchanged."
-            exit 0
-          fi
-          git commit -m "assets: capture RuStore screenshots"
-          git pull --rebase origin "${GITHUB_REF_NAME}"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+            adb install -r "$APK"
+            adb shell settings put system system_locales ru-RU || true
+            adb shell am force-stop com.sl.passwordgenerator
+            adb shell monkey -p com.sl.passwordgenerator -c android.intent.category.LAUNCHER 1
+            sleep 3
+
+            # Generate a password so the main store screenshot shows the app in use.
+            adb shell input tap 540 1740
+            sleep 2
+            adb exec-out screencap -p > "$OUT/01-generator.png"
+
+            # Open the real About sheet from the top-right info button.
+            adb shell input tap 1025 105
+            sleep 2
+            adb exec-out screencap -p > "$OUT/02-about.png"
+
+            # Return to the generator and show the lower options section.
+            adb shell input keyevent KEYCODE_BACK
+            sleep 1
+            adb shell input swipe 540 1450 540 500 450
+            sleep 2
+            adb exec-out screencap -p > "$OUT/03-options.png"
+
+            test "$(find "$OUT" -maxdepth 1 -name '*.png' -size +10k | wc -l)" -eq 3
+            file "$OUT"/*.png
+
+      - name: Upload RuStore screenshots
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: password-generator-rustore-screenshots
+          path: store-assets/rustore/screenshots/*.png
+          if-no-files-found: error
+          retention-days: 30
