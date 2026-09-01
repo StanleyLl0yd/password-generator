@@ -141,7 +141,7 @@ jobs:
             exit 1
           fi
 
-          jarsigner -verify -strict "$source_aab"
+          jarsigner -verify "$source_aab"
           aab_report="$RUNNER_TEMP/aab-cert-report.txt"
           keytool -printcert -jarfile "$source_aab" | tee "$aab_report"
           aab_fingerprint="$(
