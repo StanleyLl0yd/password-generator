@@ -1,5 +1,9 @@
 package com.sl.passwordgenerator.ui.components
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.view.WindowManager
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -32,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -47,22 +52,31 @@ fun PasswordField(
     hidePasswordContentDescription: String,
     onCopyClick: () -> Unit,
     modifier: Modifier = Modifier,
-    isGenerating: Boolean = false,
-    onSensitiveContentVisibilityChanged: (Boolean) -> Unit = {}
+    isGenerating: Boolean = false
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
+    val activity = LocalContext.current.findActivity()
+
+    fun setSensitiveContentVisible(visible: Boolean) {
+        val window = activity?.window ?: return
+        if (visible) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        }
+    }
 
     LaunchedEffect(password) {
         if (passwordVisible) {
             passwordVisible = false
-            onSensitiveContentVisibilityChanged(false)
+            setSensitiveContentVisible(false)
         }
     }
 
     DisposableEffect(Unit) {
         onDispose {
             if (passwordVisible) {
-                onSensitiveContentVisibilityChanged(false)
+                setSensitiveContentVisible(false)
             }
         }
     }
@@ -85,7 +99,7 @@ fun PasswordField(
             IconButton(
                 onClick = {
                     passwordVisible = !passwordVisible
-                    onSensitiveContentVisibilityChanged(passwordVisible)
+                    setSensitiveContentVisible(passwordVisible)
                 },
                 enabled = password.isNotEmpty()
             ) {
@@ -165,4 +179,10 @@ fun PasswordField(
             }
         }
     }
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
