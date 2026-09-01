@@ -10,6 +10,7 @@ import com.sl.passwordgenerator.domain.usecase.PasswordGenerator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.IOException
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -134,7 +135,7 @@ class PasswordGeneratorViewModel @Inject constructor(
     ) {
         saveJob?.cancel()
         saveJob = viewModelScope.launch {
-            if (delayMillis > 0) delay(delayMillis)
+            if (delayMillis > 0) delay(delayMillis.milliseconds)
             try {
                 settingsRepository.savePreferences(state.toPreferences())
             } catch (_: IOException) {
