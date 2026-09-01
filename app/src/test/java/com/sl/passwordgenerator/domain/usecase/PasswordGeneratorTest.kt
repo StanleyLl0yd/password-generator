@@ -33,6 +33,25 @@ class PasswordGeneratorTest {
     }
 
     @Test
+    fun generate_includesEverySelectedGroupAtMinimumLength() {
+        val password = generatePassword(
+            config(
+                length = PasswordConstants.MIN_LENGTH,
+                useLowercase = true,
+                useUppercase = true,
+                useDigits = true,
+                useSymbols = true
+            )
+        )
+
+        assertEquals(PasswordConstants.MIN_LENGTH, password.length)
+        assertTrue(password.any { it in PasswordConstants.LOWERCASE_CHARS })
+        assertTrue(password.any { it in PasswordConstants.UPPERCASE_CHARS })
+        assertTrue(password.any { it in PasswordConstants.DIGIT_CHARS })
+        assertTrue(password.any { it in PasswordConstants.SYMBOL_CHARS })
+    }
+
+    @Test
     fun generate_excludesSimilarAndDuplicateCharacters() {
         val password = generatePassword(
             config(

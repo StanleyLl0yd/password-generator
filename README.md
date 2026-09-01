@@ -13,7 +13,7 @@ A privacy-focused offline password generator for Android, built with Kotlin, Jet
 
 [⬇️ Download the latest APK](https://github.com/StanleyLl0yd/password-generator/releases/latest)
 
-Current source version: **1.5.0** (`versionCode 11`) · Min SDK: **26 (Android 8.0)** · Target SDK: **36**
+Current source version: **1.5.1** (`versionCode 12`) · Min SDK: **26 (Android 8.0)** · Target SDK: **36**
 
 ## ✨ Features
 
@@ -38,7 +38,7 @@ Passwords are generated locally with `SecureRandom`.
 - **No analytics, tracking or ads**
 - Generated passwords are kept only in memory and are never saved to persistent storage
 - Only generator preferences are stored in DataStore
-- Generator preferences are excluded from Android cloud backup and device-to-device transfer
+- Android application backup is disabled; backup and device-transfer rules also explicitly exclude generator preferences
 - Copied passwords are marked as sensitive
 - The app schedules its own copied value for removal after **60 seconds** and removes it only if Android still allows clipboard access and that value is still current; newer clipboard content is not touched
 - Android may restrict clipboard access after the app leaves the foreground; Android 13+ also provides system clipboard auto-clear behavior
@@ -76,7 +76,7 @@ To run the checks that do not require release signing:
 ./gradlew testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest
 ```
 
-CI additionally verifies the R8/resource-shrunk release APK and AAB with a temporary CI-only signing key. The official Android Release workflow restores the release keystore only from GitHub Actions secrets, lets Gradle sign the release build, verifies the expected certificate with `apksigner`, creates a SHA-256 checksum and publishes the signed APK plus checksum directly to GitHub Release Assets. Temporary signing material is removed after the workflow finishes.
+CI additionally verifies the R8/resource-shrunk release APK and AAB with a temporary CI-only signing key. The official Android Release workflow restores the release keystore only from GitHub Actions secrets, lets Gradle sign both release packages, verifies the expected release certificate for the APK and AAB, creates SHA-256 checksums and artifact attestations, and publishes the signed APK, AAB and checksum files directly to GitHub Release Assets. Temporary signing material is removed after the workflow finishes.
 
 A local release build requires a local `key.properties` that points to a keystore. The official release key and its credentials are not stored in the repository.
 

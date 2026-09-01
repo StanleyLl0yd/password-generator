@@ -13,7 +13,7 @@
 
 [⬇️ Скачать последнюю версию APK](https://github.com/StanleyLl0yd/password-generator/releases/latest)
 
-Текущая версия исходного кода: **1.5.0** (`versionCode 11`) · Min SDK: **26 (Android 8.0)** · Target SDK: **36**
+Текущая версия исходного кода: **1.5.1** (`versionCode 12`) · Min SDK: **26 (Android 8.0)** · Target SDK: **36**
 
 ## ✨ Возможности
 
@@ -38,7 +38,7 @@
 - **Без аналитики, трекинга и рекламы**
 - Сгенерированные пароли находятся только в памяти и никогда не сохраняются в постоянное хранилище
 - В DataStore сохраняются только настройки генератора
-- Настройки генератора исключены из облачного резервного копирования Android и переноса данных между устройствами
+- Резервное копирование приложения средствами Android отключено; правила backup и переноса между устройствами дополнительно явно исключают настройки генератора
 - Скопированные пароли помечаются как конфиденциальные
 - Приложение планирует удаление собственного значения из буфера через **60 секунд** и удаляет его только если Android всё ещё разрешает доступ к буферу и это значение остаётся текущим; более новое содержимое не затрагивается
 - После ухода приложения в фон Android может ограничить доступ к буферу; начиная с Android 13 система также использует собственную автоматическую очистку буфера
@@ -76,7 +76,7 @@ cd password-generator
 ./gradlew testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest
 ```
 
-CI дополнительно проверяет release APK с R8/shrink resources и release AAB, используя временный ключ только для CI. Официальный Android Release workflow восстанавливает release-keystore только из GitHub Actions Secrets, Gradle сам подписывает release-сборку, `apksigner` проверяет ожидаемый сертификат, создаётся SHA-256 checksum, после чего подписанный APK и checksum публикуются напрямую в GitHub Release Assets. Временные signing-файлы после выполнения workflow удаляются.
+CI дополнительно проверяет release APK с R8/shrink resources и release AAB, используя временный ключ только для CI. Официальный Android Release workflow восстанавливает release-keystore только из GitHub Actions Secrets, Gradle подписывает оба release-пакета, для APK и AAB проверяется ожидаемый release-сертификат, создаются SHA-256 checksums и artifact attestations, после чего подписанные APK, AAB и файлы checksums публикуются напрямую в GitHub Release Assets. Временные signing-файлы после выполнения workflow удаляются.
 
 Для локальной release-сборки нужен локальный `key.properties`, указывающий на keystore. Официальный release-ключ и его учётные данные в репозитории не хранятся.
 
