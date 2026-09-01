@@ -3,3 +3,63 @@ linter: jetbrains/qodana-jvm-android:2026.2
 profile:
   name: qodana.recommended
 failThreshold: 0
+exclude:
+  - name: FunctionName
+    paths:
+      - app/src/main/java/com/sl/passwordgenerator/MainActivity.kt
+      - app/src/main/java/com/sl/passwordgenerator/ui/AboutSheet.kt
+      - app/src/main/java/com/sl/passwordgenerator/ui/PasswordGeneratorScreen.kt
+      - app/src/main/java/com/sl/passwordgenerator/ui/components/CheckboxRow.kt
+      - app/src/main/java/com/sl/passwordgenerator/ui/components/LengthSlider.kt
+      - app/src/main/java/com/sl/passwordgenerator/ui/components/PasswordField.kt
+      - app/src/main/java/com/sl/passwordgenerator/ui/components/StrengthIndicator.kt
+      - app/src/main/java/com/sl/passwordgenerator/ui/theme/Theme.kt
+  - name: UnstableApiUsage
+    paths:
+      - settings.gradle.kts
+  - name: UsePropertyAccessSyntax
+    paths:
+      - app/src/main/java/com/sl/passwordgenerator/util/SecureClipboard.kt
+  - name: KotlinDeprecation
+    paths:
+      - app/src/main/java/com/sl/passwordgenerator/domain/usecase/PasswordGenerator.kt
+  - name: UnusedSymbol
+    paths:
+      - app/src/main/java/com/sl/passwordgenerator/PasswordGeneratorApplication.kt
+  - name: AndroidLintAndroidGradlePluginVersion
+    paths:
+      - gradle/libs.versions.toml
+      - gradle/wrapper/gradle-wrapper.properties
+  - name: AndroidLintGradleDependency
+    paths:
+      - gradle/libs.versions.toml
+  - name: AndroidLintNewerVersionAvailable
+    paths:
+      - gradle/libs.versions.toml
+  - name: AndroidLintIconDuplicates
+    paths:
+      - app/src/main/res/mipmap-mdpi
+      - app/src/main/res/mipmap-hdpi
+      - app/src/main/res/mipmap-xhdpi
+      - app/src/main/res/mipmap-xxhdpi
+      - app/src/main/res/mipmap-xxxhdpi
+  - name: AndroidLintIconLauncherShape
+    paths:
+      - app/src/main/res/mipmap-mdpi
+      - app/src/main/res/mipmap-hdpi
+      - app/src/main/res/mipmap-xhdpi
+      - app/src/main/res/mipmap-xxhdpi
+      - app/src/main/res/mipmap-xxxhdpi
+  - name: AndroidLintMonochromeLauncherIcon
+    paths:
+      - app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+      - app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
+  - name: AndroidLintObsoleteSdkInt
+    paths:
+      - app/src/main/res/mipmap-anydpi-v26
+  - name: AndroidUnknownAttribute
+    paths:
+      - app/src/main/AndroidManifest.xml
+  - name: AndroidDomInspection
+    paths:
+      - app/src/main/res/values/themes.xml

@@ -196,10 +196,8 @@ class PasswordGenerator @Inject constructor() {
         return false
     }
 
-    private fun hasManyRepeats(password: String): Boolean {
-        if (password.length < 4) return false
-        return password.toSet().size.toDouble() / password.length < 0.5
-    }
+    private fun hasManyRepeats(password: String): Boolean =
+        password.length >= 4 && password.toSet().size.toDouble() / password.length < 0.5
 
     private fun containsCommonPattern(password: String): Boolean {
         val normalized = password.lowercase()
