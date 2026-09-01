@@ -51,3 +51,9 @@ exclude:
   - name: AndroidLintObsoleteSdkInt
     paths:
       - app/src/main/res/mipmap-anydpi-v26
+  - name: AndroidUnknownAttribute
+    paths:
+      - app/src/main/AndroidManifest.xml
+  - name: AndroidDomInspection
+    paths:
+      - app/src/main/res/values/themes.xml

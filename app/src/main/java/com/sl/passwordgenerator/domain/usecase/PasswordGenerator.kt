@@ -105,7 +105,7 @@ class PasswordGenerator @Inject constructor() {
             val available = if (excludeDuplicates) group.filterNot { it in usedChars!! } else group
             if (available.isEmpty()) continue
             val ch = available[secureRandom.nextInt(available.length)]
-            result.append(ch)
+            result.append(value = ch)
             usedChars?.add(ch)
         }
 
@@ -120,7 +120,7 @@ class PasswordGenerator @Inject constructor() {
                 pool.allChars
             }
             val ch = available[secureRandom.nextInt(available.length)]
-            result.append(ch)
+            result.append(value = ch)
             usedChars?.add(ch)
         }
 

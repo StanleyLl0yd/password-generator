@@ -196,12 +196,12 @@ private fun AboutRow(
 @Suppress("DEPRECATION")
 private fun Context.appVersionName(): String = runCatching {
     val packageInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        packageManager.getPackageInfo(
-            packageName,
+        this.packageManager.getPackageInfo(
+            this.packageName,
             PackageManager.PackageInfoFlags.of(0)
         )
     } else {
-        packageManager.getPackageInfo(packageName, 0)
+        this.packageManager.getPackageInfo(this.packageName, 0)
     }
     packageInfo.versionName.orEmpty()
 }.getOrDefault("")
