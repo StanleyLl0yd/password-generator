@@ -7,6 +7,23 @@ All notable changes to this project are documented here.
 
 ---
 
+## [1.5.2] - 2026-09-01
+
+### Privacy & reliability
+- Disabled Android application backup as defense in depth while keeping explicit backup and device-transfer exclusions for generator preferences.
+- Added regression coverage that verifies every enabled character group is represented even at the minimum password length.
+
+### Maintenance
+- Simplified the Compose hierarchy and source imports, removed an unused Compose preview dependency, and cleaned haptic, debounce and repeat-detection code without changing application behavior.
+- Made Qodana run a strict full-project scan on pull requests with `qodana.recommended` and `failThreshold: 0`, using only narrowly scoped exclusions for confirmed false positives.
+- Updated CodeQL Action to 4.37.9 and `actions/download-artifact` to 8.0.1 while keeping immutable commit SHA pins.
+
+### Technical
+- Updated `versionCode` to 13 and `versionName` to `1.5.2`.
+- User-facing functionality and UI/UX remain unchanged.
+
+---
+
 ## [1.5.1] - 2026-09-01
 
 ### Changed
