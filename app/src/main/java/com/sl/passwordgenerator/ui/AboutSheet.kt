@@ -50,6 +50,7 @@ fun AboutSheet(
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
     val versionName = remember(context) { context.appVersionName() }
+    val privacyUrl = stringResource(R.string.about_privacy_url)
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -116,6 +117,13 @@ fun AboutSheet(
                 label = stringResource(R.string.about_license_label),
                 value = stringResource(R.string.about_license),
                 onClick = { runCatching { uriHandler.openUri(LICENSE_URL) } }
+            )
+
+            AboutRow(
+                icon = Icons.Outlined.Description,
+                label = stringResource(R.string.about_privacy_label),
+                value = stringResource(R.string.about_privacy),
+                onClick = { runCatching { uriHandler.openUri(privacyUrl) } }
             )
 
             AboutRow(
