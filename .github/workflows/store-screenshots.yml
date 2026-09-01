@@ -49,7 +49,7 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -no-metrics
           script: |
-            set -euo pipefail
+            set -eu
             APK=release/password-generator-1.5.2.apk
             OUT=store-assets/rustore/screenshots
             rm -rf "$OUT"
@@ -61,17 +61,14 @@ jobs:
             adb shell monkey -p com.sl.passwordgenerator -c android.intent.category.LAUNCHER 1
             sleep 3
 
-            # Generate a password so the main store screenshot shows the app in use.
             adb shell input tap 540 1740
             sleep 2
             adb exec-out screencap -p > "$OUT/01-generator.png"
 
-            # Open the real About sheet from the top-right info button.
             adb shell input tap 1025 105
             sleep 2
             adb exec-out screencap -p > "$OUT/02-about.png"
 
-            # Return to the generator and show the lower options section.
             adb shell input keyevent KEYCODE_BACK
             sleep 1
             adb shell input swipe 540 1450 540 500 450
