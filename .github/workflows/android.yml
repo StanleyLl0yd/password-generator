@@ -58,7 +58,7 @@ jobs:
           } > key.properties
 
       - name: Verify project and build release artifacts
-        run: ./gradlew testDebugUnitTest lintDebug detekt assembleDebug assembleDebugAndroidTest assembleRelease bundleRelease --stacktrace
+        run: ./gradlew --write-verification-metadata sha256 testDebugUnitTest lintDebug detekt assembleDebug assembleDebugAndroidTest assembleRelease bundleRelease --stacktrace
 
       - name: Upload verification reports
         if: always()
@@ -66,6 +66,7 @@ jobs:
         with:
           name: android-verification-${{ github.sha }}
           path: |
+            gradle/verification-metadata.xml
             app/build/reports/lint-results-debug.*
             app/build/reports/detekt/
             app/build/reports/tests/testDebugUnitTest/
