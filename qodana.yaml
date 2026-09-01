@@ -3,3 +3,17 @@ linter: jetbrains/qodana-jvm-android:2026.2
 profile:
   name: qodana.recommended
 failThreshold: 0
+exclude:
+  - name: FunctionName
+    paths:
+      - app/src/main/java/com/sl/passwordgenerator/MainActivity.kt
+      - app/src/main/java/com/sl/passwordgenerator/ui/AboutSheet.kt
+      - app/src/main/java/com/sl/passwordgenerator/ui/PasswordGeneratorScreen.kt
+      - app/src/main/java/com/sl/passwordgenerator/ui/components/CheckboxRow.kt
+      - app/src/main/java/com/sl/passwordgenerator/ui/components/LengthSlider.kt
+      - app/src/main/java/com/sl/passwordgenerator/ui/components/PasswordField.kt
+      - app/src/main/java/com/sl/passwordgenerator/ui/components/StrengthIndicator.kt
+      - app/src/main/java/com/sl/passwordgenerator/ui/theme/Theme.kt
+  - name: UnstableApiUsage
+    paths:
+      - settings.gradle.kts
