@@ -24,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,12 +47,24 @@ fun PasswordField(
     hidePasswordContentDescription: String,
     onCopyClick: () -> Unit,
     modifier: Modifier = Modifier,
-    isGenerating: Boolean = false
+    isGenerating: Boolean = false,
+    onSensitiveContentVisibilityChanged: (Boolean) -> Unit = {}
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(password) {
-        passwordVisible = false
+        if (passwordVisible) {
+            passwordVisible = false
+            onSensitiveContentVisibilityChanged(false)
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            if (passwordVisible) {
+                onSensitiveContentVisibilityChanged(false)
+            }
+        }
     }
 
     Column(
@@ -70,7 +83,10 @@ fun PasswordField(
             )
 
             IconButton(
-                onClick = { passwordVisible = !passwordVisible },
+                onClick = {
+                    passwordVisible = !passwordVisible
+                    onSensitiveContentVisibilityChanged(passwordVisible)
+                },
                 enabled = password.isNotEmpty()
             ) {
                 Icon(
