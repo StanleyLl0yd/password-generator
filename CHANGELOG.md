@@ -7,6 +7,23 @@ All notable changes to this project are documented here.
 
 ---
 
+## [1.5.3] - 2026-09-01
+
+### Security & privacy
+- Android screen capture is blocked only while a generated password is explicitly revealed, reducing screenshot and Recents-thumbnail exposure without disabling captures of the normal masked interface.
+- Password-bearing generation results and UI state now redact the password from `toString()` output to prevent accidental disclosure through future logging or diagnostics.
+- Added regression tests that verify secret values are not exposed by those string representations.
+- Added public English and Russian Privacy Policy documents and a localized Privacy Policy link in the About sheet.
+
+### Localization
+- Localized the application name as `Генератор паролей` when Android is using the Russian locale.
+
+### Technical
+- Updated `versionCode` to 14 and `versionName` to `1.5.3`.
+- Password generation, persisted settings and the existing UI flow remain unchanged.
+
+---
+
 ## [1.5.2] - 2026-09-01
 
 ### Privacy & reliability
