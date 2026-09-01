@@ -13,7 +13,7 @@ A privacy-focused offline password generator for Android, built with Kotlin, Jet
 
 [⬇️ Download the latest APK](https://github.com/StanleyLl0yd/password-generator/releases/latest)
 
-Current source version: **1.5.1** (`versionCode 12`) · Min SDK: **26 (Android 8.0)** · Target SDK: **36**
+Current source version: **1.5.2** (`versionCode 13`) · Min SDK: **26 (Android 8.0)** · Target SDK: **36**
 
 ## ✨ Features
 

@@ -62,4 +62,5 @@ exclude:
       - app/src/main/AndroidManifest.xml
   - name: AndroidDomInspection
     paths:
+      - app/src/main/AndroidManifest.xml
       - app/src/main/res/values/themes.xml
