@@ -49,34 +49,26 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -no-metrics
           script: |
-            set -eu
-            APK=release/password-generator-1.5.2.apk
-            OUT=store-assets/rustore/screenshots
-            rm -rf "$OUT"
-            mkdir -p "$OUT"
-
-            adb install -r "$APK"
+            rm -rf store-assets/rustore/screenshots
+            mkdir -p store-assets/rustore/screenshots
+            adb install -r release/password-generator-1.5.2.apk
             adb shell settings put system system_locales ru-RU || true
             adb shell am force-stop com.sl.passwordgenerator
             adb shell monkey -p com.sl.passwordgenerator -c android.intent.category.LAUNCHER 1
             sleep 3
-
             adb shell input tap 540 1740
             sleep 2
-            adb exec-out screencap -p > "$OUT/01-generator.png"
-
+            adb exec-out screencap -p > store-assets/rustore/screenshots/01-generator.png
             adb shell input tap 1025 105
             sleep 2
-            adb exec-out screencap -p > "$OUT/02-about.png"
-
+            adb exec-out screencap -p > store-assets/rustore/screenshots/02-about.png
             adb shell input keyevent KEYCODE_BACK
             sleep 1
             adb shell input swipe 540 1450 540 500 450
             sleep 2
-            adb exec-out screencap -p > "$OUT/03-options.png"
-
-            test "$(find "$OUT" -maxdepth 1 -name '*.png' -size +10k | wc -l)" -eq 3
-            file "$OUT"/*.png
+            adb exec-out screencap -p > store-assets/rustore/screenshots/03-options.png
+            test "$(find store-assets/rustore/screenshots -maxdepth 1 -name '*.png' -size +10k | wc -l)" -eq 3
+            file store-assets/rustore/screenshots/*.png
 
       - name: Upload RuStore screenshots
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
