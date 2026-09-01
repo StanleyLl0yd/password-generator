@@ -25,7 +25,6 @@ exclude:
       - app/src/main/java/com/sl/passwordgenerator/domain/usecase/PasswordGenerator.kt
   - name: UnusedSymbol
     paths:
-      - AGENTS.md
       - app/src/main/java/com/sl/passwordgenerator/PasswordGeneratorApplication.kt
   - name: AndroidLintAndroidGradlePluginVersion
     paths:
