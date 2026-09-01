@@ -3,6 +3,7 @@ package com.sl.passwordgenerator.ui.components
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.view.Window
 import android.view.WindowManager
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -55,8 +56,12 @@ fun PasswordField(
     isGenerating: Boolean = false
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
+    val window = LocalContext.current.findActivity()?.window
 
-    ProtectSensitiveContent(passwordVisible)
+    DisposableEffect(window, passwordVisible) {
+        window.setSensitiveContentProtection(passwordVisible)
+        onDispose { window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE) }
+    }
 
     LaunchedEffect(password) {
         passwordVisible = false
@@ -159,19 +164,11 @@ fun PasswordField(
     }
 }
 
-@Composable
-private fun ProtectSensitiveContent(enabled: Boolean) {
-    val window = LocalContext.current.findActivity()?.window
-
-    DisposableEffect(window, enabled) {
-        if (enabled) {
-            window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        }
-        onDispose {
-            if (enabled) {
-                window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
-            }
-        }
+private fun Window?.setSensitiveContentProtection(enabled: Boolean) {
+    if (enabled) {
+        this?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+    } else {
+        this?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
     }
 }
 
