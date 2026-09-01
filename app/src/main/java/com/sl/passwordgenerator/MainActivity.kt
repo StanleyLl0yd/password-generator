@@ -1,7 +1,6 @@
 package com.sl.passwordgenerator
 
 import android.os.Bundle
-import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -19,34 +18,18 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent {
-            PasswordGeneratorApp(
-                onSensitiveContentVisibilityChanged = ::setSensitiveContentVisible
-            )
-        }
-    }
-
-    private fun setSensitiveContentVisible(visible: Boolean) {
-        if (visible) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        } else {
-            window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        }
+        setContent { PasswordGeneratorApp() }
     }
 }
 
 @Composable
-fun PasswordGeneratorApp(
-    onSensitiveContentVisibilityChanged: (Boolean) -> Unit = {}
-) {
+fun PasswordGeneratorApp() {
     PasswordGeneratorTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            PasswordGeneratorScreen(
-                onSensitiveContentVisibilityChanged = onSensitiveContentVisibilityChanged
-            )
+            PasswordGeneratorScreen()
         }
     }
 }
