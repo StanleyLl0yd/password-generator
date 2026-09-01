@@ -31,7 +31,7 @@ object SecureClipboard {
             putBoolean(SENSITIVE_KEY, true)
             putString(CLEAR_TOKEN_KEY, clearToken)
         }
-        clipboard.primaryClip = clip
+        clipboard.setPrimaryClip(clip)
 
         pendingClear?.let(handler::removeCallbacks)
         pendingClear = Runnable {
@@ -43,7 +43,7 @@ object SecureClipboard {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     clipboard.clearPrimaryClip()
                 } else {
-                    clipboard.primaryClip = ClipData.newPlainText("", "")
+                    clipboard.setPrimaryClip(ClipData.newPlainText("", ""))
                 }
             }
             pendingClear = null
