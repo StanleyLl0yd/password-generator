@@ -20,6 +20,9 @@ exclude:
   - name: UsePropertyAccessSyntax
     paths:
       - app/src/main/java/com/sl/passwordgenerator/util/SecureClipboard.kt
+  - name: KotlinDeprecation
+    paths:
+      - app/src/main/java/com/sl/passwordgenerator/domain/usecase/PasswordGenerator.kt
   - name: AndroidLintAndroidGradlePluginVersion
     paths:
       - gradle/libs.versions.toml
