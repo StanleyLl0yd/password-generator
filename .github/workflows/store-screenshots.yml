@@ -1,0 +1,70 @@
+name: RuStore Screenshots
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [publish/rustore-readiness]
+    paths:
+      - .github/workflows/store-screenshots.yml
+      - app/src/androidTest/java/com/sl/passwordgenerator/StoreScreenshotTest.kt
+      - app/src/main/**
+      - app/build.gradle.kts
+      - gradle/libs.versions.toml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rustore-screenshots-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Capture screenshots in Android emulator
+        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: |
+            ./gradlew assembleDebug assembleDebugAndroidTest --stacktrace
+            adb install -r app/build/outputs/apk/debug/app-debug.apk
+            adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb shell settings put system system_locales ru-RU || true
+            adb shell am broadcast -a android.intent.action.LOCALE_CHANGED || true
+            adb shell am instrument -w -r \
+              -e class com.sl.passwordgenerator.StoreScreenshotTest \
+              com.sl.passwordgenerator.test/androidx.test.runner.AndroidJUnitRunner
+            rm -rf store-assets/rustore/screenshots
+            mkdir -p store-assets/rustore/screenshots
+            adb pull /sdcard/Android/data/com.sl.passwordgenerator/files/screenshots/. store-assets/rustore/screenshots/
+            test "$(find store-assets/rustore/screenshots -maxdepth 1 -name '*.png' | wc -l)" -ge 3
+
+      - name: Commit generated screenshots
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add store-assets/rustore/screenshots
+          if git diff --cached --quiet; then
+            echo "Screenshots are unchanged."
+            exit 0
+          fi
+          git commit -m "assets: capture RuStore screenshots"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
