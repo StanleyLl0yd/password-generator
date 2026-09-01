@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <issue id="AndroidGradlePluginVersion">
+        <ignore path="gradle/libs.versions.toml" />
+        <ignore path="gradle/wrapper/gradle-wrapper.properties" />
+    </issue>
+    <issue id="GradleDependency">
+        <ignore path="gradle/libs.versions.toml" />
+    </issue>
+    <issue id="NewerVersionAvailable">
+        <ignore path="gradle/libs.versions.toml" />
+    </issue>
+    <issue id="IconDuplicates">
+        <ignore path="app/src/main/res/mipmap-*/ic_launcher.webp" />
+        <ignore path="app/src/main/res/mipmap-*/ic_launcher_round.webp" />
+    </issue>
+    <issue id="IconLauncherShape">
+        <ignore path="app/src/main/res/mipmap-*/ic_launcher.webp" />
+        <ignore path="app/src/main/res/mipmap-*/ic_launcher_round.webp" />
+    </issue>
+    <issue id="MonochromeLauncherIcon">
+        <ignore path="app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" />
+        <ignore path="app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" />
+    </issue>
+    <issue id="ObsoleteSdkInt">
+        <ignore path="app/src/main/res/mipmap-anydpi-v26" />
+        <ignore path="app/src/main/res/mipmap-anydpi-v26/**" />
+    </issue>
+</lint>
