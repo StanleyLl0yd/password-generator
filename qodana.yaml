@@ -1,7 +1,41 @@
 version: "1.0"
 linter: jetbrains/qodana-jvm-android:2026.2
 profile:
-  name: qodana.recommended
+  base:
+    name: qodana.recommended
+  inspections:
+    - inspection: AndroidLintAndroidGradlePluginVersion
+      ignore:
+        - "gradle/libs.versions.toml"
+        - "gradle/wrapper/gradle-wrapper.properties"
+    - inspection: AndroidLintGradleDependency
+      ignore:
+        - "gradle/libs.versions.toml"
+    - inspection: AndroidLintNewerVersionAvailable
+      ignore:
+        - "gradle/libs.versions.toml"
+    - inspection: AndroidLintIconDuplicates
+      ignore:
+        - "app/src/main/res/mipmap-mdpi/**"
+        - "app/src/main/res/mipmap-hdpi/**"
+        - "app/src/main/res/mipmap-xhdpi/**"
+        - "app/src/main/res/mipmap-xxhdpi/**"
+        - "app/src/main/res/mipmap-xxxhdpi/**"
+    - inspection: AndroidLintIconLauncherShape
+      ignore:
+        - "app/src/main/res/mipmap-mdpi/**"
+        - "app/src/main/res/mipmap-hdpi/**"
+        - "app/src/main/res/mipmap-xhdpi/**"
+        - "app/src/main/res/mipmap-xxhdpi/**"
+        - "app/src/main/res/mipmap-xxxhdpi/**"
+    - inspection: AndroidLintMonochromeLauncherIcon
+      ignore:
+        - "app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml"
+        - "app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml"
+    - inspection: AndroidLintObsoleteSdkInt
+      ignore:
+        - "app/src/main/res/mipmap-anydpi-v26"
+        - "app/src/main/res/mipmap-anydpi-v26/**"
 failThreshold: 0
 exclude:
   - name: FunctionName
@@ -26,37 +60,6 @@ exclude:
   - name: UnusedSymbol
     paths:
       - app/src/main/java/com/sl/passwordgenerator/PasswordGeneratorApplication.kt
-  - name: AndroidLintAndroidGradlePluginVersion
-    paths:
-      - gradle/libs.versions.toml
-      - gradle/wrapper/gradle-wrapper.properties
-  - name: AndroidLintGradleDependency
-    paths:
-      - gradle/libs.versions.toml
-  - name: AndroidLintNewerVersionAvailable
-    paths:
-      - gradle/libs.versions.toml
-  - name: AndroidLintIconDuplicates
-    paths:
-      - app/src/main/res/mipmap-mdpi
-      - app/src/main/res/mipmap-hdpi
-      - app/src/main/res/mipmap-xhdpi
-      - app/src/main/res/mipmap-xxhdpi
-      - app/src/main/res/mipmap-xxxhdpi
-  - name: AndroidLintIconLauncherShape
-    paths:
-      - app/src/main/res/mipmap-mdpi
-      - app/src/main/res/mipmap-hdpi
-      - app/src/main/res/mipmap-xhdpi
-      - app/src/main/res/mipmap-xxhdpi
-      - app/src/main/res/mipmap-xxxhdpi
-  - name: AndroidLintMonochromeLauncherIcon
-    paths:
-      - app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
-      - app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
-  - name: AndroidLintObsoleteSdkInt
-    paths:
-      - app/src/main/res/mipmap-anydpi-v26
   - name: AndroidUnknownAttribute
     paths:
       - app/src/main/AndroidManifest.xml
