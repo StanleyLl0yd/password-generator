@@ -87,6 +87,12 @@ https://github.com/StanleyLl0yd/password-generator
 
 ## Privacy policy
 
+Russian:
+
+https://github.com/StanleyLl0yd/password-generator/blob/main/PRIVACY.ru.md
+
+English:
+
 https://github.com/StanleyLl0yd/password-generator/blob/main/PRIVACY.md
 
 ## User data safety
