@@ -13,7 +13,7 @@
 
 [⬇️ Скачать последнюю версию APK](https://github.com/StanleyLl0yd/password-generator/releases/latest)
 
-Текущая версия исходного кода: **1.5.1** (`versionCode 12`) · Min SDK: **26 (Android 8.0)** · Target SDK: **36**
+Текущая версия исходного кода: **1.5.2** (`versionCode 13`) · Min SDK: **26 (Android 8.0)** · Target SDK: **36**
 
 ## ✨ Возможности
 
