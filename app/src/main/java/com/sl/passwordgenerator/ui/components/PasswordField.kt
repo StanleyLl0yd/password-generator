@@ -55,30 +55,11 @@ fun PasswordField(
     isGenerating: Boolean = false
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
-    val activity = LocalContext.current.findActivity()
 
-    fun setSensitiveContentVisible(visible: Boolean) {
-        val window = activity?.window ?: return
-        if (visible) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        } else {
-            window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        }
-    }
+    ProtectSensitiveContent(passwordVisible)
 
     LaunchedEffect(password) {
-        if (passwordVisible) {
-            passwordVisible = false
-            setSensitiveContentVisible(false)
-        }
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            if (passwordVisible) {
-                setSensitiveContentVisible(false)
-            }
-        }
+        passwordVisible = false
     }
 
     Column(
@@ -97,10 +78,7 @@ fun PasswordField(
             )
 
             IconButton(
-                onClick = {
-                    passwordVisible = !passwordVisible
-                    setSensitiveContentVisible(passwordVisible)
-                },
+                onClick = { passwordVisible = !passwordVisible },
                 enabled = password.isNotEmpty()
             ) {
                 Icon(
@@ -176,6 +154,22 @@ fun PasswordField(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProtectSensitiveContent(enabled: Boolean) {
+    val window = LocalContext.current.findActivity()?.window
+
+    DisposableEffect(window, enabled) {
+        if (enabled) {
+            window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        }
+        onDispose {
+            if (enabled) {
+                window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
             }
         }
     }
