@@ -23,6 +23,9 @@ exclude:
   - name: KotlinDeprecation
     paths:
       - app/src/main/java/com/sl/passwordgenerator/domain/usecase/PasswordGenerator.kt
+  - name: UnusedSymbol
+    paths:
+      - app/src/main/java/com/sl/passwordgenerator/PasswordGeneratorApplication.kt
   - name: AndroidLintAndroidGradlePluginVersion
     paths:
       - gradle/libs.versions.toml
