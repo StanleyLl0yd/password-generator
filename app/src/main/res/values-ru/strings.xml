@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Password Generator</string>
+    <string name="app_name">Генератор паролей</string>
 
     <string name="about_open">О приложении</string>
     <string name="about_version">Версия %1$s</string>
