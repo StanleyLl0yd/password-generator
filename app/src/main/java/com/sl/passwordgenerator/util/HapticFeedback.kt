@@ -16,20 +16,14 @@ object HapticFeedback {
         performVibration(context, duration = 40)
     }
 
-    @Suppress("DEPRECATION")
     private fun performVibration(context: Context, duration: Long) {
         try {
             val vibrator = getVibrator(context) ?: return
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val effect = VibrationEffect.createOneShot(
-                    duration,
-                    VibrationEffect.DEFAULT_AMPLITUDE
-                )
-                vibrator.vibrate(effect)
-            } else {
-                vibrator.vibrate(duration)
-            }
+            val effect = VibrationEffect.createOneShot(
+                duration,
+                VibrationEffect.DEFAULT_AMPLITUDE
+            )
+            vibrator.vibrate(effect)
         } catch (_: Exception) {
         }
     }
