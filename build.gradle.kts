@@ -4,3 +4,9 @@ plugins {
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.detekt) apply false
 }
+
+subprojects {
+    configurations.configureEach {
+        resolutionStrategy.force("com.squareup:javapoet:1.13.0")
+    }
+}
