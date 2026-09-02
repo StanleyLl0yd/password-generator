@@ -1,7 +1,7 @@
 package com.sl.passwordgenerator.domain.usecase
 
 import com.sl.passwordgenerator.domain.PasswordConstants
-import com.sl.passwordgenerator.domain.model.PasswordGenerationConfig
+import com.sl.passwordgenerator.domain.model.GeneratorPreferences
 import com.sl.passwordgenerator.domain.model.PasswordGenerationError
 import com.sl.passwordgenerator.domain.model.PasswordGenerationResult
 import org.junit.Assert.assertEquals
@@ -130,13 +130,7 @@ class PasswordGeneratorTest {
         assertTrue(generator.estimatePasswordScore("fK7!pQ3@vN9#xR4%") >= 80)
     }
 
-    @Test
-    fun clampLength_enforcesDomainBounds() {
-        assertEquals(PasswordConstants.MIN_LENGTH.toFloat(), generator.clampLength(-1f))
-        assertEquals(PasswordConstants.MAX_LENGTH.toFloat(), generator.clampLength(100f))
-    }
-
-    private fun generatePassword(config: PasswordGenerationConfig): String =
+    private fun generatePassword(config: GeneratorPreferences): String =
         when (val result = generator.generate(config)) {
             is PasswordGenerationResult.Success -> result.password
             is PasswordGenerationResult.Error -> {
@@ -153,7 +147,7 @@ class PasswordGeneratorTest {
         useSymbols: Boolean = true,
         excludeSimilar: Boolean = false,
         excludeDuplicates: Boolean = false
-    ) = PasswordGenerationConfig(
+    ) = GeneratorPreferences(
         length = length,
         useLowercase = useLowercase,
         useUppercase = useUppercase,
