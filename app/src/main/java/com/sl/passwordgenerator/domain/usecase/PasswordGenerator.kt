@@ -5,8 +5,8 @@ import com.sl.passwordgenerator.domain.model.GeneratorPreferences
 import com.sl.passwordgenerator.domain.model.PasswordGenerationError
 import com.sl.passwordgenerator.domain.model.PasswordGenerationResult
 import java.security.SecureRandom
-import java.util.Collections
 import kotlin.math.ln
+import kotlin.random.asKotlinRandom
 
 private data class CharPool(
     val groups: List<String>,
@@ -96,16 +96,14 @@ class PasswordGenerator {
         }
 
         while (result.length < length) {
-            val char = if (availableChars == null) {
-                pool.allChars[secureRandom.nextInt(pool.allChars.length)]
-            } else {
-                availableChars.removeAt(secureRandom.nextInt(availableChars.size))
-            }
+            val char = availableChars?.let { chars ->
+                chars.removeAt(secureRandom.nextInt(chars.size))
+            } ?: pool.allChars[secureRandom.nextInt(pool.allChars.length)]
             result.append(char)
         }
 
         val shuffled = result.toString().toMutableList()
-        Collections.shuffle(shuffled, secureRandom)
+        shuffled.shuffle(secureRandom.asKotlinRandom())
         return shuffled.joinToString("")
     }
 

@@ -13,6 +13,5 @@ object PasswordConstants {
     const val DIGIT_CHARS = "0123456789"
     const val SYMBOL_CHARS = "!@#$%^&*()-_=+[]{};:,.<>?/|"
 
-    val FULL_CHARSPACE =
-        LOWERCASE_CHARS.length + UPPERCASE_CHARS.length + DIGIT_CHARS.length + SYMBOL_CHARS.length
+    const val FULL_CHARSPACE = 89
 }

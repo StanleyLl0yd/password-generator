@@ -9,6 +9,8 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -113,9 +115,12 @@ fun PasswordField(
         AnimatedContent(
             targetState = password,
             transitionSpec = {
-                fadeIn(animationSpec = tween(120)).togetherWith(
-                    fadeOut(animationSpec = tween(100))
-                )
+                if (isGenerating) {
+                    (fadeIn(animationSpec = tween(200)) + slideInVertically { it / 4 })
+                        .togetherWith(fadeOut(animationSpec = tween(100)) + slideOutVertically { -it / 4 })
+                } else {
+                    fadeIn(animationSpec = tween(120)).togetherWith(fadeOut(animationSpec = tween(100)))
+                }
             },
             label = "password_animation"
         ) { animatedPassword ->
