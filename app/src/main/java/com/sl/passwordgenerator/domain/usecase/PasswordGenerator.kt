@@ -29,22 +29,24 @@ class PasswordGenerator {
             useSymbols = config.useSymbols,
             excludeSimilar = config.excludeSimilar
         )
-
-        if (pool.allChars.isEmpty()) {
-            return PasswordGenerationResult.Error(PasswordGenerationError.NO_CHARSETS)
+        val error = when {
+            pool.allChars.isEmpty() -> PasswordGenerationError.NO_CHARSETS
+            config.excludeDuplicates && config.length > pool.allChars.length ->
+                PasswordGenerationError.NOT_ENOUGH_UNIQUE_CHARS
+            else -> null
         }
 
-        if (config.excludeDuplicates && config.length > pool.allChars.length) {
-            return PasswordGenerationResult.Error(PasswordGenerationError.NOT_ENOUGH_UNIQUE_CHARS)
-        }
-
-        return PasswordGenerationResult.Success(
-            generatePassword(
-                length = config.length,
-                pool = pool,
-                excludeDuplicates = config.excludeDuplicates
+        return if (error == null) {
+            PasswordGenerationResult.Success(
+                generatePassword(
+                    length = config.length,
+                    pool = pool,
+                    excludeDuplicates = config.excludeDuplicates
+                )
             )
-        )
+        } else {
+            PasswordGenerationResult.Error(error)
+        }
     }
 
     fun estimatePasswordScore(password: String): Int {
