@@ -29,14 +29,14 @@ private val Context.dataStore by preferencesDataStore(
     corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() }
 )
 
-class SettingsRepository(
-    private val context: Context
-) {
+class SettingsRepository(context: Context) {
+
+    private val dataStore = context.applicationContext.dataStore
 
     val preferencesFlow: Flow<GeneratorPreferences> = flow {
         // v1.4.1 and older persisted the generated password. Remove it before exposing data.
         try {
-            context.dataStore.edit { prefs -> prefs.removeLegacyPassword() }
+            dataStore.edit { prefs -> prefs.removeLegacyPassword() }
         } catch (_: IOException) {
             // Do not expose data if the privacy migration could not be completed.
             emit(GeneratorPreferences())
@@ -44,7 +44,7 @@ class SettingsRepository(
         }
 
         emitAll(
-            context.dataStore.data
+            dataStore.data
                 .catch { error ->
                     if (error is IOException) emit(emptyPreferences()) else throw error
                 }
@@ -66,7 +66,7 @@ class SettingsRepository(
     }
 
     suspend fun savePreferences(preferences: GeneratorPreferences) {
-        context.dataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             // Defensive cleanup in case an old backup or app downgrade restores the key.
             prefs.removeLegacyPassword()
             prefs[Keys.LENGTH] = preferences.length
