@@ -68,6 +68,11 @@ import com.sl.passwordgenerator.util.HapticFeedback
 import com.sl.passwordgenerator.util.SecureClipboard
 import kotlinx.coroutines.launch
 
+private const val VERY_WEAK_SCORE_LIMIT = 20
+private const val WEAK_SCORE_LIMIT = 40
+private const val MEDIUM_SCORE_LIMIT = 60
+private const val STRONG_SCORE_LIMIT = 80
+
 @Composable
 fun PasswordGeneratorScreen(
     viewModel: PasswordGeneratorViewModel = viewModel()
@@ -426,10 +431,10 @@ private fun PasswordGenerationError.toErrorMessage(resources: Resources): String
 @Composable
 private fun Int.toStrengthLabel(): String = stringResource(
     when {
-        this < 20 -> R.string.strength_very_weak
-        this < 40 -> R.string.strength_weak
-        this < 60 -> R.string.strength_medium
-        this < 80 -> R.string.strength_strong
+        this < VERY_WEAK_SCORE_LIMIT -> R.string.strength_very_weak
+        this < WEAK_SCORE_LIMIT -> R.string.strength_weak
+        this < MEDIUM_SCORE_LIMIT -> R.string.strength_medium
+        this < STRONG_SCORE_LIMIT -> R.string.strength_strong
         else -> R.string.strength_very_strong
     }
 )
