@@ -1,7 +1,9 @@
 package com.sl.passwordgenerator.domain.model
 
+import com.sl.passwordgenerator.domain.PasswordConstants
+
 data class GeneratorPreferences(
-    val length: Float = 16f,
+    val length: Int = PasswordConstants.DEFAULT_LENGTH,
     val useLowercase: Boolean = true,
     val useUppercase: Boolean = true,
     val useDigits: Boolean = true,
