@@ -8,7 +8,7 @@ on:
       - .github/workflows/store-screenshots.yml
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: rustore-screenshots-${{ github.ref }}
@@ -22,8 +22,6 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          persist-credentials: false
 
       - name: Enable KVM
         run: |
@@ -83,3 +81,12 @@ jobs:
           path: store-assets/rustore/screenshots/*.png
           if-no-files-found: error
           retention-days: 30
+
+      - name: Commit screenshots and remove temporary workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add store-assets/rustore/screenshots/*.png
+          git rm .github/workflows/store-screenshots.yml
+          git commit -m "docs: add final RuStore screenshots"
+          git push origin HEAD:publish/rustore-v1.5.3
