@@ -2,18 +2,15 @@ package com.sl.passwordgenerator.data
 
 import android.content.Context
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.sl.passwordgenerator.domain.PasswordConstants
 import com.sl.passwordgenerator.domain.model.GeneratorPreferences
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -32,9 +29,7 @@ private val Context.dataStore by preferencesDataStore(
     corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() }
 )
 
-@Singleton
-class SettingsRepository @Inject constructor(
-    @param:ApplicationContext
+class SettingsRepository(
     private val context: Context
 ) {
 
@@ -55,16 +50,16 @@ class SettingsRepository @Inject constructor(
                 }
                 .map { prefs ->
                     GeneratorPreferences(
-                        length = (prefs[Keys.LENGTH] ?: 16).toFloat().coerceIn(
-                            PasswordConstants.MIN_LENGTH.toFloat(),
-                            PasswordConstants.MAX_LENGTH.toFloat()
+                        length = (prefs[Keys.LENGTH] ?: PasswordConstants.DEFAULT_LENGTH).coerceIn(
+                            PasswordConstants.MIN_LENGTH,
+                            PasswordConstants.MAX_LENGTH
                         ),
-                        useLowercase      = prefs[Keys.USE_LOWERCASE] ?: true,
-                        useUppercase      = prefs[Keys.USE_UPPERCASE] ?: true,
-                        useDigits         = prefs[Keys.USE_DIGITS] ?: true,
-                        useSymbols        = prefs[Keys.USE_SYMBOLS] ?: true,
+                        useLowercase = prefs[Keys.USE_LOWERCASE] ?: true,
+                        useUppercase = prefs[Keys.USE_UPPERCASE] ?: true,
+                        useDigits = prefs[Keys.USE_DIGITS] ?: true,
+                        useSymbols = prefs[Keys.USE_SYMBOLS] ?: true,
                         excludeDuplicates = prefs[Keys.EXCLUDE_DUPLICATES] ?: true,
-                        excludeSimilar    = prefs[Keys.EXCLUDE_SIMILAR] ?: true
+                        excludeSimilar = prefs[Keys.EXCLUDE_SIMILAR] ?: true
                     )
                 }
         )
@@ -74,23 +69,23 @@ class SettingsRepository @Inject constructor(
         context.dataStore.edit { prefs ->
             // Defensive cleanup in case an old backup or app downgrade restores the key.
             prefs.removeLegacyPassword()
-            prefs[Keys.LENGTH]             = preferences.length.toInt()
-            prefs[Keys.USE_LOWERCASE]      = preferences.useLowercase
-            prefs[Keys.USE_UPPERCASE]      = preferences.useUppercase
-            prefs[Keys.USE_DIGITS]         = preferences.useDigits
-            prefs[Keys.USE_SYMBOLS]        = preferences.useSymbols
+            prefs[Keys.LENGTH] = preferences.length
+            prefs[Keys.USE_LOWERCASE] = preferences.useLowercase
+            prefs[Keys.USE_UPPERCASE] = preferences.useUppercase
+            prefs[Keys.USE_DIGITS] = preferences.useDigits
+            prefs[Keys.USE_SYMBOLS] = preferences.useSymbols
             prefs[Keys.EXCLUDE_DUPLICATES] = preferences.excludeDuplicates
-            prefs[Keys.EXCLUDE_SIMILAR]    = preferences.excludeSimilar
+            prefs[Keys.EXCLUDE_SIMILAR] = preferences.excludeSimilar
         }
     }
 
     private object Keys {
-        val LENGTH             = intPreferencesKey("length")
-        val USE_LOWERCASE      = booleanPreferencesKey("use_lowercase")
-        val USE_UPPERCASE      = booleanPreferencesKey("use_uppercase")
-        val USE_DIGITS         = booleanPreferencesKey("use_digits")
-        val USE_SYMBOLS        = booleanPreferencesKey("use_symbols")
+        val LENGTH = intPreferencesKey("length")
+        val USE_LOWERCASE = booleanPreferencesKey("use_lowercase")
+        val USE_UPPERCASE = booleanPreferencesKey("use_uppercase")
+        val USE_DIGITS = booleanPreferencesKey("use_digits")
+        val USE_SYMBOLS = booleanPreferencesKey("use_symbols")
         val EXCLUDE_DUPLICATES = booleanPreferencesKey("exclude_duplicates")
-        val EXCLUDE_SIMILAR    = booleanPreferencesKey("exclude_similar")
+        val EXCLUDE_SIMILAR = booleanPreferencesKey("exclude_similar")
     }
 }
