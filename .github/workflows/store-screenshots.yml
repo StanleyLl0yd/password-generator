@@ -1,0 +1,85 @@
+name: RuStore Screenshots
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [publish/rustore-v1.5.3]
+    paths:
+      - .github/workflows/store-screenshots.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rustore-screenshots-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  capture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Enable KVM
+        run: |
+          test -e /dev/kvm
+          sudo chmod 666 /dev/kvm
+          ls -l /dev/kvm
+
+      - name: Download signed release APK
+        run: |
+          mkdir -p release
+          curl --fail --location --retry 3 \
+            --output release/password-generator-1.5.3.apk \
+            https://github.com/StanleyLl0yd/password-generator/releases/download/v1.5.3/password-generator-1.5.3.apk
+          test -s release/password-generator-1.5.3.apk
+
+      - name: Capture Russian screenshots from release APK
+        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -no-metrics
+          script: |
+            rm -rf store-assets/rustore/screenshots
+            mkdir -p store-assets/rustore/screenshots
+            adb install -r release/password-generator-1.5.3.apk
+            adb shell settings put system system_locales ru-RU
+            adb reboot
+            adb wait-for-device
+            until [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1" ]; do sleep 2; done
+            test "$(adb shell settings get system system_locales | tr -d '\r')" = "ru-RU"
+            adb shell am force-stop com.sl.passwordgenerator
+            adb shell monkey -p com.sl.passwordgenerator -c android.intent.category.LAUNCHER 1
+            sleep 3
+            adb shell input tap 540 1740
+            sleep 2
+            adb exec-out screencap -p > store-assets/rustore/screenshots/01-generator.png
+            adb shell input tap 1025 105
+            sleep 2
+            adb exec-out screencap -p > store-assets/rustore/screenshots/02-about.png
+            adb shell input keyevent KEYCODE_BACK
+            sleep 1
+            adb shell input tap 740 836
+            sleep 1
+            adb shell input tap 540 1740
+            sleep 2
+            adb exec-out screencap -p > store-assets/rustore/screenshots/03-custom-password.png
+            test "$(find store-assets/rustore/screenshots -maxdepth 1 -name '*.png' -size +10k | wc -l)" -eq 3
+            file store-assets/rustore/screenshots/*.png
+
+      - name: Upload RuStore screenshots
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: password-generator-rustore-screenshots-v1.5.3-ru
+          path: store-assets/rustore/screenshots/*.png
+          if-no-files-found: error
+          retention-days: 30
