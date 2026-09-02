@@ -30,8 +30,8 @@ import kotlin.math.roundToInt
 
 @Composable
 fun LengthControl(
-    length: Float,
-    onLengthChange: (Float) -> Unit,
+    length: Int,
+    onLengthChange: (Int) -> Unit,
     onLengthChangeFinished: () -> Unit,
     label: String,
     decreaseContentDescription: String,
@@ -39,8 +39,7 @@ fun LengthControl(
     modifier: Modifier = Modifier
 ) {
     fun setLength(value: Int) {
-        val clamped = value.coerceIn(PasswordConstants.MIN_LENGTH, PasswordConstants.MAX_LENGTH)
-        onLengthChange(clamped.toFloat())
+        onLengthChange(value.coerceIn(PasswordConstants.MIN_LENGTH, PasswordConstants.MAX_LENGTH))
         onLengthChangeFinished()
     }
 
@@ -67,7 +66,7 @@ fun LengthControl(
                 )
 
                 IconButton(
-                    onClick = { setLength(length.toInt() - 1) },
+                    onClick = { setLength(length - 1) },
                     enabled = length > PasswordConstants.MIN_LENGTH
                 ) {
                     Icon(Icons.Rounded.Remove, decreaseContentDescription)
@@ -78,7 +77,7 @@ fun LengthControl(
                     color = MaterialTheme.colorScheme.primaryContainer
                 ) {
                     Text(
-                        text = length.toInt().toString(),
+                        text = length.toString(),
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                         fontWeight = FontWeight.Bold,
@@ -90,7 +89,7 @@ fun LengthControl(
                 }
 
                 IconButton(
-                    onClick = { setLength(length.toInt() + 1) },
+                    onClick = { setLength(length + 1) },
                     enabled = length < PasswordConstants.MAX_LENGTH
                 ) {
                     Icon(Icons.Rounded.Add, increaseContentDescription)
@@ -107,15 +106,8 @@ fun LengthControl(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Slider(
-                    value = length,
-                    onValueChange = { newValue ->
-                        onLengthChange(
-                            newValue.coerceIn(
-                                PasswordConstants.MIN_LENGTH.toFloat(),
-                                PasswordConstants.MAX_LENGTH.toFloat()
-                            ).roundToInt().toFloat()
-                        )
-                    },
+                    value = length.toFloat(),
+                    onValueChange = { value -> onLengthChange(value.roundToInt()) },
                     valueRange = PasswordConstants.MIN_LENGTH.toFloat()..PasswordConstants.MAX_LENGTH.toFloat(),
                     steps = PasswordConstants.MAX_LENGTH - PasswordConstants.MIN_LENGTH - 1,
                     onValueChangeFinished = onLengthChangeFinished,
@@ -141,7 +133,7 @@ fun LengthControl(
             ) {
                 listOf(16, 24, 32).forEach { preset ->
                     FilterChip(
-                        selected = length.toInt() == preset,
+                        selected = length == preset,
                         onClick = { setLength(preset) },
                         label = {
                             Text(
