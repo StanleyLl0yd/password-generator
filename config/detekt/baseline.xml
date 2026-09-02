@@ -90,6 +90,5 @@
     <ID>TooManyFunctions:PasswordGenerator.kt$PasswordGenerator</ID>
     <ID>TooManyFunctions:PasswordGeneratorScreen.kt$com.sl.passwordgenerator.ui.PasswordGeneratorScreen.kt</ID>
     <ID>TooManyFunctions:PasswordGeneratorViewModel.kt$PasswordGeneratorViewModel : AndroidViewModel</ID>
-    <ID>WildcardImport:StrengthIndicator.kt$import androidx.compose.foundation.layout.*</ID>
   </CurrentIssues>
 </SmellBaseline>
