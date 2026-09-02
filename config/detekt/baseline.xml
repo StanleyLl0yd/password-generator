@@ -6,10 +6,10 @@
     <ID>FunctionNaming:AboutSheet.kt$@Composable private fun AboutRow( icon: ImageVector, label: String, value: String, onClick: (() -&gt; Unit)? = null )</ID>
     <ID>FunctionNaming:AboutSheet.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun AboutSheet( onDismiss: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
     <ID>FunctionNaming:CheckboxRow.kt$@Composable fun CheckboxRow( checked: Boolean, onCheckedChange: (Boolean) -&gt; Unit, text: String, modifier: Modifier = Modifier )</ID>
-    <ID>FunctionNaming:LengthSlider.kt$@Composable fun LengthControl( length: Float, onLengthChange: (Float) -&gt; Unit, onLengthChangeFinished: () -&gt; Unit, label: String, decreaseContentDescription: String, increaseContentDescription: String, modifier: Modifier = Modifier )</ID>
+    <ID>FunctionNaming:LengthSlider.kt$@Composable fun LengthControl( length: Int, onLengthChange: (Int) -&gt; Unit, onLengthChangeFinished: () -&gt; Unit, label: String, decreaseContentDescription: String, increaseContentDescription: String, modifier: Modifier = Modifier )</ID>
     <ID>FunctionNaming:MainActivity.kt$@Composable fun PasswordGeneratorApp()</ID>
     <ID>FunctionNaming:PasswordField.kt$@Composable fun PasswordField( password: String, label: String, copyLabel: String, showPasswordContentDescription: String, hidePasswordContentDescription: String, onCopyClick: () -&gt; Unit, modifier: Modifier = Modifier, isGenerating: Boolean = false )</ID>
-    <ID>FunctionNaming:PasswordGeneratorScreen.kt$@Composable fun PasswordGeneratorScreen( viewModel: PasswordGeneratorViewModel = hiltViewModel() )</ID>
+    <ID>FunctionNaming:PasswordGeneratorScreen.kt$@Composable fun PasswordGeneratorScreen( viewModel: PasswordGeneratorViewModel = viewModel() )</ID>
     <ID>FunctionNaming:PasswordGeneratorScreen.kt$@Composable private fun CharacterSetChip( selected: Boolean, label: String, onSelectedChange: (Boolean) -&gt; Unit, modifier: Modifier = Modifier )</ID>
     <ID>FunctionNaming:PasswordGeneratorScreen.kt$@Composable private fun CharacterSetGrid( lowercase: Boolean, uppercase: Boolean, digits: Boolean, symbols: Boolean, onLowercaseChanged: (Boolean) -&gt; Unit, onUppercaseChanged: (Boolean) -&gt; Unit, onDigitsChanged: (Boolean) -&gt; Unit, onSymbolsChanged: (Boolean) -&gt; Unit )</ID>
     <ID>FunctionNaming:PasswordGeneratorScreen.kt$@Composable private fun CompactSection( title: String, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -&gt; Unit )</ID>
@@ -20,10 +20,10 @@
     <ID>FunctionNaming:StrengthIndicator.kt$@Composable fun StrengthIndicator( strengthScore: Int, strengthLabel: String, title: String, modifier: Modifier = Modifier )</ID>
     <ID>FunctionNaming:Theme.kt$@Composable fun PasswordGeneratorTheme( darkTheme: Boolean = isSystemInDarkTheme(), dynamicColor: Boolean = true, content: @Composable () -&gt; Unit )</ID>
     <ID>LongMethod:AboutSheet.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun AboutSheet( onDismiss: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>LongMethod:LengthSlider.kt$@Composable fun LengthControl( length: Float, onLengthChange: (Float) -&gt; Unit, onLengthChangeFinished: () -&gt; Unit, label: String, decreaseContentDescription: String, increaseContentDescription: String, modifier: Modifier = Modifier )</ID>
+    <ID>LongMethod:LengthSlider.kt$@Composable fun LengthControl( length: Int, onLengthChange: (Int) -&gt; Unit, onLengthChangeFinished: () -&gt; Unit, label: String, decreaseContentDescription: String, increaseContentDescription: String, modifier: Modifier = Modifier )</ID>
     <ID>LongMethod:PasswordField.kt$@Composable fun PasswordField( password: String, label: String, copyLabel: String, showPasswordContentDescription: String, hidePasswordContentDescription: String, onCopyClick: () -&gt; Unit, modifier: Modifier = Modifier, isGenerating: Boolean = false )</ID>
     <ID>LongMethod:PasswordGeneratorScreen.kt$@Composable private fun PasswordGeneratorContent( state: PasswordGeneratorUiState, viewModel: PasswordGeneratorViewModel, onCopyClick: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>LongParameterList:LengthSlider.kt$( length: Float, onLengthChange: (Float) -&gt; Unit, onLengthChangeFinished: () -&gt; Unit, label: String, decreaseContentDescription: String, increaseContentDescription: String, modifier: Modifier = Modifier )</ID>
+    <ID>LongParameterList:LengthSlider.kt$( length: Int, onLengthChange: (Int) -&gt; Unit, onLengthChangeFinished: () -&gt; Unit, label: String, decreaseContentDescription: String, increaseContentDescription: String, modifier: Modifier = Modifier )</ID>
     <ID>LongParameterList:PasswordField.kt$( password: String, label: String, copyLabel: String, showPasswordContentDescription: String, hidePasswordContentDescription: String, onCopyClick: () -&gt; Unit, modifier: Modifier = Modifier, isGenerating: Boolean = false )</ID>
     <ID>LongParameterList:PasswordGeneratorScreen.kt$( lowercase: Boolean, uppercase: Boolean, digits: Boolean, symbols: Boolean, onLowercaseChanged: (Boolean) -&gt; Unit, onUppercaseChanged: (Boolean) -&gt; Unit, onDigitsChanged: (Boolean) -&gt; Unit, onSymbolsChanged: (Boolean) -&gt; Unit )</ID>
     <ID>LongParameterList:PasswordGeneratorScreen.kt$( password: String, strengthScore: Int, strengthLabel: String, isGenerating: Boolean, onCopyClick: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
@@ -50,10 +50,6 @@
     <ID>MagicNumber:PasswordGenerator.kt$PasswordGenerator$4</ID>
     <ID>MagicNumber:PasswordGenerator.kt$PasswordGenerator$6</ID>
     <ID>MagicNumber:PasswordGenerator.kt$PasswordGenerator$8</ID>
-    <ID>MagicNumber:PasswordStrength.kt$PasswordStrength.Companion$20</ID>
-    <ID>MagicNumber:PasswordStrength.kt$PasswordStrength.Companion$40</ID>
-    <ID>MagicNumber:PasswordStrength.kt$PasswordStrength.Companion$60</ID>
-    <ID>MagicNumber:PasswordStrength.kt$PasswordStrength.Companion$80</ID>
     <ID>MagicNumber:StrengthIndicator.kt$0.5f</ID>
     <ID>MagicNumber:StrengthIndicator.kt$0xFF388E3C</ID>
     <ID>MagicNumber:StrengthIndicator.kt$0xFFD32F2F</ID>
@@ -90,27 +86,9 @@
     <ID>MagicNumber:Theme.kt$0xFFFFD8E7</ID>
     <ID>MagicNumber:Theme.kt$0xFFFFD9EC</ID>
     <ID>MagicNumber:Theme.kt$0xFFFFFFFF</ID>
-    <ID>MaxLineLength:PasswordField.kt$contentDescription = if (passwordVisible) hidePasswordContentDescription else showPasswordContentDescription</ID>
-    <ID>MaxLineLength:PasswordGeneratorScreen.kt$CharacterSetChip(lowercase, stringResource(R.string.lowercase_compact), onLowercaseChanged, Modifier.weight(1f))</ID>
-    <ID>MaxLineLength:PasswordGeneratorScreen.kt$CharacterSetChip(uppercase, stringResource(R.string.uppercase_compact), onUppercaseChanged, Modifier.weight(1f))</ID>
-    <ID>NewLineAtEndOfFile:GeneratorPreferences.kt$com.sl.passwordgenerator.domain.model.GeneratorPreferences.kt</ID>
-    <ID>NewLineAtEndOfFile:MainActivity.kt$com.sl.passwordgenerator.MainActivity.kt</ID>
-    <ID>NewLineAtEndOfFile:PasswordStrength.kt$com.sl.passwordgenerator.domain.model.PasswordStrength.kt</ID>
-    <ID>NewLineAtEndOfFile:StrengthIndicator.kt$com.sl.passwordgenerator.ui.components.StrengthIndicator.kt</ID>
-    <ID>NewLineAtEndOfFile:Type.kt$com.sl.passwordgenerator.ui.theme.Type.kt</ID>
-    <ID>ReturnCount:PasswordGenerator.kt$PasswordGenerator$fun generate(config: PasswordGenerationConfig): PasswordGenerationResult</ID>
     <ID>ReturnCount:PasswordGenerator.kt$PasswordGenerator$private fun containsSequentialSubstring(password: String, minLength: Int): Boolean</ID>
     <ID>TooManyFunctions:PasswordGenerator.kt$PasswordGenerator</ID>
     <ID>TooManyFunctions:PasswordGeneratorScreen.kt$com.sl.passwordgenerator.ui.PasswordGeneratorScreen.kt</ID>
-    <ID>TooManyFunctions:PasswordGeneratorViewModel.kt$PasswordGeneratorViewModel : ViewModel</ID>
-    <ID>WildcardImport:LengthSlider.kt$import androidx.compose.foundation.layout.*</ID>
-    <ID>WildcardImport:LengthSlider.kt$import androidx.compose.material3.*</ID>
-    <ID>WildcardImport:PasswordField.kt$import androidx.compose.foundation.layout.*</ID>
-    <ID>WildcardImport:PasswordField.kt$import androidx.compose.material3.*</ID>
-    <ID>WildcardImport:PasswordField.kt$import androidx.compose.runtime.*</ID>
-    <ID>WildcardImport:PasswordGeneratorScreen.kt$import androidx.compose.foundation.layout.*</ID>
-    <ID>WildcardImport:PasswordGeneratorScreen.kt$import androidx.compose.material3.*</ID>
-    <ID>WildcardImport:PasswordGeneratorScreen.kt$import androidx.compose.runtime.*</ID>
-    <ID>WildcardImport:StrengthIndicator.kt$import androidx.compose.foundation.layout.*</ID>
+    <ID>TooManyFunctions:PasswordGeneratorViewModel.kt$PasswordGeneratorViewModel : AndroidViewModel</ID>
   </CurrentIssues>
 </SmellBaseline>

@@ -11,9 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.sl.passwordgenerator.ui.PasswordGeneratorScreen
 import com.sl.passwordgenerator.ui.theme.PasswordGeneratorTheme
-import dagger.hilt.android.AndroidEntryPoint
 
-@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

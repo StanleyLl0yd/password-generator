@@ -13,7 +13,7 @@ A privacy-focused offline password generator for Android, built with Kotlin, Jet
 
 [⬇️ Download the latest APK](https://github.com/StanleyLl0yd/password-generator/releases/latest)
 
-Current source version: **1.5.2** (`versionCode 13`) · Min SDK: **26 (Android 8.0)** · Target SDK: **36**
+Current source version: **1.5.3** (`versionCode 14`) · Min SDK: **26 (Android 8.0)** · Target SDK: **36**
 
 ## ✨ Features
 
@@ -28,7 +28,7 @@ Current source version: **1.5.2** (`versionCode 13`) · Min SDK: **26 (Android 8
 - Generator settings are saved between launches
 - Material 3 interface with system light/dark theme and Dynamic Color on Android 12+
 - English and Russian localization
-- About section with description, installed version, author, license and GitHub repository link
+- About section with description, installed version, author, license, Privacy Policy and GitHub repository links
 
 Passwords are generated locally with `SecureRandom`.
 
@@ -39,12 +39,14 @@ Passwords are generated locally with `SecureRandom`.
 - Generated passwords are kept only in memory and are never saved to persistent storage
 - Only generator preferences are stored in DataStore
 - Android application backup is disabled; backup and device-transfer rules also explicitly exclude generator preferences
+- Screen capture is blocked while a generated password is explicitly revealed; the normal masked interface remains capturable
+- Password-bearing state/results redact the secret from their string representations
 - Copied passwords are marked as sensitive
 - The app schedules its own copied value for removal after **60 seconds** and removes it only if Android still allows clipboard access and that value is still current; newer clipboard content is not touched
 - Android may restrict clipboard access after the app leaves the foreground; Android 13+ also provides system clipboard auto-clear behavior
 - Passwords that may have been stored by v1.4.1 and older are removed automatically when preferences are read or saved
 
-The GitHub and license links in About are opened by Android in an external app such as a web browser.
+Links in About are opened by Android in an external app such as a web browser. See [PRIVACY.md](PRIVACY.md) for the full Privacy Policy.
 
 Security issues should be reported according to [SECURITY.md](SECURITY.md).
 
@@ -73,7 +75,7 @@ cd password-generator
 To run the checks that do not require release signing:
 
 ```bash
-./gradlew testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest
+./gradlew testDebugUnitTest lintDebug detekt assembleDebug assembleDebugAndroidTest
 ```
 
 CI additionally verifies the R8/resource-shrunk release APK and AAB with a temporary CI-only signing key. The official Android Release workflow restores the release keystore only from GitHub Actions secrets, lets Gradle sign both release packages, verifies the expected release certificate for the APK and AAB, creates SHA-256 checksums and artifact attestations, and publishes the signed APK, AAB and checksum files directly to GitHub Release Assets. Temporary signing material is removed after the workflow finishes.
@@ -86,8 +88,7 @@ A local release build requires a local `key.properties` that points to a keystor
 | --- | --- |
 | Language | Kotlin 2.2.0 |
 | UI | Jetpack Compose + Material 3 |
-| Architecture | MVVM + Clean Architecture |
-| Dependency injection | Hilt 2.57.2 |
+| Architecture | MVVM with domain/data separation |
 | Async/state | Kotlin Coroutines + Flow |
 | Preferences | DataStore 1.2.0 |
 | Build | Gradle 8.13, AGP 8.13.2, Kotlin DSL |
@@ -98,10 +99,15 @@ GitHub Actions automatically checks pull requests and pushes to `main` with:
 
 - unit tests
 - Android Lint
+- Detekt
 - debug APK assembly
 - instrumentation-test APK compilation
 - release APK assembly with R8/resource shrinking
 - release AAB assembly
+- CodeQL
+- Qodana
+- Semgrep
+- Gitleaks
 
 ## 🌍 Languages
 

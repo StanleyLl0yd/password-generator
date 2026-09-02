@@ -1,15 +1,14 @@
 package com.sl.passwordgenerator.ui
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.sl.passwordgenerator.data.SettingsRepository
+import com.sl.passwordgenerator.domain.PasswordConstants
 import com.sl.passwordgenerator.domain.model.GeneratorPreferences
-import com.sl.passwordgenerator.domain.model.PasswordGenerationConfig
 import com.sl.passwordgenerator.domain.model.PasswordGenerationResult
 import com.sl.passwordgenerator.domain.usecase.PasswordGenerator
-import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.IOException
-import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -24,11 +23,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@HiltViewModel
-class PasswordGeneratorViewModel @Inject constructor(
-    private val settingsRepository: SettingsRepository,
-    private val passwordGenerator: PasswordGenerator
-) : ViewModel() {
+class PasswordGeneratorViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val settingsRepository = SettingsRepository(application)
+    private val passwordGenerator = PasswordGenerator()
 
     private val _uiState = MutableStateFlow(PasswordGeneratorUiState())
     val uiState: StateFlow<PasswordGeneratorUiState> = _uiState.asStateFlow()
@@ -42,68 +40,74 @@ class PasswordGeneratorViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val preferences = settingsRepository.preferencesFlow.first()
-            _uiState.value = preferences.toUiState().withStrength()
+            _uiState.value = PasswordGeneratorUiState(preferences = preferences)
             isInitialized = true
-
-            if (_uiState.value.password.isEmpty()) {
-                generatePassword()
-            }
+            generatePassword()
         }
     }
 
-    fun onLengthChanged(value: Float) {
-        updateState(saveMode = SaveMode.DEBOUNCED) {
-            it.copy(length = passwordGenerator.clampLength(value))
+    fun onLengthChanged(value: Int) {
+        updatePreferences(debounced = true) {
+            it.copy(
+                length = value.coerceIn(
+                    PasswordConstants.MIN_LENGTH,
+                    PasswordConstants.MAX_LENGTH
+                )
+            )
         }
     }
 
     fun onLengthChangeFinished() {
         if (!isInitialized) return
-        persistPreferences(_uiState.value, delayMillis = 0)
+        persistPreferences(_uiState.value.preferences, delayMillis = 0)
     }
 
     fun onLowercaseChanged(enabled: Boolean) {
-        updateState { it.copy(useLowercase = enabled) }
+        updatePreferences { it.copy(useLowercase = enabled) }
     }
 
     fun onUppercaseChanged(enabled: Boolean) {
-        updateState { it.copy(useUppercase = enabled) }
+        updatePreferences { it.copy(useUppercase = enabled) }
     }
 
     fun onDigitsChanged(enabled: Boolean) {
-        updateState { it.copy(useDigits = enabled) }
+        updatePreferences { it.copy(useDigits = enabled) }
     }
 
     fun onSymbolsChanged(enabled: Boolean) {
-        updateState { it.copy(useSymbols = enabled) }
+        updatePreferences { it.copy(useSymbols = enabled) }
     }
 
     fun onExcludeDuplicatesChanged(enabled: Boolean) {
-        updateState { it.copy(excludeDuplicates = enabled) }
+        updatePreferences { it.copy(excludeDuplicates = enabled) }
     }
 
     fun onExcludeSimilarChanged(enabled: Boolean) {
-        updateState { it.copy(excludeSimilar = enabled) }
+        updatePreferences { it.copy(excludeSimilar = enabled) }
     }
 
     fun generatePassword() {
-        if (!isInitialized) return
-        if (_uiState.value.isGenerating) return
+        if (!isInitialized || _uiState.value.isGenerating) return
 
+        val preferences = _uiState.value.preferences
         _uiState.update { it.copy(isGenerating = true) }
-
-        val config = _uiState.value.toGenerationConfig()
 
         viewModelScope.launch {
             val result = withContext(Dispatchers.Default) {
-                passwordGenerator.generate(config)
+                passwordGenerator.generate(preferences)
             }
 
             when (result) {
-                is PasswordGenerationResult.Success ->
-                    updateState(saveMode = SaveMode.NONE) {
-                        it.copy(password = result.password, isGenerating = false)
+                is PasswordGenerationResult.Success -> {
+                    val strengthScore = passwordGenerator.estimatePasswordScore(result.password)
+                    _uiState.update {
+                        it.copy(
+                            password = result.password,
+                            strengthScore = strengthScore,
+                            isGenerating = false
+                        )
                     }
+                }
 
                 is PasswordGenerationResult.Error -> {
                     _uiState.update { it.copy(isGenerating = false) }
@@ -113,74 +117,29 @@ class PasswordGeneratorViewModel @Inject constructor(
         }
     }
 
-    private fun updateState(
-        saveMode: SaveMode = SaveMode.IMMEDIATE,
-        transform: (PasswordGeneratorUiState) -> PasswordGeneratorUiState
+    private fun updatePreferences(
+        debounced: Boolean = false,
+        transform: (GeneratorPreferences) -> GeneratorPreferences
     ) {
         if (!isInitialized) return
 
-        val newState = transform(_uiState.value).withStrength()
-        _uiState.value = newState
-
-        when (saveMode) {
-            SaveMode.NONE -> Unit
-            SaveMode.IMMEDIATE -> persistPreferences(newState, delayMillis = 0)
-            SaveMode.DEBOUNCED -> persistPreferences(newState, delayMillis = 300)
-        }
+        val preferences = transform(_uiState.value.preferences)
+        _uiState.update { it.copy(preferences = preferences) }
+        persistPreferences(preferences, delayMillis = if (debounced) 300 else 0)
     }
 
     private fun persistPreferences(
-        state: PasswordGeneratorUiState,
+        preferences: GeneratorPreferences,
         delayMillis: Long
     ) {
         saveJob?.cancel()
         saveJob = viewModelScope.launch {
             if (delayMillis > 0) delay(delayMillis.milliseconds)
             try {
-                settingsRepository.savePreferences(state.toPreferences())
+                settingsRepository.savePreferences(preferences)
             } catch (_: IOException) {
                 _events.send(PasswordGeneratorUiEvent.SettingsSaveError)
             }
         }
     }
-
-    private fun PasswordGeneratorUiState.withStrength(): PasswordGeneratorUiState =
-        copy(strengthScore = passwordGenerator.estimatePasswordScore(password))
-
-    private enum class SaveMode {
-        NONE,
-        IMMEDIATE,
-        DEBOUNCED
-    }
 }
-
-private fun GeneratorPreferences.toUiState() = PasswordGeneratorUiState(
-    password          = "",
-    length            = length,
-    useLowercase      = useLowercase,
-    useUppercase      = useUppercase,
-    useDigits         = useDigits,
-    useSymbols        = useSymbols,
-    excludeDuplicates = excludeDuplicates,
-    excludeSimilar    = excludeSimilar
-)
-
-private fun PasswordGeneratorUiState.toGenerationConfig() = PasswordGenerationConfig(
-    length            = length.toInt(),
-    useLowercase      = useLowercase,
-    useUppercase      = useUppercase,
-    useDigits         = useDigits,
-    useSymbols        = useSymbols,
-    excludeSimilar    = excludeSimilar,
-    excludeDuplicates = excludeDuplicates
-)
-
-private fun PasswordGeneratorUiState.toPreferences() = GeneratorPreferences(
-    length            = length,
-    useLowercase      = useLowercase,
-    useUppercase      = useUppercase,
-    useDigits         = useDigits,
-    useSymbols        = useSymbols,
-    excludeDuplicates = excludeDuplicates,
-    excludeSimilar    = excludeSimilar
-)
