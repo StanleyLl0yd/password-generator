@@ -3,15 +3,51 @@ package com.sl.passwordgenerator.ui
 import android.content.Context
 import android.content.res.Resources
 import android.os.Build
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.weight
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.WindowInsets
+import androidx.compose.material3.navigationBars
+import androidx.compose.material3.statusBars
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -20,11 +56,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sl.passwordgenerator.R
 import com.sl.passwordgenerator.domain.model.PasswordGenerationError
-import com.sl.passwordgenerator.domain.model.PasswordStrength
 import com.sl.passwordgenerator.ui.components.CheckboxRow
 import com.sl.passwordgenerator.ui.components.LengthControl
 import com.sl.passwordgenerator.ui.components.PasswordField
@@ -35,7 +70,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun PasswordGeneratorScreen(
-    viewModel: PasswordGeneratorViewModel = hiltViewModel()
+    viewModel: PasswordGeneratorViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val resources = LocalResources.current
@@ -185,6 +220,7 @@ private fun PasswordGeneratorContent(
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
+    val preferences = state.preferences
 
     Column(
         modifier = modifier
@@ -203,7 +239,7 @@ private fun PasswordGeneratorContent(
         )
 
         LengthControl(
-            length = state.length,
+            length = preferences.length,
             onLengthChange = viewModel::onLengthChanged,
             onLengthChangeFinished = viewModel::onLengthChangeFinished,
             label = stringResource(R.string.length_label),
@@ -213,10 +249,10 @@ private fun PasswordGeneratorContent(
 
         CompactSection(title = stringResource(R.string.character_sets_title)) {
             CharacterSetGrid(
-                lowercase = state.useLowercase,
-                uppercase = state.useUppercase,
-                digits = state.useDigits,
-                symbols = state.useSymbols,
+                lowercase = preferences.useLowercase,
+                uppercase = preferences.useUppercase,
+                digits = preferences.useDigits,
+                symbols = preferences.useSymbols,
                 onLowercaseChanged = viewModel::onLowercaseChanged,
                 onUppercaseChanged = viewModel::onUppercaseChanged,
                 onDigitsChanged = viewModel::onDigitsChanged,
@@ -231,7 +267,7 @@ private fun PasswordGeneratorContent(
             ) {
                 Column {
                     CheckboxRow(
-                        checked = state.excludeSimilar,
+                        checked = preferences.excludeSimilar,
                         onCheckedChange = viewModel::onExcludeSimilarChanged,
                         text = stringResource(R.string.exclude_similar_label)
                     )
@@ -240,7 +276,7 @@ private fun PasswordGeneratorContent(
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
                     )
                     CheckboxRow(
-                        checked = state.excludeDuplicates,
+                        checked = preferences.excludeDuplicates,
                         onCheckedChange = viewModel::onExcludeDuplicatesChanged,
                         text = stringResource(R.string.exclude_duplicates_label)
                     )
@@ -325,15 +361,35 @@ private fun CharacterSetGrid(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            CharacterSetChip(lowercase, stringResource(R.string.lowercase_compact), onLowercaseChanged, Modifier.weight(1f))
-            CharacterSetChip(uppercase, stringResource(R.string.uppercase_compact), onUppercaseChanged, Modifier.weight(1f))
+            CharacterSetChip(
+                lowercase,
+                stringResource(R.string.lowercase_compact),
+                onLowercaseChanged,
+                Modifier.weight(1f)
+            )
+            CharacterSetChip(
+                uppercase,
+                stringResource(R.string.uppercase_compact),
+                onUppercaseChanged,
+                Modifier.weight(1f)
+            )
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            CharacterSetChip(digits, stringResource(R.string.digits_compact), onDigitsChanged, Modifier.weight(1f))
-            CharacterSetChip(symbols, stringResource(R.string.symbols_compact), onSymbolsChanged, Modifier.weight(1f))
+            CharacterSetChip(
+                digits,
+                stringResource(R.string.digits_compact),
+                onDigitsChanged,
+                Modifier.weight(1f)
+            )
+            CharacterSetChip(
+                symbols,
+                stringResource(R.string.symbols_compact),
+                onSymbolsChanged,
+                Modifier.weight(1f)
+            )
         }
     }
 }
@@ -368,11 +424,12 @@ private fun PasswordGenerationError.toErrorMessage(resources: Resources): String
 }
 
 @Composable
-private fun Int.toStrengthLabel(): String =
-    when (PasswordStrength.fromScore(this)) {
-        PasswordStrength.VERY_WEAK -> stringResource(R.string.strength_very_weak)
-        PasswordStrength.WEAK -> stringResource(R.string.strength_weak)
-        PasswordStrength.MEDIUM -> stringResource(R.string.strength_medium)
-        PasswordStrength.STRONG -> stringResource(R.string.strength_strong)
-        PasswordStrength.VERY_STRONG -> stringResource(R.string.strength_very_strong)
+private fun Int.toStrengthLabel(): String = stringResource(
+    when {
+        this < 20 -> R.string.strength_very_weak
+        this < 40 -> R.string.strength_weak
+        this < 60 -> R.string.strength_medium
+        this < 80 -> R.string.strength_strong
+        else -> R.string.strength_very_strong
     }
+)
