@@ -1,5 +1,6 @@
 buildscript {
     dependencies {
+        // Keep AGP's JavaPoet classpath on the checksum-verified artifact.
         classpath("com.squareup:javapoet:1.13.0")
     }
 }
