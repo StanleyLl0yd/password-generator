@@ -11,9 +11,9 @@
     <string name="about_license">PolyForm Noncommercial 1.0.0</string>
     <string name="about_privacy_label">Privacy</string>
     <string name="about_privacy">Privacy Policy</string>
-    <string name="about_privacy_url">https://github.com/StanleyLl0yd/password-generator/blob/main/PRIVACY.md</string>
-    <string name="about_github_label">GitHub</string>
-    <string name="about_github">github.com/StanleyLl0yd/password-generator</string>
+    <string name="about_privacy_url">https://stanleyll0yd.github.io/apps/password-generator/privacy/</string>
+    <string name="about_website_label">App website</string>
+    <string name="about_website">stanleyll0yd.github.io</string>
     <string name="about_required_notice">Required Notice: Copyright © 2025–2026 Stanley Lloyd</string>
 
     <string name="character_sets_title">Character sets</string>
