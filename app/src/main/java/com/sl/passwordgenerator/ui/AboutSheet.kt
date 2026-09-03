@@ -15,9 +15,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
-import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -38,7 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.sl.passwordgenerator.R
 
-private const val GITHUB_URL = "https://github.com/StanleyLl0yd/password-generator"
+private const val WEBSITE_URL = "https://stanleyll0yd.github.io/apps/password-generator/"
 private const val LICENSE_URL = "https://polyformproject.org/licenses/noncommercial/1.0.0"
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -127,10 +127,10 @@ fun AboutSheet(
             )
 
             AboutRow(
-                icon = Icons.Outlined.Code,
-                label = stringResource(R.string.about_github_label),
-                value = stringResource(R.string.about_github),
-                onClick = { runCatching { uriHandler.openUri(GITHUB_URL) } }
+                icon = Icons.Outlined.Language,
+                label = stringResource(R.string.about_website_label),
+                value = stringResource(R.string.about_website),
+                onClick = { runCatching { uriHandler.openUri(WEBSITE_URL) } }
             )
 
             Text(
