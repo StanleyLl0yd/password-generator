@@ -1,5 +1,9 @@
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
+import java.awt.RenderingHints
+import java.awt.image.BufferedImage
+import java.io.File
 import java.io.FileInputStream
+import javax.imageio.ImageIO
 import java.util.Properties
 import org.gradle.api.GradleException
 
@@ -28,6 +32,61 @@ if (isReleaseBuild && !keystorePropertiesFile.exists()) {
     )
 }
 
+
+val launcherIconSource = rootProject.file("artwork/app-icon.png")
+val generatedLauncherRes = layout.buildDirectory.dir("generated/launcher-icons/res")
+val launcherIconSizes = mapOf(
+    "mdpi" to 48,
+    "hdpi" to 72,
+    "xhdpi" to 96,
+    "xxhdpi" to 144,
+    "xxxhdpi" to 192,
+)
+
+val generateLauncherIcons = tasks.register("generateLauncherIcons") {
+    inputs.file(launcherIconSource)
+    outputs.dir(generatedLauncherRes)
+
+    doLast {
+        val source = ImageIO.read(launcherIconSource)
+            ?: throw GradleException("Could not decode launcher icon source: $launcherIconSource")
+        val outputRoot = generatedLauncherRes.get().asFile
+        outputRoot.deleteRecursively()
+
+        fun writeIcon(target: File, size: Int) {
+            target.parentFile.mkdirs()
+            val scaled = BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB)
+            val graphics = scaled.createGraphics()
+            try {
+                graphics.setRenderingHint(
+                    RenderingHints.KEY_INTERPOLATION,
+                    RenderingHints.VALUE_INTERPOLATION_BICUBIC,
+                )
+                graphics.setRenderingHint(
+                    RenderingHints.KEY_RENDERING,
+                    RenderingHints.VALUE_RENDER_QUALITY,
+                )
+                graphics.drawImage(source, 0, 0, size, size, null)
+            } finally {
+                graphics.dispose()
+            }
+
+            if (!ImageIO.write(scaled, "png", target)) {
+                throw GradleException("Could not write launcher icon: $target")
+            }
+        }
+
+        writeIcon(
+            File(outputRoot, "drawable-nodpi/ic_launcher_foreground.png"),
+            512,
+        )
+        launcherIconSizes.forEach { (density, size) ->
+            writeIcon(File(outputRoot, "mipmap-$density/ic_launcher.png"), size)
+            writeIcon(File(outputRoot, "mipmap-$density/ic_launcher_round.png"), size)
+        }
+    }
+}
+
 android {
     namespace = "com.sl.passwordgenerator"
     compileSdk = 36
@@ -47,8 +106,8 @@ android {
         applicationId = "com.sl.passwordgenerator"
         minSdk = 26
         targetSdk = 36
-        versionCode = 16
-        versionName = "1.5.5"
+        versionCode = 17
+        versionName = "1.5.6"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -81,6 +140,14 @@ android {
     buildFeatures {
         compose = true
     }
+
+    sourceSets {
+        getByName("main").res.srcDir(generatedLauncherRes)
+    }
+}
+
+tasks.matching { it.name == "preBuild" }.configureEach {
+    dependsOn(generateLauncherIcons)
 }
 
 configure<DetektExtension> {
