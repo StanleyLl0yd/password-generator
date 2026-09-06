@@ -1,6 +1,6 @@
 # RuStore listing — Password Generator
 
-Prepared for Password Generator 1.5.3 (`versionCode 14`, package `com.sl.passwordgenerator`).
+Prepared for Password Generator 1.5.6 (`versionCode 17`, package `com.sl.passwordgenerator`).
 
 ## Application information
 
@@ -66,12 +66,9 @@ Length: 78/80 characters.
 
 ## What's new
 
-Версия 1.5.3:
-- добавлена защита раскрытого пароля от скриншотов и миниатюры недавних приложений;
-- строковые представления внутренних объектов теперь маскируют пароль, исключая случайную утечку через диагностический вывод;
-- добавлены публичные Политики конфиденциальности и ссылка на них из раздела «О приложении»;
-- русское название приложения локализовано как «Генератор паролей»;
-- добавлены regression-тесты для новых защитных механизмов.
+Версия 1.5.6:
+- исправлено отображение иконки приложения на Android 8+ и некоторых сторонних лаунчерах;
+- восстановлена фирменная иконка с замком для adaptive и обычных launcher-ресурсов.
 
 ## Moderator note
 
@@ -81,19 +78,13 @@ Length: 147/180 characters.
 
 ## Developer contact
 
-At least one contact method is required. Use the project website:
+Website:
 
-https://github.com/StanleyLl0yd/password-generator
+https://stanleyll0yd.github.io/apps/password-generator/
 
 ## Privacy policy
 
-Russian:
-
-https://github.com/StanleyLl0yd/password-generator/blob/main/PRIVACY.ru.md
-
-English:
-
-https://github.com/StanleyLl0yd/password-generator/blob/main/PRIVACY.md
+https://stanleyll0yd.github.io/apps/password-generator/privacy/
 
 ## User data safety
 
@@ -109,20 +100,14 @@ The application requests only `android.permission.VIBRATE` for haptic feedback.
 
 ## Package to upload
 
-Preferred first-publication package:
+Upload the signed AAB from GitHub Release `v1.5.6`:
 
-`password-generator-1.5.3.apk`
+`password-generator-1.5.6.aab`
 
-Use the signed APK published in GitHub Release `v1.5.3`. The release workflow verifies its release certificate before publication.
-
-The signed AAB `password-generator-1.5.3.aab` is also available if AAB publication is preferred.
+The release workflow signs the AAB with the permanent release key and verifies its certificate before publication. APK is retained only as an additional direct-install/GitHub artifact.
 
 ## Media
 
-**Store icon:** `store-assets/app-icon-512.png`.  
-**Phone screenshots:**
-- `store-assets/rustore/screenshots/01-generator.png`
-- `store-assets/rustore/screenshots/02-about.png`
-- `store-assets/rustore/screenshots/03-custom-password.png`
+**Store icon:** `store-assets/app-icon-512.png`.
 
-The screenshots are captured from the real signed `v1.5.3` APK running on an Android 36 emulator with the `ru-RU` system locale.
+Existing RuStore screenshots may be retained for this update. Repository screenshot assets were captured from v1.5.3; do not re-upload `02-about.png` as a current screenshot without recapturing it from the current app, because the About links have changed since then.
