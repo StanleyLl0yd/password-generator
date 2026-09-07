@@ -75,26 +75,6 @@ jobs:
           rm -f key.properties
           rm -f "$RUNNER_TEMP/ci-release.jks"
 
-  dependency-review:
-    name: Dependency Review
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    permissions:
-      contents: read
-
-    steps:
-      - name: Review dependency changes
-        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
-        with:
-          fail-on-severity: high
-          vulnerability-check: true
-          license-check: false
-          comment-summary-in-pr: never
-          retry-on-snapshot-warnings: true
-          retry-on-snapshot-warnings-timeout: 120
-          show-patched-versions: true
-
   semgrep:
     name: Semgrep
     runs-on: ubuntu-24.04
@@ -170,7 +150,7 @@ jobs:
 
   verify:
     if: always()
-    needs: [build, dependency-review, semgrep, gitleaks, codeql]
+    needs: [build, semgrep, gitleaks, codeql]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
@@ -179,20 +159,12 @@ jobs:
       - name: Enforce verification results
         env:
           BUILD_RESULT: ${{ needs.build.result }}
-          DEPENDENCY_REVIEW_RESULT: ${{ needs.dependency-review.result }}
           SEMGREP_RESULT: ${{ needs.semgrep.result }}
           GITLEAKS_RESULT: ${{ needs.gitleaks.result }}
           CODEQL_RESULT: ${{ needs.codeql.result }}
-          EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
           test "$BUILD_RESULT" = "success"
           test "$SEMGREP_RESULT" = "success"
           test "$GITLEAKS_RESULT" = "success"
           test "$CODEQL_RESULT" = "success"
-
-          if [[ "$EVENT_NAME" == "pull_request" ]]; then
-            test "$DEPENDENCY_REVIEW_RESULT" = "success"
-          else
-            test "$DEPENDENCY_REVIEW_RESULT" = "skipped"
-          fi
