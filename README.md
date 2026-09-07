@@ -104,6 +104,7 @@ GitHub Actions automatically checks pull requests and pushes to `main` with:
 - instrumentation-test APK compilation
 - release APK assembly with R8/resource shrinking
 - release AAB assembly
+- Dependency Review on pull requests
 - CodeQL
 - Semgrep
 - Gitleaks
