@@ -70,7 +70,7 @@ Password Generator intentionally minimizes attack surface:
 - release artifacts receive SHA-256 checksums and OIDC-backed GitHub artifact attestations;
 - external GitHub Actions are pinned to immutable commit SHAs and workflow containers are digest-pinned;
 - Gradle dependency verification metadata and wrapper validation protect dependency/build-tool integrity;
-- CodeQL, Semgrep, Gitleaks, Dependency Review, Qodana, Android Lint, Detekt, and Dependabot provide layered automated analysis;
+- CodeQL, Semgrep, Gitleaks, Qodana, Android Lint, Detekt, Gradle dependency verification, and Dependabot provide layered automated analysis;
 - the default branch requires the repository's aggregate verification gate before merge.
 
 Never commit a keystore, `key.properties`, private key, token, `.env` file, service-account credential, generated password, or other credential material.
