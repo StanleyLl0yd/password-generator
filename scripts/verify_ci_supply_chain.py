@@ -33,7 +33,14 @@ for root in ROOTS:
             action = ACTION_REF.match(line)
             if action:
                 target = action.group(1)
-                if target.startswith("./") or target.startswith("docker://"):
+                if target.startswith("./"):
+                    continue
+                if target.startswith("docker://"):
+                    image_target = target.removeprefix("docker://")
+                    if not DIGEST.search(image_target):
+                        errors.append(
+                            f"{path}:{number}: docker action image must be pinned by sha256 digest"
+                        )
                     continue
                 if "@" not in target:
                     errors.append(f"{path}:{number}: action is not pinned")
