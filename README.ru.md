@@ -104,7 +104,6 @@ GitHub Actions автоматически проверяет Pull Request'ы и 
 - компиляцию APK инструментальных тестов
 - сборку release APK с R8 и shrink resources
 - сборку release AAB
-- Dependency Review для Pull Request'ов
 - CodeQL
 - Semgrep
 - Gitleaks
