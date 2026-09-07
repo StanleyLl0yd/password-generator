@@ -13,7 +13,7 @@ A privacy-focused offline password generator for Android, built with Kotlin, Jet
 
 [⬇️ Download the latest APK](https://github.com/StanleyLl0yd/password-generator/releases/latest)
 
-Current source version: **1.5.3** (`versionCode 14`) · Min SDK: **26 (Android 8.0)** · Target SDK: **36**
+Current source version: **1.5.6** (`versionCode 17`) · Min SDK: **26 (Android 8.0)** · Target SDK: **36**
 
 ## ✨ Features
 
@@ -28,7 +28,7 @@ Current source version: **1.5.3** (`versionCode 14`) · Min SDK: **26 (Android 8
 - Generator settings are saved between launches
 - Material 3 interface with system light/dark theme and Dynamic Color on Android 12+
 - English and Russian localization
-- About section with description, installed version, author, license, Privacy Policy and GitHub repository links
+- About section with description, installed version, author, license, Privacy Policy and official project website links
 
 Passwords are generated locally with `SecureRandom`.
 
@@ -104,10 +104,13 @@ GitHub Actions automatically checks pull requests and pushes to `main` with:
 - instrumentation-test APK compilation
 - release APK assembly with R8/resource shrinking
 - release AAB assembly
+- Dependency Review on pull requests
 - CodeQL
-- Qodana
 - Semgrep
 - Gitleaks
+- Gradle wrapper and CI supply-chain validation
+
+Qodana runs as a scheduled/manual defense-in-depth scan rather than a merge-blocking external gate.
 
 ## 🌍 Languages
 

@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: September 1, 2026
+Last updated: September 7, 2026
 
 Password Generator is a privacy-focused offline Android application.
 
@@ -38,7 +38,7 @@ Password Generator does not knowingly collect data from anyone, including childr
 
 The application does not integrate third-party analytics, advertising, tracking, authentication, or cloud services.
 
-The About screen contains links to the project's GitHub repository, software license, and this Privacy Policy. These links are opened externally by Android, for example in a web browser. Any data processing performed by the external application or website is governed by that service's own privacy policy.
+The About screen contains links to the official project website, software license, and this Privacy Policy. These links are opened externally by Android, for example in a web browser. Any data processing performed by the external application or website is governed by that service's own privacy policy.
 
 ## Changes to this policy
 
