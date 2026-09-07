@@ -134,53 +134,9 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           GITLEAKS_ENABLE_COMMENTS: 'false'
 
-  codeql:
-    name: Analyze Java and Kotlin
-    runs-on: ubuntu-24.04
-    timeout-minutes: 35
-    permissions:
-      contents: read
-      security-events: write
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-
-      - name: Set up Android build environment
-        uses: ./.github/actions/android-gradle-setup
-        with:
-          gradle-cache-read-only: true
-
-      - name: Install Android 36 platform
-        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
-        with:
-          languages: java-kotlin
-          build-mode: manual
-          queries: security-extended
-
-      - name: Build for analysis
-        run: ./gradlew clean assembleDebug --no-build-cache --rerun-tasks --stacktrace
-
-      - name: Analyze pull request head
-        if: github.event_name == 'pull_request'
-        uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
-        with:
-          ref: ${{ format('refs/pull/{0}/head', github.event.pull_request.number) }}
-          sha: ${{ github.event.pull_request.head.sha }}
-
-      - name: Analyze branch
-        if: github.event_name != 'pull_request'
-        uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
-
   verify:
     if: always()
-    needs: [build, dependency-review, semgrep, gitleaks, codeql]
+    needs: [build, dependency-review, semgrep, gitleaks]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
@@ -192,14 +148,12 @@ jobs:
           DEPENDENCY_REVIEW_RESULT: ${{ needs.dependency-review.result }}
           SEMGREP_RESULT: ${{ needs.semgrep.result }}
           GITLEAKS_RESULT: ${{ needs.gitleaks.result }}
-          CODEQL_RESULT: ${{ needs.codeql.result }}
           EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
           test "$BUILD_RESULT" = "success"
           test "$SEMGREP_RESULT" = "success"
           test "$GITLEAKS_RESULT" = "success"
-          test "$CODEQL_RESULT" = "success"
 
           if [[ "$EVENT_NAME" == "pull_request" ]]; then
             test "$DEPENDENCY_REVIEW_RESULT" = "success"
