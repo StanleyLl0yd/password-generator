@@ -1,7 +1,7 @@
 # Project instructions
 
 ## App icon
-- The canonical Password Generator app icon is `artwork/app-icon.webp`.
+- The canonical Password Generator app icon is `artwork/app-icon.png`.
 - Do not redraw, restyle, regenerate, or replace it unless explicitly requested by the project owner.
 - Every Android release must use this artwork for launcher icon resources.
 - Store listing icons must be derived from the same artwork without changing the design.
@@ -491,6 +491,22 @@ When choosing between:
 preserve the working behavior until the code is proven unnecessary.
 
 The final goal is a codebase containing only the complexity required to implement the project's current functionality: as small, clean, understandable, maintainable, and efficient as reasonably possible, without functional regressions.
+
+## Security hardening rules
+
+- Treat repository security hardening as an implementation task: audit the complete repository and apply safe, justified fixes rather than only listing recommendations.
+- Preserve stronger existing controls and adapt security tooling to the actual Android/Kotlin stack; do not add scanners or gates solely for symmetry with another repository.
+- Keep the default branch PR-only, force-push/deletion protected, and guarded by strict required checks. Do not add mandatory human approvals solely for a single-maintainer security score.
+- Every external GitHub Action must use a full immutable 40-character commit SHA. Every workflow container used for security/build-critical jobs must also be pinned by SHA-256 digest.
+- Keep workflow permissions at least privilege. Write permissions, OIDC, security-event upload, and release permissions must be scoped only to the jobs that require them.
+- Never use `pull_request_target` to execute repository or fork-controlled code with secrets, privileged tokens, signing material, or write permissions.
+- Keep Semgrep, Gitleaks, Dependency Review, CodeQL, Android Lint, Detekt, and the build/test suite fail-closed where they are part of the required verification path. Qodana may remain a scheduled/manual defense-in-depth scan rather than a flaky merge gate.
+- Preserve Gradle dependency verification metadata, wrapper validation, and the pinned Gradle distribution checksum. Do not weaken reproducible dependency resolution or supply-chain integrity to make CI pass.
+- Never commit keystores, private keys, tokens, environment files, service-account credentials, signing passwords, or other secret material. Production signing material must come only from protected secret storage and must be removed from runners after use.
+- Releases must be tied to the verified `main` commit, use the permanent release signing identity, verify package identity and signatures, publish checksums, and attach provenance/attestations. Existing release tags must never be moved or deleted.
+- Before adding or changing required status checks, verify their exact GitHub check names so repository rules cannot require a nonexistent context.
+- After any substantial refactor, dependency change, CI/CD change, or release-process change, rerun the full applicable build, tests, lint/static analysis, secret scan, dependency review/audit, and release validation.
+- Do not weaken privacy properties while hardening the repository: Password Generator remains offline, without analytics/ads/tracking, and generated passwords must not be persisted or exposed through logs, diagnostics, screenshots, backups, or repository artifacts.
 
 ## App icon source artwork
 
