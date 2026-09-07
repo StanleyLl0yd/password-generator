@@ -7,9 +7,7 @@ on:
     paths:
       - .github/release-trigger
 
-permissions:
-  actions: write
-  contents: read
+permissions: {}
 
 concurrency:
   group: release-dispatch
@@ -17,12 +15,15 @@ concurrency:
 
 jobs:
   dispatch:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
+    permissions:
+      actions: write
+      contents: read
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -30,6 +31,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
           release_tag="$(tr -d '[:space:]' < .github/release-trigger)"
           app_version="$(sed -n 's/^[[:space:]]*versionName = "\([^"]*\)".*/\1/p' app/build.gradle.kts | head -n 1)"
 
@@ -42,7 +44,4 @@ jobs:
             exit 1
           fi
 
-          gh workflow run release.yml \
-            --repo "$GITHUB_REPOSITORY" \
-            --ref main \
-            -f tag="$release_tag"
+          gh workflow run release.yml             --repo "$GITHUB_REPOSITORY"             --ref main             -f tag="$release_tag"
