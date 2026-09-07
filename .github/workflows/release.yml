@@ -14,75 +14,130 @@ concurrency:
   group: android-release
   cancel-in-progress: false
 
+env:
+  RELEASE_TAG: ${{ inputs.tag }}
+
 jobs:
   validate:
     name: Validate release request
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     permissions:
+      actions: read
       contents: read
 
     steps:
-      - name: Require protected main branch
-        env:
-          RELEASE_TAG: ${{ inputs.tag }}
+      - name: Require main and validate tag format
         run: |
-          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
-            echo "Releases must be started from main." >&2
-            exit 1
-          fi
-          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Release tag must use vMAJOR.MINOR.PATCH format." >&2
-            exit 1
-          fi
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/main"
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
 
       - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
 
-      - name: Match app version
-        env:
-          RELEASE_TAG: ${{ inputs.tag }}
+      - name: Verify CI supply-chain policy
+        run: python3 scripts/verify_ci_supply_chain.py
+
+      - name: Validate release source and version
         run: |
-          app_version="$(sed -n 's/^[[:space:]]*versionName = "\([^"]*\)".*/\1/p' app/build.gradle.kts | head -n 1)"
-          if [[ -z "$app_version" || "$RELEASE_TAG" != "v$app_version" ]]; then
-            echo "Release tag $RELEASE_TAG must match app version v$app_version." >&2
+          set -euo pipefail
+          git fetch --no-tags origin main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+
+          version_name="$(sed -n 's/^[[:space:]]*versionName = "\([^"]*\)".*/\1/p' app/build.gradle.kts | head -1)"
+          version_code="$(sed -n 's/^[[:space:]]*versionCode = \([0-9][0-9]*\).*/\1/p' app/build.gradle.kts | head -1)"
+          namespace="$(sed -n 's/^[[:space:]]*namespace = "\([^"]*\)".*/\1/p' app/build.gradle.kts | head -1)"
+          application_id="$(sed -n 's/^[[:space:]]*applicationId = "\([^"]*\)".*/\1/p' app/build.gradle.kts | head -1)"
+
+          test -n "$version_name"
+          [[ "$version_code" =~ ^[0-9]+$ ]]
+          (( version_code > 0 ))
+          test "$namespace" = "com.sl.passwordgenerator"
+          test "$application_id" = "com.sl.passwordgenerator"
+          test "$RELEASE_TAG" = "v$version_name"
+          test -f ".github/release-notes/$RELEASE_TAG.md"
+
+          max_previous_code=0
+          max_previous_tag=""
+          while IFS= read -r tag; do
+            [[ "$tag" == "$RELEASE_TAG" ]] && continue
+            [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || continue
+            previous_file="$(git show "${tag}:app/build.gradle.kts" 2>/dev/null || true)"
+            [[ -n "$previous_file" ]] || continue
+            previous_code="$(sed -n 's/^[[:space:]]*versionCode = \([0-9][0-9]*\).*/\1/p' <<< "$previous_file" | head -1)"
+            [[ "$previous_code" =~ ^[0-9]+$ ]] || continue
+            if (( previous_code > max_previous_code )); then
+              max_previous_code="$previous_code"
+              max_previous_tag="$tag"
+            fi
+          done < <(git tag --list 'v*')
+
+          if (( version_code <= max_previous_code )); then
+            echo "versionCode $version_code must be greater than $max_previous_code from $max_previous_tag." >&2
             exit 1
           fi
 
+      - name: Require successful main verification
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          release_sha="$(git rev-parse HEAD)"
+
+          for attempt in $(seq 1 40); do
+            runs="$(gh api               -H "Accept: application/vnd.github+json"               "/repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$release_sha&per_page=100")"
+            record="$(jq -c               '[.workflow_runs[] | select(.name == "Android CI" and .event == "push" and .head_branch == "main")] | sort_by(.created_at) | last // empty'               <<< "$runs")"
+
+            if [[ -n "$record" ]]; then
+              status="$(jq -r '.status' <<< "$record")"
+              conclusion="$(jq -r '.conclusion // ""' <<< "$record")"
+              run_url="$(jq -r '.html_url' <<< "$record")"
+
+              if [[ "$status" == "completed" && "$conclusion" == "success" ]]; then
+                echo "Android CI: success ($run_url)"
+                exit 0
+              fi
+              if [[ "$status" == "completed" ]]; then
+                echo "Android CI failed with conclusion '$conclusion': $run_url" >&2
+                exit 1
+              fi
+            fi
+
+            if (( attempt < 40 )); then
+              sleep 15
+            fi
+          done
+
+          echo "Timed out waiting for successful Android CI on $release_sha." >&2
+          exit 1
+
   build-sign:
-    name: Test, build, and sign
+    name: Test, build, sign, and attest
     needs: validate
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
     environment: release
     permissions:
       contents: read
       id-token: write
       attestations: write
     env:
-      RELEASE_TAG: ${{ inputs.tag }}
       EXPECTED_CERT_SHA256: f02571c40741e2cb071564f5b63fd3dc38a875d0eda11a8c42269ed635bc2a58
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Set up Java
-        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c
+      - name: Set up Android build environment
+        uses: ./.github/actions/android-gradle-setup
         with:
-          distribution: temurin
-          java-version: "17"
-          cache: gradle
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699
-        with:
-          packages: platform-tools
-          log-accepted-android-sdk-licenses: false
+          gradle-cache-read-only: true
 
       - name: Install Android 36 platform
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
@@ -94,18 +149,16 @@ jobs:
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          if [[ -z "$KEYSTORE_BASE64" || -z "$KEYSTORE_PASSWORD" || -z "$KEY_ALIAS" || -z "$KEY_PASSWORD" ]]; then
-            echo "Android release signing secrets are not configured." >&2
-            exit 1
-          fi
+          set -euo pipefail
+          test -n "$KEYSTORE_BASE64"
+          test -n "$KEYSTORE_PASSWORD"
+          test -n "$KEY_ALIAS"
+          test -n "$KEY_PASSWORD"
 
           umask 077
           keystore_path="$RUNNER_TEMP/password-generator-release.jks"
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$keystore_path"
-          if [[ ! -s "$keystore_path" ]]; then
-            echo "ANDROID_KEYSTORE_BASE64 is invalid." >&2
-            exit 1
-          fi
+          test -s "$keystore_path"
 
           {
             echo "storeFile=$keystore_path"
@@ -114,72 +167,73 @@ jobs:
             echo "keyPassword=$KEY_PASSWORD"
           } > key.properties
 
-          keytool -list \
-            -keystore "$keystore_path" \
-            -storepass "$KEYSTORE_PASSWORD" \
-            -alias "$KEY_ALIAS" > /dev/null
+          keytool -list             -keystore "$keystore_path"             -storepass "$KEYSTORE_PASSWORD"             -alias "$KEY_ALIAS" >/dev/null
 
-      - name: Test and build signed release
-        run: ./gradlew testDebugUnitTest lintDebug assembleRelease bundleRelease --stacktrace
+      - name: Test and lint release source
+        run: ./gradlew testDebugUnitTest lintDebug detekt --stacktrace
 
-      - name: Verify release certificates
+      - name: Build signed APK and AAB
+        run: ./gradlew assembleRelease bundleRelease --stacktrace
+
+      - name: Verify signatures and package release
         run: |
+          set -euo pipefail
           source_apk="app/build/outputs/apk/release/app-release.apk"
           source_aab="app/build/outputs/bundle/release/app-release.aab"
+          test -s "$source_apk"
+          test -s "$source_aab"
+
+          aapt="$(find "$ANDROID_HOME/build-tools" -type f -name aapt -print | sort -V | tail -n 1)"
+          test -n "$aapt"
+          package_line="$("$aapt" dump badging "$source_apk" | head -n 1)"
+          package_name="$(sed -n "s/^package: name='\([^']*\)'.*/\1/p" <<< "$package_line")"
+          package_version_code="$(sed -n "s/.*versionCode='\([^']*\)'.*/\1/p" <<< "$package_line")"
+          package_version_name="$(sed -n "s/.*versionName='\([^']*\)'.*/\1/p" <<< "$package_line")"
+          source_version_code="$(sed -n 's/^[[:space:]]*versionCode = \([0-9][0-9]*\).*/\1/p' app/build.gradle.kts | head -1)"
+          test "$package_name" = "com.sl.passwordgenerator"
+          test "$package_version_name" = "${RELEASE_TAG#v}"
+          test "$package_version_code" = "$source_version_code"
+
+          expected="$(printf '%s' "$EXPECTED_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
           apksigner="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner -print | sort -V | tail -n 1)"
-          if [[ -z "$apksigner" ]]; then
-            echo "Android apksigner was not found." >&2
-            exit 1
-          fi
+          test -n "$apksigner"
 
           apk_report="$RUNNER_TEMP/apksigner-report.txt"
           "$apksigner" verify --verbose --print-certs "$source_apk" | tee "$apk_report"
-          apk_fingerprint="$(
-            awk -F': ' '/certificate SHA-256 digest:/ {print $NF; exit}' "$apk_report" |
-              tr -d ':' |
-              tr '[:upper:]' '[:lower:]'
-          )"
-          if [[ "$apk_fingerprint" != "$EXPECTED_CERT_SHA256" ]]; then
-            echo "APK certificate fingerprint does not match the release key." >&2
-            exit 1
-          fi
+          grep -F 'Verified using v2 scheme (APK Signature Scheme v2): true' "$apk_report"
+          grep -F 'Number of signers: 1' "$apk_report"
+          apk_fingerprint="$(awk -F': ' '/certificate SHA-256 digest:/ {print $NF; exit}' "$apk_report" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          test "$apk_fingerprint" = "$expected"
 
-          jarsigner -verify "$source_aab"
-          aab_report="$RUNNER_TEMP/aab-cert-report.txt"
-          keytool -printcert -jarfile "$source_aab" | tee "$aab_report"
-          aab_fingerprint="$(
-            sed -n 's/^[[:space:]]*SHA256: //p' "$aab_report" |
-              head -n 1 |
-              tr -d ':' |
-              tr '[:upper:]' '[:lower:]'
-          )"
-          if [[ "$aab_fingerprint" != "$EXPECTED_CERT_SHA256" ]]; then
-            echo "AAB certificate fingerprint does not match the release key." >&2
-            exit 1
-          fi
+          jarsigner -verify "$source_aab" | tee "$RUNNER_TEMP/jarsigner-report.txt"
+          grep -F 'jar verified.' "$RUNNER_TEMP/jarsigner-report.txt"
+          aab_fingerprint="$(keytool -printcert -jarfile "$source_aab" | awk -F': ' '/SHA256:/ {print $NF; exit}' | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          test "$aab_fingerprint" = "$expected"
 
-      - name: Package signed release
-        run: |
           mkdir -p release
-          apk_name="password-generator-${RELEASE_TAG#v}.apk"
-          aab_name="password-generator-${RELEASE_TAG#v}.aab"
-          cp app/build/outputs/apk/release/app-release.apk "release/$apk_name"
-          cp app/build/outputs/bundle/release/app-release.aab "release/$aab_name"
+          version="${RELEASE_TAG#v}"
+          apk_name="password-generator-$version.apk"
+          aab_name="password-generator-$version.aab"
+          cp "$source_apk" "release/$apk_name"
+          cp "$source_aab" "release/$aab_name"
+
           (
             cd release
             sha256sum "$apk_name" > "$apk_name.sha256"
             sha256sum "$aab_name" > "$aab_name.sha256"
+            sha256sum --check "$apk_name.sha256"
+            sha256sum --check "$aab_name.sha256"
           )
 
       - name: Attest signed packages
-        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: |
             release/password-generator-*.apk
             release/password-generator-*.aab
 
       - name: Upload signed package
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: password-generator-${{ inputs.tag }}-signed
           path: |
@@ -197,72 +251,67 @@ jobs:
           rm -f "$RUNNER_TEMP/password-generator-release.jks"
 
   publish:
-    name: Publish immutable-ready release
+    name: Publish verified release
     needs: build-sign
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: write
     env:
-      RELEASE_TAG: ${{ inputs.tag }}
       GH_TOKEN: ${{ github.token }}
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Download signed package
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: password-generator-${{ inputs.tag }}-signed
           path: release
 
-      - name: Refuse existing release or tag
+      - name: Refuse an existing release
         run: |
-          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+          set -euo pipefail
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "Release $RELEASE_TAG already exists." >&2
             exit 1
           fi
-          if git ls-remote --exit-code --tags origin "refs/tags/$RELEASE_TAG" > /dev/null 2>&1; then
-            echo "Tag $RELEASE_TAG already exists." >&2
-            exit 1
+
+      - name: Create or verify release tag
+        run: |
+          set -euo pipefail
+          existing="$(git ls-remote --tags origin "refs/tags/$RELEASE_TAG" | awk '{print $1}')"
+          if [[ -n "$existing" ]]; then
+            if [[ "$existing" != "$GITHUB_SHA" ]]; then
+              echo "Existing tag $RELEASE_TAG points to $existing, expected $GITHUB_SHA." >&2
+              exit 1
+            fi
+          else
+            gh api --method POST               "/repos/$GITHUB_REPOSITORY/git/refs"               -f ref="refs/tags/$RELEASE_TAG"               -f sha="$GITHUB_SHA"
           fi
 
       - name: Create draft release
         id: draft
         run: |
+          set -euo pipefail
           notes_file=".github/release-notes/$RELEASE_TAG.md"
-          if [[ -f "$notes_file" ]]; then
-            gh release create "$RELEASE_TAG" \
-              --draft \
-              --target "$GITHUB_SHA" \
-              --title "Password Generator ${RELEASE_TAG#v}" \
-              --notes-file "$notes_file" \
-              --repo "$GITHUB_REPOSITORY"
-          else
-            gh release create "$RELEASE_TAG" \
-              --draft \
-              --target "$GITHUB_SHA" \
-              --title "Password Generator ${RELEASE_TAG#v}" \
-              --generate-notes \
-              --repo "$GITHUB_REPOSITORY"
-          fi
+          gh release create "$RELEASE_TAG"             --verify-tag             --draft             --title "Password Generator ${RELEASE_TAG#v}"             --notes-file "$notes_file"             --repo "$GITHUB_REPOSITORY"
           echo "created=true" >> "$GITHUB_OUTPUT"
 
       - name: Attach verified assets
         run: |
+          set -euo pipefail
           apk_path="release/password-generator-${RELEASE_TAG#v}.apk"
           aab_path="release/password-generator-${RELEASE_TAG#v}.aab"
-          gh release upload "$RELEASE_TAG" \
-            "$apk_path" "$apk_path.sha256" \
-            "$aab_path" "$aab_path.sha256" \
-            --repo "$GITHUB_REPOSITORY"
+          gh release upload "$RELEASE_TAG"             "$apk_path" "$apk_path.sha256"             "$aab_path" "$aab_path.sha256"             --repo "$GITHUB_REPOSITORY"
 
       - name: Publish release
         run: gh release edit "$RELEASE_TAG" --draft=false --repo "$GITHUB_REPOSITORY"
 
       - name: Remove failed draft
         if: failure() && steps.draft.outputs.created == 'true'
-        run: gh release delete "$RELEASE_TAG" --yes --cleanup-tag --repo "$GITHUB_REPOSITORY"
+        run: gh release delete "$RELEASE_TAG" --yes --repo "$GITHUB_REPOSITORY"
