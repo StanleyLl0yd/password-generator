@@ -260,6 +260,7 @@ jobs:
           cmake -S windows -B build/windows -A x64
           cmake --build build/windows --config Release --parallel
           ctest --test-dir build/windows -C Release --output-on-failure
+          windows/scripts/verify-binary.ps1 -Executable "build/windows/Release/PasswordGenerator.exe"
 
       - name: Package Windows release
         shell: pwsh
