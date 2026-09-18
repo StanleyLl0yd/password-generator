@@ -54,3 +54,17 @@ service-account*.json
 service_account*.json
 credentials*.json
 google-services.json
+
+# Native desktop build and release outputs
+.build/
+CMakeFiles/
+CMakeCache.txt
+*.dSYM/
+*.pdb
+*.ilk
+*.exp
+*.lib
+*.exe
+*.msix
+*.dmg
+*.app/
