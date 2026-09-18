@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "constants": {
+    "minLength": 4,
+    "maxLength": 64,
+    "defaultLength": 16,
+    "referenceLengthForMaxScore": 20,
+    "fullCharacterSpace": 89,
+    "lowercase": "abcdefghijklmnopqrstuvwxyz",
+    "uppercase": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    "digits": "0123456789",
+    "symbols": "!@#$%^&*()-_=+[]{};:,.<>?/|",
+    "similar": "iIl1oO0B8G6S5Z2"
+  },
+  "generationCases": [
+    {
+      "name": "defaults",
+      "length": 16,
+      "lowercase": true,
+      "uppercase": true,
+      "digits": true,
+      "symbols": true,
+      "excludeDuplicates": true,
+      "excludeSimilar": true
+    },
+    {
+      "name": "minimum-all-groups",
+      "length": 4,
+      "lowercase": true,
+      "uppercase": true,
+      "digits": true,
+      "symbols": true,
+      "excludeDuplicates": false,
+      "excludeSimilar": false
+    },
+    {
+      "name": "maximum-with-repeats",
+      "length": 64,
+      "lowercase": true,
+      "uppercase": true,
+      "digits": true,
+      "symbols": true,
+      "excludeDuplicates": false,
+      "excludeSimilar": true
+    }
+  ],
+  "strengthCases": [
+    { "password": "", "score": 0 },
+    { "password": "aaaaaaaa", "maxScore": 5 },
+    { "password": "1234", "maxScore": 5 },
+    { "password": "password", "maxScore": 20 }
+  ]
+}
