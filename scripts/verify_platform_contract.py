@@ -10,7 +10,7 @@ if not re.fullmatch(r"\d+\.\d+\.\d+", version):
 
 android = (ROOT / "app/build.gradle.kts").read_text(encoding="utf-8")
 windows_cmake = (ROOT / "windows/CMakeLists.txt").read_text(encoding="utf-8")
-windows_rc = (ROOT / "windows/res/password-generator.rc").read_text(encoding="utf-8")
+windows_rc = (ROOT / "windows/res/password-generator.rc.in").read_text(encoding="utf-8")
 mac_plist = (ROOT / "macos/Resources/Info.plist.in").read_text(encoding="utf-8")
 kotlin_constants = (ROOT / "app/src/main/java/com/sl/passwordgenerator/domain/PasswordConstants.kt").read_text(encoding="utf-8")
 cpp_constants = (ROOT / "windows/src/generator.hpp").read_text(encoding="utf-8")
