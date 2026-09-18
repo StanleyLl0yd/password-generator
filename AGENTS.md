@@ -503,7 +503,7 @@ The final goal is a codebase containing only the complexity required to implemen
 - Generated passwords must never be persisted on any platform. Persist only non-secret generator preferences.
 - Desktop clipboard cleanup must clear only Password Generator's still-current value; never destroy content copied later by the user or another application.
 - Revealed passwords should enable the strongest practical native screen-capture exclusion mechanism, while the normal masked interface remains capturable.
-- A unified release must not be published unless all supported platform release artifacts for that version pass their required build, test, security, signing/notarization, and package verification steps.
+- A unified release must not be published unless all supported platform release artifacts for that version pass their required build, test, security, integrity, and package verification steps. Android remains release-signed. Windows Authenticode signing and macOS Developer ID signing/notarization are optional until the owner provisions those identities; their absence must be explicit in release metadata and must never be disguised as a signed/notarized release.
 - Historical Android-only tags and releases are immutable history and must not be renamed or moved when unified releases begin.
 
 ## Security hardening rules
