@@ -9,11 +9,21 @@
 [![en](https://img.shields.io/badge/lang-en-red.svg)](README.md)
 [![ru](https://img.shields.io/badge/lang-ru-blue.svg)](README.ru.md)
 
-Приватный офлайн-генератор паролей для Android на Kotlin, Jetpack Compose и Material 3.
+Приватный офлайн-генератор паролей с полностью нативными реализациями для Android, Windows и macOS.
 
 [⬇️ Скачать последнюю версию APK](https://github.com/StanleyLl0yd/password-generator/releases/latest)
 
-Текущая версия исходного кода: **1.5.6** (`versionCode 17`) · Min SDK: **26 (Android 8.0)** · Target SDK: **36**
+Текущая версия исходного кода: **1.6.0** · Android `versionCode 18` · **1.6.0 пока не опубликована**; последняя публичная версия — 1.5.6.
+
+## Платформы
+
+| Платформа | Нативный стек | Минимальная версия |
+| --- | --- | --- |
+| Android | Kotlin + Jetpack Compose + Material 3 | Android 8.0 / API 26 |
+| Windows | C++20 + Win32 / Common Controls | Windows 10 |
+| macOS | Swift + AppKit / Foundation / Security | macOS 13 |
+
+Desktop-версии принципиально не используют сторонние runtime-библиотеки и кроссплатформенные UI-фреймворки. Общее поведение задаётся спецификациями и contract-тестами, а каждая платформа использует нативные криптографический RNG, элементы интерфейса, настройки и API буфера обмена своей ОС.
 
 ## ✨ Возможности
 
@@ -86,12 +96,13 @@ CI дополнительно проверяет release APK с R8/shrink resour
 
 | Категория | Технология |
 | --- | --- |
-| Язык | Kotlin 2.2.0 |
-| UI | Jetpack Compose + Material 3 |
-| Архитектура | MVVM с разделением domain/data |
-| Асинхронность / состояние | Kotlin Coroutines + Flow |
-| Настройки | DataStore 1.2.0 |
-| Сборка | Gradle 8.13, AGP 8.13.2, Kotlin DSL |
+| Android | Kotlin 2.2.0, Jetpack Compose, Material 3, DataStore |
+| Windows | C++20, Win32, Common Controls, BCrypt, Registry |
+| macOS | Swift, AppKit, Foundation, Security, UserDefaults |
+| Общее | Спецификации продукта, privacy/UX contracts и проверки паритета |
+| Android build | Gradle 8.13, AGP 8.13.2, Kotlin DSL |
+| Windows build | CMake + MSVC |
+| macOS build | SwiftPM |
 
 ## ✅ Проверка проекта
 
