@@ -13,7 +13,7 @@
 
 [⬇️ Скачать последнюю версию APK](https://github.com/StanleyLl0yd/password-generator/releases/latest)
 
-Текущая версия исходного кода: **1.6.0** · Android `versionCode 18` · **1.6.0 пока не опубликована**; последняя публичная версия — 1.5.6.
+Текущая версия исходного кода: **1.6.1** · Android `versionCode 19` · единый нативный релиз для Android, Windows и macOS.
 
 ## Платформы
 
