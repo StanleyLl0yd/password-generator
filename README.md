@@ -13,7 +13,7 @@ A privacy-focused offline password generator with fully native implementations f
 
 [⬇️ Download the latest APK](https://github.com/StanleyLl0yd/password-generator/releases/latest)
 
-Current source version: **1.6.0** · Android `versionCode 18` · **1.6.0 is not published yet**; the latest public release remains 1.5.6.
+Current source version: **1.6.1** · Android `versionCode 19` · unified native release for Android, Windows, and macOS.
 
 ## Platforms
 
