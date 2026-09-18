@@ -140,6 +140,12 @@ jobs:
         working-directory: macos
         run: swift build -c release
 
+      - name: Validate application bundle packaging
+        run: |
+          bash macos/scripts/package-app.sh "$RUNNER_TEMP/password-generator-macos"
+          plutil -lint "$RUNNER_TEMP/password-generator-macos/Password Generator.app/Contents/Info.plist"
+          test -s "$RUNNER_TEMP/password-generator-macos/Password Generator.app/Contents/Resources/AppIcon.icns"
+
   dependency-review:
     name: Dependency Review
     if: github.event_name == 'pull_request'
