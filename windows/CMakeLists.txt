@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 
-project(PasswordGeneratorWindows VERSION 1.6.0 LANGUAGES CXX)
+project(PasswordGeneratorWindows VERSION 1.6.1 LANGUAGES CXX)
 
 if(NOT WIN32)
     message(FATAL_ERROR "The Windows application must be built on Windows.")

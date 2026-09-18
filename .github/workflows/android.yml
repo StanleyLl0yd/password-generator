@@ -113,6 +113,10 @@ jobs:
         shell: pwsh
         run: ctest --test-dir build/windows -C Release --output-on-failure
 
+      - name: Verify packaged Windows executable
+        shell: pwsh
+        run: windows/scripts/verify-binary.ps1 -Executable "build/windows/Release/PasswordGenerator.exe"
+
   macos:
     name: macOS native
     runs-on: macos-15
