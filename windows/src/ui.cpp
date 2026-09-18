@@ -421,8 +421,6 @@ void MainWindow::LayoutControls(int width, int) {
     int y = 16;
 
     auto find = [&](int id) { return GetDlgItem(hwnd_, id); };
-    auto nextStatic = GetWindow(hwnd_, GW_CHILD);
-
     auto placeLabelByText = [&](const wchar_t* labelText, int x, int yy, int w, int h) {
         for (HWND child = GetWindow(hwnd_, GW_CHILD); child != nullptr; child = GetWindow(child, GW_HWNDNEXT)) {
             wchar_t buffer[128]{};
