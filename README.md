@@ -9,11 +9,21 @@
 [![en](https://img.shields.io/badge/lang-en-red.svg)](README.md)
 [![ru](https://img.shields.io/badge/lang-ru-blue.svg)](README.ru.md)
 
-A privacy-focused offline password generator for Android, built with Kotlin, Jetpack Compose and Material 3.
+A privacy-focused offline password generator with fully native implementations for Android, Windows and macOS.
 
 [⬇️ Download the latest APK](https://github.com/StanleyLl0yd/password-generator/releases/latest)
 
-Current source version: **1.5.6** (`versionCode 17`) · Min SDK: **26 (Android 8.0)** · Target SDK: **36**
+Current source version: **1.6.0** · Android `versionCode 18` · **1.6.0 is not published yet**; the latest public release remains 1.5.6.
+
+## Platforms
+
+| Platform | Native stack | Minimum |
+| --- | --- | --- |
+| Android | Kotlin + Jetpack Compose + Material 3 | Android 8.0 / API 26 |
+| Windows | C++20 + Win32 / Common Controls | Windows 10 |
+| macOS | Swift + AppKit / Foundation / Security | macOS 13 |
+
+The desktop applications intentionally use no third-party runtime libraries or cross-platform UI framework. Product behavior is shared through specifications and contract tests, while each platform uses its operating system's native cryptographic RNG, controls, preferences and clipboard APIs.
 
 ## ✨ Features
 
@@ -86,12 +96,13 @@ A local release build requires a local `key.properties` that points to a keystor
 
 | Category | Technology |
 | --- | --- |
-| Language | Kotlin 2.2.0 |
-| UI | Jetpack Compose + Material 3 |
-| Architecture | MVVM with domain/data separation |
-| Async/state | Kotlin Coroutines + Flow |
-| Preferences | DataStore 1.2.0 |
-| Build | Gradle 8.13, AGP 8.13.2, Kotlin DSL |
+| Android | Kotlin 2.2.0, Jetpack Compose, Material 3, DataStore |
+| Windows | C++20, Win32, Common Controls, BCrypt, Registry |
+| macOS | Swift, AppKit, Foundation, Security, UserDefaults |
+| Shared | Product specifications, privacy/UX contracts and parity checks |
+| Android build | Gradle 8.13, AGP 8.13.2, Kotlin DSL |
+| Windows build | CMake + MSVC |
+| macOS build | SwiftPM |
 
 ## ✅ Quality checks
 

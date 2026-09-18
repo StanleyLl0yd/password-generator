@@ -1,4 +1,4 @@
-name: Dispatch Android Release
+name: Dispatch Unified Release
 
 on:
   push:
@@ -33,14 +33,14 @@ jobs:
         run: |
           set -euo pipefail
           release_tag="$(tr -d '[:space:]' < .github/release-trigger)"
-          app_version="$(sed -n 's/^[[:space:]]*versionName = "\([^"]*\)".*/\1/p' app/build.gradle.kts | head -n 1)"
+          app_version="$(tr -d '[:space:]' < VERSION)"
 
           if [[ ! "$release_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "Invalid release tag: $release_tag" >&2
             exit 1
           fi
           if [[ "$release_tag" != "v$app_version" ]]; then
-            echo "Release tag $release_tag does not match app version v$app_version." >&2
+            echo "Release tag $release_tag does not match product version v$app_version." >&2
             exit 1
           fi
 

@@ -1,4 +1,4 @@
-name: Android CI
+name: CI
 
 on:
   push:
@@ -12,7 +12,7 @@ on:
 permissions: {}
 
 concurrency:
-  group: android-ci-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -31,6 +31,9 @@ jobs:
 
       - name: Verify CI supply-chain policy
         run: python3 scripts/verify_ci_supply_chain.py
+
+      - name: Verify cross-platform product contract
+        run: python3 scripts/verify_platform_contract.py
 
       - name: Set up Android build environment
         uses: ./.github/actions/android-gradle-setup
@@ -75,6 +78,73 @@ jobs:
           rm -f key.properties
           rm -f "$RUNNER_TEMP/ci-release.jks"
 
+
+
+  windows:
+    name: Windows native
+    runs-on: windows-2025
+    timeout-minutes: 20
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Verify CI supply-chain policy
+        shell: pwsh
+        run: python scripts/verify_ci_supply_chain.py
+
+      - name: Verify cross-platform product contract
+        shell: pwsh
+        run: python scripts/verify_platform_contract.py
+
+      - name: Configure
+        shell: pwsh
+        run: cmake -S windows -B build/windows -A x64
+
+      - name: Build
+        shell: pwsh
+        run: cmake --build build/windows --config Release --parallel
+
+      - name: Test
+        shell: pwsh
+        run: ctest --test-dir build/windows -C Release --output-on-failure
+
+  macos:
+    name: macOS native
+    runs-on: macos-15
+    timeout-minutes: 20
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Verify CI supply-chain policy
+        run: python3 scripts/verify_ci_supply_chain.py
+
+      - name: Verify cross-platform product contract
+        run: python3 scripts/verify_platform_contract.py
+
+      - name: Test
+        working-directory: macos
+        run: swift test -c release
+
+      - name: Build
+        working-directory: macos
+        run: swift build -c release
+
+      - name: Validate application bundle packaging
+        run: |
+          bash macos/scripts/package-app.sh "$RUNNER_TEMP/password-generator-macos"
+          plutil -lint "$RUNNER_TEMP/password-generator-macos/Password Generator.app/Contents/Info.plist"
+          test -s "$RUNNER_TEMP/password-generator-macos/Password Generator.app/Contents/Resources/AppIcon.icns"
 
   dependency-review:
     name: Dependency Review
@@ -136,7 +206,7 @@ jobs:
 
   verify:
     if: always()
-    needs: [build, dependency-review, semgrep, gitleaks]
+    needs: [build, windows, macos, dependency-review, semgrep, gitleaks]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
@@ -145,6 +215,8 @@ jobs:
       - name: Enforce verification results
         env:
           BUILD_RESULT: ${{ needs.build.result }}
+          WINDOWS_RESULT: ${{ needs.windows.result }}
+          MACOS_RESULT: ${{ needs.macos.result }}
           DEPENDENCY_REVIEW_RESULT: ${{ needs.dependency-review.result }}
           SEMGREP_RESULT: ${{ needs.semgrep.result }}
           GITLEAKS_RESULT: ${{ needs.gitleaks.result }}
@@ -152,6 +224,8 @@ jobs:
         run: |
           set -euo pipefail
           test "$BUILD_RESULT" = "success"
+          test "$WINDOWS_RESULT" = "success"
+          test "$MACOS_RESULT" = "success"
           test "$SEMGREP_RESULT" = "success"
           test "$GITLEAKS_RESULT" = "success"
 

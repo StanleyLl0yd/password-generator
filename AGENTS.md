@@ -3,7 +3,7 @@
 ## App icon
 - The canonical Password Generator app icon is `artwork/app-icon.png`.
 - Do not redraw, restyle, regenerate, or replace it unless explicitly requested by the project owner.
-- Every Android release must use this artwork for launcher icon resources.
+- Every Android, Windows, and macOS release must derive its platform icon resources from this artwork without changing the visible design.
 - Store listing icons must be derived from the same artwork without changing the design.
 
 ## Releases
@@ -492,10 +492,24 @@ preserve the working behavior until the code is proven unnecessary.
 
 The final goal is a codebase containing only the complexity required to implement the project's current functionality: as small, clean, understandable, maintainable, and efficient as reasonably possible, without functional regressions.
 
+## Multi-platform native product rules
+
+- Password Generator is one product with one public semantic version across Android, Windows, and macOS. The repository root `VERSION` file is authoritative for new unified releases.
+- Platform implementations remain fully native: Android uses Kotlin/Compose, Windows uses C++20/Win32, and macOS uses Swift/AppKit. Do not introduce Electron, Qt, .NET desktop UI, Catalyst, Flutter, React Native, or another cross-platform runtime without explicit owner approval.
+- Windows and macOS runtime code should use operating-system APIs and standard language/runtime facilities first. Third-party runtime dependencies require a demonstrated need and explicit review.
+- Shared behavior belongs in `shared/spec/` and contract tests, not in a cross-platform runtime library unless duplication becomes materially harder to maintain than the shared binary layer.
+- Generator constants, generation invariants, strength-score behavior, secret handling, clipboard semantics, localization scope, and privacy guarantees must remain behaviorally aligned across platforms.
+- Android uses `SecureRandom`, Windows uses `BCryptGenRandom`, and macOS uses `SecRandomCopyBytes`. Bounded selection must avoid modulo bias.
+- Generated passwords must never be persisted on any platform. Persist only non-secret generator preferences.
+- Desktop clipboard cleanup must clear only Password Generator's still-current value; never destroy content copied later by the user or another application.
+- Revealed passwords should enable the strongest practical native screen-capture exclusion mechanism, while the normal masked interface remains capturable.
+- A unified release must not be published unless all supported platform release artifacts for that version pass their required build, test, security, integrity, and package verification steps. Android remains release-signed. Windows Authenticode signing and macOS Developer ID signing/notarization are optional until the owner provisions those identities; their absence must be explicit in release metadata and must never be disguised as a signed/notarized release.
+- Historical Android-only tags and releases are immutable history and must not be renamed or moved when unified releases begin.
+
 ## Security hardening rules
 
 - Treat repository security hardening as an implementation task: audit the complete repository and apply safe, justified fixes rather than only listing recommendations.
-- Preserve stronger existing controls and adapt security tooling to the actual Android/Kotlin stack; do not add scanners or gates solely for symmetry with another repository.
+- Preserve stronger existing controls and adapt security tooling to the actual Kotlin/Android, C++/Win32, and Swift/AppKit stacks; do not add scanners or gates solely for symmetry with another repository.
 - Keep the default branch PR-only, force-push/deletion protected, and guarded by strict required checks. Do not add mandatory human approvals solely for a single-maintainer security score.
 - Every external GitHub Action must use a full immutable 40-character commit SHA. Every workflow container used for security/build-critical jobs must also be pinned by SHA-256 digest.
 - Keep workflow permissions at least privilege. Write permissions, OIDC, security-event upload, and release permissions must be scoped only to the jobs that require them.
@@ -503,7 +517,7 @@ The final goal is a codebase containing only the complexity required to implemen
 - Keep Semgrep, Gitleaks, Dependency Review, CodeQL, Android Lint, Detekt, and the build/test suite fail-closed where they are part of the required verification path. Dependency Review must remain required while GitHub Dependency Graph support is enabled and stable for this repository. Qodana may remain a scheduled/manual defense-in-depth scan rather than a flaky merge gate.
 - Preserve Gradle dependency verification metadata, wrapper validation, and the pinned Gradle distribution checksum. Do not weaken reproducible dependency resolution or supply-chain integrity to make CI pass.
 - Never commit keystores, private keys, tokens, environment files, service-account credentials, signing passwords, or other secret material. Production signing material must come only from protected secret storage and must be removed from runners after use.
-- Releases must be tied to the verified `main` commit, use the permanent release signing identity, verify package identity and signatures, publish checksums, and attach provenance/attestations. Existing release tags must never be moved or deleted.
+- Releases must be tied to the verified `main` commit, verify package identity and integrity, publish checksums, and attach provenance/attestations. Android must use and verify its permanent release signing identity. Windows Authenticode and macOS Developer ID/notarization are applied only when those owner-controlled identities are provisioned; unsigned/ad-hoc desktop release status must be disclosed. Existing release tags must never be moved or deleted.
 - Before adding or changing required status checks, verify their exact GitHub check names so repository rules cannot require a nonexistent context.
 - After any substantial refactor, dependency change, CI/CD change, or release-process change, rerun the full applicable build, tests, lint/static analysis, secret scan, dependency review/audit, and release validation.
 - Do not weaken privacy properties while hardening the repository: Password Generator remains offline, without analytics/ads/tracking, and generated passwords must not be persisted or exposed through logs, diagnostics, screenshots, backups, or repository artifacts.
