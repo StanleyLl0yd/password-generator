@@ -31,6 +31,7 @@ bool SecureClipboard::Copy(HWND owner, const std::wstring& password) {
 
     CloseClipboard();
 
+    Forget();
     copied_ = password;
     sequence_ = GetClipboardSequenceNumber();
     SetTimer(owner, kTimerId, kClearDelayMs, nullptr);
