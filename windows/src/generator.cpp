@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <windows.h>
 #include <bcrypt.h>
 #include <cmath>
 #include <cctype>
