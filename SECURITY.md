@@ -65,7 +65,7 @@ Password Generator intentionally minimizes attack surface:
 - generated passwords are not persisted by the application;
 - Android backup is disabled and generator preferences are excluded from transfer rules;
 - only the vibration permission is requested;
-- Android release signing material is supplied only through the protected GitHub release environment and is never stored in the repository; Windows signing and macOS Developer ID/notarization credentials follow the same protected-secret model when desktop publishing is enabled;
+- Android release signing material is supplied only through the protected GitHub release environment and is never stored in the repository; current Windows releases may be published without Authenticode and current macOS releases may be published without Developer ID/notarization until those identities are provisioned. Desktop artifacts still receive checksums and GitHub artifact attestations, and any future signing credentials must use protected secret storage;
 - release APK/AAB signatures and the expected signing certificate are verified before publication;
 - release artifacts receive SHA-256 checksums and OIDC-backed GitHub artifact attestations;
 - external GitHub Actions are pinned to immutable commit SHAs and workflow containers are digest-pinned;
