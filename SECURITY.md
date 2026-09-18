@@ -42,9 +42,9 @@ These are response targets, not a guarantee of a specific remediation date.
 
 In scope:
 
-- Android application code and packaged resources;
+- Android, Windows, and macOS application code and packaged resources;
 - password generation, clipboard handling, screen-capture protection, and local preference storage;
-- Android manifest, exported components, permissions, and unintended network exposure;
+- Android manifest/exported components/permissions and unintended network exposure on every platform;
 - dependency and build-toolchain risks introduced by this repository;
 - GitHub Actions, CI/CD, release signing, checksums, provenance, and release integrity;
 - repository-secret exposure or supply-chain weaknesses caused by repository configuration.
@@ -60,12 +60,12 @@ Generally out of scope unless this repository directly causes or amplifies the i
 
 Password Generator intentionally minimizes attack surface:
 
-- no Android `INTERNET` permission;
+- no Android `INTERNET` permission and no desktop networking requirement;
 - no backend, accounts, analytics, advertising, tracking, or cloud synchronization;
 - generated passwords are not persisted by the application;
 - Android backup is disabled and generator preferences are excluded from transfer rules;
 - only the vibration permission is requested;
-- release signing material is supplied only through the protected GitHub release environment and is never stored in the repository;
+- Android release signing material is supplied only through the protected GitHub release environment and is never stored in the repository; Windows signing and macOS Developer ID/notarization credentials follow the same protected-secret model when desktop publishing is enabled;
 - release APK/AAB signatures and the expected signing certificate are verified before publication;
 - release artifacts receive SHA-256 checksums and OIDC-backed GitHub artifact attestations;
 - external GitHub Actions are pinned to immutable commit SHAs and workflow containers are digest-pinned;
