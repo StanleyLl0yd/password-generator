@@ -10,6 +10,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+if(MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
 add_library(password_generator_core
     src/generator.cpp
     src/settings.cpp
@@ -53,7 +57,13 @@ add_dependencies(PasswordGenerator password_generator_icon)
 target_include_directories(PasswordGenerator PRIVATE res)
 target_compile_definitions(PasswordGenerator PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
 target_compile_options(PasswordGenerator PRIVATE /W4 /WX /permissive- /EHsc /utf-8)
-target_link_options(PasswordGenerator PRIVATE /DYNAMICBASE /NXCOMPAT /HIGHENTROPYVA)
+target_link_options(PasswordGenerator PRIVATE
+    /DYNAMICBASE
+    /NXCOMPAT
+    /HIGHENTROPYVA
+    /MANIFEST:EMBED
+    "/MANIFESTINPUT:${CMAKE_CURRENT_SOURCE_DIR}/res/password-generator.manifest"
+)
 target_link_libraries(PasswordGenerator PRIVATE
     password_generator_core
     user32
