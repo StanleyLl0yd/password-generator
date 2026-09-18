@@ -7,7 +7,16 @@ All notable changes to this project are documented here.
 
 ---
 
-## [1.6.0] - Unreleased
+## [1.6.1] - 2026-09-18
+
+### Windows
+- Fixed startup failure with “ordinal 345 could not be found” by activating Microsoft Common Controls 6.0 in the embedded application manifest.
+- Added build/release regression checks that validate the embedded Common Controls v6 dependency and smoke-launch the Windows executable.
+
+### Android and macOS
+- No functional changes; version advanced only to preserve unified product versioning.
+
+## [1.6.0] - 2026-09-18
 
 ### Platforms
 - Started the unified native multi-platform product line with one public version across Android, Windows, and macOS.
