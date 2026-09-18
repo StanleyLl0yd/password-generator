@@ -1,6 +1,7 @@
 #include "ui.hpp"
 
 #include "settings.hpp"
+#include "resource.h"
 
 #include <commctrl.h>
 #include <dwmapi.h>
@@ -185,12 +186,12 @@ bool MainWindow::Create(HINSTANCE instance, int showCommand) {
         .cbClsExtra = 0,
         .cbWndExtra = 0,
         .hInstance = instance_,
-        .hIcon = LoadIconW(nullptr, IDI_APPLICATION),
+        .hIcon = LoadIconW(instance_, MAKEINTRESOURCEW(IDI_APP_ICON)),
         .hCursor = LoadCursorW(nullptr, IDC_ARROW),
         .hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1),
         .lpszMenuName = nullptr,
         .lpszClassName = kWindowClass,
-        .hIconSm = LoadIconW(nullptr, IDI_APPLICATION)
+        .hIconSm = LoadIconW(instance_, MAKEINTRESOURCEW(IDI_APP_ICON))
     };
 
     if (RegisterClassExW(&windowClass) == 0 && GetLastError() != ERROR_CLASS_ALREADY_EXISTS) {
