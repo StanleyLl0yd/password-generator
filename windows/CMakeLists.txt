@@ -19,12 +19,38 @@ target_compile_definitions(password_generator_core PRIVATE UNICODE _UNICODE WIN3
 target_compile_options(password_generator_core PRIVATE /W4 /WX /permissive- /EHsc /utf-8)
 target_link_libraries(password_generator_core PUBLIC bcrypt advapi32)
 
+set(GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(GENERATED_ICON "${GENERATED_DIR}/PasswordGenerator.ico")
+
+add_custom_command(
+    OUTPUT "${GENERATED_ICON}"
+    COMMAND powershell -NoProfile -ExecutionPolicy Bypass
+        -File "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate-icon.ps1"
+        -Source "${CMAKE_CURRENT_SOURCE_DIR}/../artwork/app-icon.png"
+        -Destination "${GENERATED_ICON}"
+    DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/../artwork/app-icon.png"
+        "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate-icon.ps1"
+    VERBATIM
+)
+add_custom_target(password_generator_icon DEPENDS "${GENERATED_ICON}")
+
+file(TO_CMAKE_PATH "${GENERATED_ICON}" ICON_PATH)
+file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/res/password-generator.manifest" MANIFEST_PATH)
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/res/password-generator.rc.in"
+    "${GENERATED_DIR}/password-generator.rc"
+    @ONLY
+)
+
 add_executable(PasswordGenerator WIN32
     src/main.cpp
     src/clipboard.cpp
     src/ui.cpp
-    res/password-generator.rc
+    "${GENERATED_DIR}/password-generator.rc"
 )
+add_dependencies(PasswordGenerator password_generator_icon)
+target_include_directories(PasswordGenerator PRIVATE res)
 target_compile_definitions(PasswordGenerator PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
 target_compile_options(PasswordGenerator PRIVATE /W4 /WX /permissive- /EHsc /utf-8)
 target_link_options(PasswordGenerator PRIVATE /DYNAMICBASE /NXCOMPAT /HIGHENTROPYVA)
