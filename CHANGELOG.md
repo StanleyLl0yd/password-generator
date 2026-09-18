@@ -7,6 +7,26 @@ All notable changes to this project are documented here.
 
 ---
 
+## [1.6.0] - Unreleased
+
+### Platforms
+- Started the unified native multi-platform product line with one public version across Android, Windows, and macOS.
+- Added a native Windows implementation using C++20, Win32/Common Controls, BCrypt, and Registry preferences with no third-party runtime libraries.
+- Added a native macOS implementation using Swift, AppKit, Foundation, Security, and UserDefaults with no third-party packages.
+- Added shared generator, privacy, and UX contracts plus automated platform-parity checks.
+
+### Windows and macOS parity
+- Ported the current Android generation rules: length 4–64, four character groups, mandatory representation of enabled groups, similar-character exclusion, duplicate exclusion, 16/24/32 presets, password strength scoring, show/hide, copy, and saved non-secret preferences.
+- Desktop generation uses the operating system cryptographic RNG with rejection sampling to avoid modulo bias.
+- Generated passwords are never persisted.
+- Clipboard cleanup waits 60 seconds and clears only Password Generator's still-current value.
+- Explicitly revealed passwords enable native best-effort screen-capture exclusion.
+- Added English and Russian UI and About links.
+
+### Android
+- Advanced the source version to 1.6.0 (`versionCode 18`) to align the product version across all supported platforms.
+- Existing Android behavior remains unchanged.
+
 ## [1.5.3] - 2026-09-01
 
 ### Security & privacy
