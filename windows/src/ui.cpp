@@ -356,7 +356,7 @@ LRESULT MainWindow::HandleMessage(UINT message, WPARAM wParam, LPARAM lParam) {
             SetBkMode(dc, OPAQUE);
             SetBkColor(dc, GetSysColor(COLOR_WINDOW));
             SetTextColor(dc, GetSysColor(COLOR_WINDOWTEXT));
-            return reinterpret_cast<LRESULT>(GetSysColorBrush(COLOR_3DFACE));
+            return reinterpret_cast<LRESULT>(GetSysColorBrush(COLOR_WINDOW));
         }
 
         SetBkMode(dc, TRANSPARENT);
@@ -370,7 +370,7 @@ LRESULT MainWindow::HandleMessage(UINT message, WPARAM wParam, LPARAM lParam) {
             HDC dc = reinterpret_cast<HDC>(wParam);
             SetBkMode(dc, TRANSPARENT);
             SetTextColor(dc, GetSysColor(COLOR_WINDOWTEXT));
-            return reinterpret_cast<LRESULT>(GetSysColorBrush(COLOR_WINDOW));
+            return reinterpret_cast<LRESULT>(GetSysColorBrush(COLOR_3DFACE));
         }
         break;
     }
