@@ -17,9 +17,9 @@ namespace {
 constexpr wchar_t kWindowClass[] = L"PasswordGeneratorNativeWindow";
 
 constexpr int kInitialClientWidth = 620;
-constexpr int kInitialClientHeight = 570;
+constexpr int kInitialClientHeight = 510;
 constexpr int kMinimumClientWidth = 520;
-constexpr int kMinimumClientHeight = 540;
+constexpr int kMinimumClientHeight = 490;
 
 constexpr DWORD kWindowStyle = WS_OVERLAPPEDWINDOW;
 
@@ -208,7 +208,7 @@ bool MainWindow::Create(HINSTANCE instance, int showCommand) {
         .hInstance = instance_,
         .hIcon = LoadIconW(instance_, MAKEINTRESOURCEW(IDI_APP_ICON)),
         .hCursor = LoadCursorW(nullptr, IDC_ARROW),
-        .hbrBackground = GetSysColorBrush(COLOR_WINDOW),
+        .hbrBackground = GetSysColorBrush(COLOR_3DFACE),
         .lpszMenuName = nullptr,
         .lpszClassName = kWindowClass,
         .hIconSm = LoadIconW(instance_, MAKEINTRESOURCEW(IDI_APP_ICON))
@@ -351,9 +351,17 @@ LRESULT MainWindow::HandleMessage(UINT message, WPARAM wParam, LPARAM lParam) {
     case WM_CTLCOLORSTATIC: {
         HDC dc = reinterpret_cast<HDC>(wParam);
         HWND control = reinterpret_cast<HWND>(lParam);
+
+        if (control == passwordEdit_) {
+            SetBkMode(dc, OPAQUE);
+            SetBkColor(dc, GetSysColor(COLOR_WINDOW));
+            SetTextColor(dc, GetSysColor(COLOR_WINDOWTEXT));
+            return reinterpret_cast<LRESULT>(GetSysColorBrush(COLOR_WINDOW));
+        }
+
         SetBkMode(dc, TRANSPARENT);
         SetTextColor(dc, GetSysColor(control == statusLabel_ ? COLOR_GRAYTEXT : COLOR_WINDOWTEXT));
-        return reinterpret_cast<LRESULT>(GetSysColorBrush(COLOR_WINDOW));
+        return reinterpret_cast<LRESULT>(GetSysColorBrush(COLOR_3DFACE));
     }
 
     case WM_CTLCOLORBTN: {
@@ -362,7 +370,7 @@ LRESULT MainWindow::HandleMessage(UINT message, WPARAM wParam, LPARAM lParam) {
             HDC dc = reinterpret_cast<HDC>(wParam);
             SetBkMode(dc, TRANSPARENT);
             SetTextColor(dc, GetSysColor(COLOR_WINDOWTEXT));
-            return reinterpret_cast<LRESULT>(GetSysColorBrush(COLOR_WINDOW));
+            return reinterpret_cast<LRESULT>(GetSysColorBrush(COLOR_3DFACE));
         }
         break;
     }
@@ -520,10 +528,6 @@ void MainWindow::CreateControls() {
         return AddControl(hwnd_, 0, L"STATIC", value, style, 0);
     };
 
-    auto addSeparator = [&]() {
-        return AddControl(hwnd_, 0, L"STATIC", L"", SS_ETCHEDHORZ, 0);
-    };
-
     passwordLabel_ = addStatic(text.password);
     passwordEdit_ = AddControl(
         hwnd_,
@@ -540,7 +544,6 @@ void MainWindow::CreateControls() {
     strengthLabel_ = addStatic(text.veryWeak, SS_RIGHT | SS_NOPREFIX);
     strengthBar_ = AddControl(hwnd_, 0, PROGRESS_CLASSW, L"", PBS_SMOOTH, 0);
     SendMessageW(strengthBar_, PBM_SETRANGE32, 0, 100);
-    firstSeparator_ = addSeparator();
 
     lengthLabel_ = addStatic(L"");
     lengthSlider_ = AddControl(
@@ -569,7 +572,6 @@ void MainWindow::CreateControls() {
     preset32Button_ = AddControl(
         hwnd_, 0, L"BUTTON", L"32", BS_PUSHBUTTON | WS_TABSTOP, IdPreset32
     );
-    secondSeparator_ = addSeparator();
 
     charsetsTitleLabel_ = addStatic(text.charsets);
     lowerCheck_ = AddControl(
@@ -584,7 +586,6 @@ void MainWindow::CreateControls() {
     symbolCheck_ = AddControl(
         hwnd_, 0, L"BUTTON", text.symbols, BS_AUTOCHECKBOX | WS_TABSTOP, IdSymbol
     );
-    thirdSeparator_ = addSeparator();
 
     advancedTitleLabel_ = addStatic(text.advanced);
     similarCheck_ = AddControl(
@@ -593,7 +594,6 @@ void MainWindow::CreateControls() {
     duplicateCheck_ = AddControl(
         hwnd_, 0, L"BUTTON", text.excludeDuplicates, BS_AUTOCHECKBOX | WS_TABSTOP, IdDuplicate
     );
-    fourthSeparator_ = addSeparator();
 
     generateButton_ = AddControl(
         hwnd_, 0, L"BUTTON", text.generate, BS_DEFPUSHBUTTON | WS_TABSTOP, IdGenerate
@@ -623,14 +623,14 @@ void MainWindow::LayoutControls(int width, int height) {
 
     const int margin = Scale(20);
     const int gap = Scale(8);
-    const int sectionGap = Scale(16);
+    const int sectionGap = Scale(14);
     const int labelHeight = Scale(20);
     const int fieldHeight = Scale(32);
     const int compactButtonWidth = Scale(90);
     const int copyButtonWidth = Scale(98);
     const int content = std::max(Scale(1), width - margin * 2);
 
-    int y = Scale(18);
+    int y = Scale(16);
 
     auto move = [](HWND control, int x, int yy, int w, int h) {
         if (control != nullptr) {
@@ -665,10 +665,8 @@ void MainWindow::LayoutControls(int width, int height) {
     move(strengthTitleLabel_, margin, y, content / 2, labelHeight);
     move(strengthLabel_, margin + content / 2, y, content / 2, labelHeight);
     y += labelHeight + Scale(6);
-    move(strengthBar_, margin, y, content, Scale(10));
-    y += Scale(10) + sectionGap;
-    move(firstSeparator_, margin, y, content, Scale(2));
-    y += Scale(2) + sectionGap;
+    move(strengthBar_, margin, y, content, Scale(8));
+    y += Scale(8) + sectionGap + Scale(2);
 
     move(lengthLabel_, margin, y, content, labelHeight);
     y += labelHeight + Scale(6);
@@ -691,9 +689,7 @@ void MainWindow::LayoutControls(int width, int height) {
     move(preset16Button_, presetStart, y, presetWidth, Scale(30));
     move(preset24Button_, presetStart + presetWidth + gap, y, presetWidth, Scale(30));
     move(preset32Button_, presetStart + (presetWidth + gap) * 2, y, presetWidth, Scale(30));
-    y += Scale(30) + sectionGap;
-    move(secondSeparator_, margin, y, content, Scale(2));
-    y += Scale(2) + sectionGap;
+    y += Scale(30) + sectionGap + Scale(4);
 
     move(charsetsTitleLabel_, margin, y, content, labelHeight);
     y += labelHeight + Scale(6);
@@ -705,26 +701,22 @@ void MainWindow::LayoutControls(int width, int height) {
     y += checkHeight + Scale(4);
     move(digitCheck_, margin, y, half, checkHeight);
     move(symbolCheck_, margin + half + gap, y, half, checkHeight);
-    y += checkHeight + sectionGap;
-    move(thirdSeparator_, margin, y, content, Scale(2));
-    y += Scale(2) + sectionGap;
+    y += checkHeight + sectionGap + Scale(4);
 
     move(advancedTitleLabel_, margin, y, content, labelHeight);
     y += labelHeight + Scale(6);
     move(similarCheck_, margin, y, content, checkHeight);
     y += checkHeight + Scale(4);
     move(duplicateCheck_, margin, y, content, checkHeight);
-    y += checkHeight + sectionGap;
-    move(fourthSeparator_, margin, y, content, Scale(2));
-    y += Scale(2) + sectionGap;
+    y += checkHeight + sectionGap + Scale(4);
 
     const int aboutWidth = Scale(112);
     move(generateButton_, margin, y, content - aboutWidth - gap, Scale(38));
     move(aboutButton_, width - margin - aboutWidth, y, aboutWidth, Scale(38));
     y += Scale(38) + Scale(10);
 
-    const int statusHeight = Scale(34);
-    const int statusY = std::max(y, height - margin - statusHeight);
+    const int statusHeight = Scale(28);
+    const int statusY = std::max(y + Scale(2), height - margin - statusHeight);
     move(statusLabel_, margin, statusY, content, statusHeight);
 }
 
