@@ -2,6 +2,7 @@
 
 #include "settings.hpp"
 #include "resource.h"
+#include "version.hpp"
 
 #include <commctrl.h>
 #include <dwmapi.h>
@@ -16,9 +17,13 @@ namespace pg {
 namespace {
 
 constexpr wchar_t kWindowClass[] = L"PasswordGeneratorNativeWindow";
-constexpr wchar_t kProductVersion[] = L"1.6.0";
-constexpr int kWindowWidth = 540;
-constexpr int kWindowHeight = 650;
+
+constexpr int kInitialClientWidth = 620;
+constexpr int kInitialClientHeight = 570;
+constexpr int kMinimumClientWidth = 520;
+constexpr int kMinimumClientHeight = 540;
+
+constexpr DWORD kWindowStyle = WS_OVERLAPPEDWINDOW;
 
 constexpr int IdPassword = 100;
 constexpr int IdReveal = 101;
@@ -41,6 +46,10 @@ constexpr int IdAbout = 116;
 constexpr int CmdGenerate = 40001;
 constexpr int CmdCopy = 40002;
 constexpr int CmdHide = 40003;
+
+#ifndef TBS_TRANSPARENTBKGND
+#define TBS_TRANSPARENTBKGND 0x1000
+#endif
 
 struct Texts {
     const wchar_t* title;
@@ -151,7 +160,7 @@ HWND AddControl(
         10,
         10,
         parent,
-        reinterpret_cast<HMENU>(static_cast<INT_PTR>(id)),
+        id == 0 ? nullptr : reinterpret_cast<HMENU>(static_cast<INT_PTR>(id)),
         GetModuleHandleW(nullptr),
         nullptr
     );
@@ -175,6 +184,19 @@ std::wstring MainWindow::Widen(const std::string& value) {
     return std::wstring(value.begin(), value.end());
 }
 
+int MainWindow::Scale(int value) const {
+    return MulDiv(value, static_cast<int>(dpi_), 96);
+}
+
+bool MainWindow::IsCheckbox(HWND control) const {
+    return control == lowerCheck_ ||
+        control == upperCheck_ ||
+        control == digitCheck_ ||
+        control == symbolCheck_ ||
+        control == similarCheck_ ||
+        control == duplicateCheck_;
+}
+
 bool MainWindow::Create(HINSTANCE instance, int showCommand) {
     instance_ = instance;
     russian_ = IsRussian();
@@ -188,7 +210,7 @@ bool MainWindow::Create(HINSTANCE instance, int showCommand) {
         .hInstance = instance_,
         .hIcon = LoadIconW(instance_, MAKEINTRESOURCEW(IDI_APP_ICON)),
         .hCursor = LoadCursorW(nullptr, IDC_ARROW),
-        .hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1),
+        .hbrBackground = GetSysColorBrush(COLOR_WINDOW),
         .lpszMenuName = nullptr,
         .lpszClassName = kWindowClass,
         .hIconSm = LoadIconW(instance_, MAKEINTRESOURCEW(IDI_APP_ICON))
@@ -198,14 +220,20 @@ bool MainWindow::Create(HINSTANCE instance, int showCommand) {
         return false;
     }
 
-    RECT rect{0, 0, kWindowWidth, kWindowHeight};
-    AdjustWindowRectEx(&rect, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, FALSE, 0);
+    const UINT initialDpi = GetDpiForSystem();
+    RECT rect{
+        0,
+        0,
+        MulDiv(kInitialClientWidth, static_cast<int>(initialDpi), 96),
+        MulDiv(kInitialClientHeight, static_cast<int>(initialDpi), 96)
+    };
+    AdjustWindowRectExForDpi(&rect, kWindowStyle, FALSE, 0, initialDpi);
 
     hwnd_ = CreateWindowExW(
         0,
         kWindowClass,
         T(russian_).title,
-        WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
+        kWindowStyle,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
         rect.right - rect.left,
@@ -266,7 +294,10 @@ LRESULT CALLBACK MainWindow::WindowProc(HWND hwnd, UINT message, WPARAM wParam, 
 LRESULT MainWindow::HandleMessage(UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
     case WM_CREATE:
+        dpi_ = GetDpiForWindow(hwnd_);
+        CreateFonts();
         CreateControls();
+        UpdateWindowChrome();
         LoadState();
         Generate();
         return 0;
@@ -274,6 +305,70 @@ LRESULT MainWindow::HandleMessage(UINT message, WPARAM wParam, LPARAM lParam) {
     case WM_SIZE:
         LayoutControls(LOWORD(lParam), HIWORD(lParam));
         return 0;
+
+    case WM_GETMINMAXINFO: {
+        auto* info = reinterpret_cast<MINMAXINFO*>(lParam);
+        RECT minimum{
+            0,
+            0,
+            Scale(kMinimumClientWidth),
+            Scale(kMinimumClientHeight)
+        };
+        AdjustWindowRectExForDpi(&minimum, kWindowStyle, FALSE, 0, dpi_);
+        info->ptMinTrackSize.x = minimum.right - minimum.left;
+        info->ptMinTrackSize.y = minimum.bottom - minimum.top;
+        return 0;
+    }
+
+    case WM_DPICHANGED: {
+        dpi_ = HIWORD(wParam);
+        const auto* suggested = reinterpret_cast<RECT*>(lParam);
+        SetWindowPos(
+            hwnd_,
+            nullptr,
+            suggested->left,
+            suggested->top,
+            suggested->right - suggested->left,
+            suggested->bottom - suggested->top,
+            SWP_NOZORDER | SWP_NOACTIVATE
+        );
+        CreateFonts();
+        ApplyFonts();
+
+        RECT client{};
+        GetClientRect(hwnd_, &client);
+        LayoutControls(client.right - client.left, client.bottom - client.top);
+        return 0;
+    }
+
+    case WM_SETTINGCHANGE:
+        CreateFonts();
+        ApplyFonts();
+        InvalidateRect(hwnd_, nullptr, TRUE);
+        return 0;
+
+    case WM_SYSCOLORCHANGE:
+        InvalidateRect(hwnd_, nullptr, TRUE);
+        return 0;
+
+    case WM_CTLCOLORSTATIC: {
+        HDC dc = reinterpret_cast<HDC>(wParam);
+        HWND control = reinterpret_cast<HWND>(lParam);
+        SetBkMode(dc, TRANSPARENT);
+        SetTextColor(dc, GetSysColor(control == statusLabel_ ? COLOR_GRAYTEXT : COLOR_WINDOWTEXT));
+        return reinterpret_cast<LRESULT>(GetSysColorBrush(COLOR_WINDOW));
+    }
+
+    case WM_CTLCOLORBTN: {
+        HWND control = reinterpret_cast<HWND>(lParam);
+        if (IsCheckbox(control)) {
+            HDC dc = reinterpret_cast<HDC>(wParam);
+            SetBkMode(dc, TRANSPARENT);
+            SetTextColor(dc, GetSysColor(COLOR_WINDOWTEXT));
+            return reinterpret_cast<LRESULT>(GetSysColorBrush(COLOR_WINDOW));
+        }
+        break;
+    }
 
     case WM_HSCROLL:
         if (reinterpret_cast<HWND>(lParam) == lengthSlider_) {
@@ -345,6 +440,7 @@ LRESULT MainWindow::HandleMessage(UINT message, WPARAM wParam, LPARAM lParam) {
         SaveState();
         clipboard_.Forget();
         ClearPassword();
+        DestroyFonts();
         PostQuitMessage(0);
         return 0;
 
@@ -355,133 +451,319 @@ LRESULT MainWindow::HandleMessage(UINT message, WPARAM wParam, LPARAM lParam) {
     return DefWindowProcW(hwnd_, message, wParam, lParam);
 }
 
+void MainWindow::CreateFonts() {
+    DestroyFonts();
+
+    NONCLIENTMETRICSW metrics{};
+    metrics.cbSize = sizeof(metrics);
+
+    if (!SystemParametersInfoForDpi(
+            SPI_GETNONCLIENTMETRICS,
+            sizeof(metrics),
+            &metrics,
+            0,
+            dpi_
+        )) {
+        metrics.cbSize = sizeof(metrics);
+        if (!SystemParametersInfoW(
+                SPI_GETNONCLIENTMETRICS,
+                sizeof(metrics),
+                &metrics,
+                0
+            )) {
+            return;
+        }
+    }
+
+    uiFont_ = CreateFontIndirectW(&metrics.lfMessageFont);
+
+    LOGFONTW section = metrics.lfMessageFont;
+    section.lfWeight = FW_SEMIBOLD;
+    sectionFont_ = CreateFontIndirectW(&section);
+}
+
+void MainWindow::DestroyFonts() {
+    if (uiFont_ != nullptr) {
+        DeleteObject(uiFont_);
+        uiFont_ = nullptr;
+    }
+    if (sectionFont_ != nullptr) {
+        DeleteObject(sectionFont_);
+        sectionFont_ = nullptr;
+    }
+}
+
+void MainWindow::ApplyFonts() {
+    const HFONT ui = uiFont_ != nullptr
+        ? uiFont_
+        : static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
+    const HFONT section = sectionFont_ != nullptr ? sectionFont_ : ui;
+
+    for (HWND child = GetWindow(hwnd_, GW_CHILD); child != nullptr; child = GetWindow(child, GW_HWNDNEXT)) {
+        SendMessageW(child, WM_SETFONT, reinterpret_cast<WPARAM>(ui), TRUE);
+    }
+
+    for (HWND label : {
+            passwordLabel_,
+            strengthTitleLabel_,
+            lengthLabel_,
+            charsetsTitleLabel_,
+            advancedTitleLabel_
+        }) {
+        if (label != nullptr) {
+            SendMessageW(label, WM_SETFONT, reinterpret_cast<WPARAM>(section), TRUE);
+        }
+    }
+}
+
+void MainWindow::UpdateWindowChrome() {
+    // DWMWA_WINDOW_CORNER_PREFERENCE = 33, DWMWCP_ROUND = 2 on Windows 11.
+    // Windows 10 simply ignores this request.
+    constexpr DWORD kWindowCornerPreferenceAttribute = 33;
+    constexpr DWORD kRoundPreference = 2;
+    DwmSetWindowAttribute(
+        hwnd_,
+        static_cast<DWMWINDOWATTRIBUTE>(kWindowCornerPreferenceAttribute),
+        &kRoundPreference,
+        sizeof(kRoundPreference)
+    );
+}
+
 void MainWindow::CreateControls() {
     const auto& text = T(russian_);
-    const HFONT font = static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
 
-    auto addStatic = [&](const wchar_t* value) {
-        HWND control = AddControl(hwnd_, 0, L"STATIC", value, SS_LEFT, 0);
-        SendMessageW(control, WM_SETFONT, reinterpret_cast<WPARAM>(font), TRUE);
-        return control;
+    auto addStatic = [&](const wchar_t* value, DWORD style = SS_LEFT | SS_NOPREFIX) {
+        return AddControl(hwnd_, 0, L"STATIC", value, style, 0);
     };
 
-    addStatic(text.password);
+    auto addSeparator = [&]() {
+        return AddControl(hwnd_, 0, L"STATIC", L"", SS_ETCHEDHORZ, 0);
+    };
+
+    passwordLabel_ = addStatic(text.password);
     passwordEdit_ = AddControl(
         hwnd_,
         WS_EX_CLIENTEDGE,
         L"EDIT",
         L"",
-        ES_AUTOHSCROLL | ES_READONLY | ES_PASSWORD,
+        ES_AUTOHSCROLL | ES_READONLY | ES_PASSWORD | WS_TABSTOP,
         IdPassword
     );
-    revealButton_ = AddControl(hwnd_, 0, L"BUTTON", text.show, BS_PUSHBUTTON, IdReveal);
-    copyButton_ = AddControl(hwnd_, 0, L"BUTTON", text.copy, BS_PUSHBUTTON, IdCopy);
+    revealButton_ = AddControl(hwnd_, 0, L"BUTTON", text.show, BS_PUSHBUTTON | WS_TABSTOP, IdReveal);
+    copyButton_ = AddControl(hwnd_, 0, L"BUTTON", text.copy, BS_PUSHBUTTON | WS_TABSTOP, IdCopy);
 
-    addStatic(text.strength);
-    strengthLabel_ = addStatic(text.veryWeak);
+    strengthTitleLabel_ = addStatic(text.strength);
+    strengthLabel_ = addStatic(text.veryWeak, SS_RIGHT | SS_NOPREFIX);
     strengthBar_ = AddControl(hwnd_, 0, PROGRESS_CLASSW, L"", PBS_SMOOTH, 0);
     SendMessageW(strengthBar_, PBM_SETRANGE32, 0, 100);
+    firstSeparator_ = addSeparator();
 
     lengthLabel_ = addStatic(L"");
-    lengthSlider_ = AddControl(hwnd_, 0, TRACKBAR_CLASSW, L"", TBS_HORZ | TBS_AUTOTICKS, IdLengthSlider);
+    lengthSlider_ = AddControl(
+        hwnd_,
+        0,
+        TRACKBAR_CLASSW,
+        L"",
+        TBS_HORZ | TBS_NOTICKS | TBS_TRANSPARENTBKGND | WS_TABSTOP,
+        IdLengthSlider
+    );
     SendMessageW(lengthSlider_, TBM_SETRANGE, TRUE, MAKELONG(kMinLength, kMaxLength));
+    SendMessageW(lengthSlider_, TBM_SETPAGESIZE, 0, 4);
 
-    AddControl(hwnd_, 0, L"BUTTON", L"-", BS_PUSHBUTTON, IdLengthMinus);
-    AddControl(hwnd_, 0, L"BUTTON", L"+", BS_PUSHBUTTON, IdLengthPlus);
-    AddControl(hwnd_, 0, L"BUTTON", L"16", BS_PUSHBUTTON, IdPreset16);
-    AddControl(hwnd_, 0, L"BUTTON", L"24", BS_PUSHBUTTON, IdPreset24);
-    AddControl(hwnd_, 0, L"BUTTON", L"32", BS_PUSHBUTTON, IdPreset32);
+    lengthMinusButton_ = AddControl(
+        hwnd_, 0, L"BUTTON", L"−", BS_PUSHBUTTON | WS_TABSTOP, IdLengthMinus
+    );
+    lengthPlusButton_ = AddControl(
+        hwnd_, 0, L"BUTTON", L"+", BS_PUSHBUTTON | WS_TABSTOP, IdLengthPlus
+    );
+    preset16Button_ = AddControl(
+        hwnd_, 0, L"BUTTON", L"16", BS_PUSHBUTTON | WS_TABSTOP, IdPreset16
+    );
+    preset24Button_ = AddControl(
+        hwnd_, 0, L"BUTTON", L"24", BS_PUSHBUTTON | WS_TABSTOP, IdPreset24
+    );
+    preset32Button_ = AddControl(
+        hwnd_, 0, L"BUTTON", L"32", BS_PUSHBUTTON | WS_TABSTOP, IdPreset32
+    );
+    secondSeparator_ = addSeparator();
 
-    addStatic(text.charsets);
-    lowerCheck_ = AddControl(hwnd_, 0, L"BUTTON", text.lowercase, BS_AUTOCHECKBOX, IdLower);
-    upperCheck_ = AddControl(hwnd_, 0, L"BUTTON", text.uppercase, BS_AUTOCHECKBOX, IdUpper);
-    digitCheck_ = AddControl(hwnd_, 0, L"BUTTON", text.digits, BS_AUTOCHECKBOX, IdDigit);
-    symbolCheck_ = AddControl(hwnd_, 0, L"BUTTON", text.symbols, BS_AUTOCHECKBOX, IdSymbol);
+    charsetsTitleLabel_ = addStatic(text.charsets);
+    lowerCheck_ = AddControl(
+        hwnd_, 0, L"BUTTON", text.lowercase, BS_AUTOCHECKBOX | WS_TABSTOP, IdLower
+    );
+    upperCheck_ = AddControl(
+        hwnd_, 0, L"BUTTON", text.uppercase, BS_AUTOCHECKBOX | WS_TABSTOP, IdUpper
+    );
+    digitCheck_ = AddControl(
+        hwnd_, 0, L"BUTTON", text.digits, BS_AUTOCHECKBOX | WS_TABSTOP, IdDigit
+    );
+    symbolCheck_ = AddControl(
+        hwnd_, 0, L"BUTTON", text.symbols, BS_AUTOCHECKBOX | WS_TABSTOP, IdSymbol
+    );
+    thirdSeparator_ = addSeparator();
 
-    addStatic(text.advanced);
-    similarCheck_ = AddControl(hwnd_, 0, L"BUTTON", text.excludeSimilar, BS_AUTOCHECKBOX, IdSimilar);
-    duplicateCheck_ = AddControl(hwnd_, 0, L"BUTTON", text.excludeDuplicates, BS_AUTOCHECKBOX, IdDuplicate);
+    advancedTitleLabel_ = addStatic(text.advanced);
+    similarCheck_ = AddControl(
+        hwnd_, 0, L"BUTTON", text.excludeSimilar, BS_AUTOCHECKBOX | WS_TABSTOP, IdSimilar
+    );
+    duplicateCheck_ = AddControl(
+        hwnd_, 0, L"BUTTON", text.excludeDuplicates, BS_AUTOCHECKBOX | WS_TABSTOP, IdDuplicate
+    );
+    fourthSeparator_ = addSeparator();
 
-    generateButton_ = AddControl(hwnd_, 0, L"BUTTON", text.generate, BS_DEFPUSHBUTTON, IdGenerate);
-    AddControl(hwnd_, 0, L"BUTTON", text.about, BS_PUSHBUTTON, IdAbout);
-    statusLabel_ = addStatic(L"");
+    generateButton_ = AddControl(
+        hwnd_, 0, L"BUTTON", text.generate, BS_DEFPUSHBUTTON | WS_TABSTOP, IdGenerate
+    );
+    aboutButton_ = AddControl(
+        hwnd_, 0, L"BUTTON", text.about, BS_PUSHBUTTON | WS_TABSTOP, IdAbout
+    );
+    statusLabel_ = addStatic(L"", SS_LEFT | SS_NOPREFIX);
 
-    for (HWND child = GetWindow(hwnd_, GW_CHILD); child != nullptr; child = GetWindow(child, GW_HWNDNEXT)) {
-        SendMessageW(child, WM_SETFONT, reinterpret_cast<WPARAM>(font), TRUE);
-        SetWindowTheme(child, L"Explorer", nullptr);
+    ApplyFonts();
+
+    SendMessageW(
+        passwordEdit_,
+        EM_SETMARGINS,
+        EC_LEFTMARGIN | EC_RIGHTMARGIN,
+        MAKELPARAM(Scale(8), Scale(8))
+    );
+
+    for (HWND control : {
+            passwordEdit_,
+            revealButton_,
+            copyButton_,
+            strengthBar_,
+            lengthSlider_,
+            lengthMinusButton_,
+            lengthPlusButton_,
+            preset16Button_,
+            preset24Button_,
+            preset32Button_,
+            lowerCheck_,
+            upperCheck_,
+            digitCheck_,
+            symbolCheck_,
+            similarCheck_,
+            duplicateCheck_,
+            generateButton_,
+            aboutButton_
+        }) {
+        SetWindowTheme(control, L"Explorer", nullptr);
     }
 
-    LayoutControls(kWindowWidth, kWindowHeight);
+    RECT client{};
+    GetClientRect(hwnd_, &client);
+    LayoutControls(client.right - client.left, client.bottom - client.top);
 }
 
-void MainWindow::LayoutControls(int width, int) {
-    const int margin = 18;
-    const int content = width - margin * 2;
-    const int button = 88;
-    const int gap = 8;
-    int y = 16;
+void MainWindow::LayoutControls(int width, int height) {
+    if (width <= 0 || height <= 0) return;
 
-    auto find = [&](int id) { return GetDlgItem(hwnd_, id); };
-    auto placeLabelByText = [&](const wchar_t* labelText, int x, int yy, int w, int h) {
-        for (HWND child = GetWindow(hwnd_, GW_CHILD); child != nullptr; child = GetWindow(child, GW_HWNDNEXT)) {
-            wchar_t buffer[128]{};
-            GetWindowTextW(child, buffer, 128);
-            if (wcscmp(buffer, labelText) == 0) {
-                MoveWindow(child, x, yy, w, h, TRUE);
-                return;
-            }
+    const int margin = Scale(20);
+    const int gap = Scale(8);
+    const int sectionGap = Scale(16);
+    const int labelHeight = Scale(20);
+    const int fieldHeight = Scale(32);
+    const int compactButtonWidth = Scale(90);
+    const int copyButtonWidth = Scale(98);
+    const int content = std::max(Scale(1), width - margin * 2);
+
+    int y = Scale(18);
+
+    auto move = [](HWND control, int x, int yy, int w, int h) {
+        if (control != nullptr) {
+            MoveWindow(control, x, yy, std::max(1, w), std::max(1, h), TRUE);
         }
     };
 
-    const auto& text = T(russian_);
-    placeLabelByText(text.password, margin, y, content, 20);
-    y += 23;
-    MoveWindow(passwordEdit_, margin, y, content - button * 2 - gap * 2, 30, TRUE);
-    MoveWindow(revealButton_, width - margin - button * 2 - gap, y, button, 30, TRUE);
-    MoveWindow(copyButton_, width - margin - button, y, button, 30, TRUE);
-    y += 42;
+    move(passwordLabel_, margin, y, content, labelHeight);
+    y += labelHeight + Scale(6);
 
-    placeLabelByText(text.strength, margin, y, 180, 20);
-    MoveWindow(strengthLabel_, width - margin - 160, y, 160, 20, TRUE);
-    y += 22;
-    MoveWindow(strengthBar_, margin, y, content, 14, TRUE);
-    y += 28;
+    const int passwordWidth = std::max(
+        Scale(150),
+        content - compactButtonWidth - copyButtonWidth - gap * 2
+    );
+    move(passwordEdit_, margin, y, passwordWidth, fieldHeight);
+    move(
+        revealButton_,
+        margin + passwordWidth + gap,
+        y,
+        compactButtonWidth,
+        fieldHeight
+    );
+    move(
+        copyButton_,
+        margin + passwordWidth + gap + compactButtonWidth + gap,
+        y,
+        copyButtonWidth,
+        fieldHeight
+    );
+    y += fieldHeight + sectionGap;
 
-    MoveWindow(lengthLabel_, margin, y, 180, 20, TRUE);
-    y += 22;
-    MoveWindow(find(IdLengthMinus), margin, y, 38, 30, TRUE);
-    MoveWindow(lengthSlider_, margin + 46, y, content - 92, 30, TRUE);
-    MoveWindow(find(IdLengthPlus), width - margin - 38, y, 38, 30, TRUE);
-    y += 38;
+    move(strengthTitleLabel_, margin, y, content / 2, labelHeight);
+    move(strengthLabel_, margin + content / 2, y, content / 2, labelHeight);
+    y += labelHeight + Scale(6);
+    move(strengthBar_, margin, y, content, Scale(10));
+    y += Scale(10) + sectionGap;
+    move(firstSeparator_, margin, y, content, Scale(2));
+    y += Scale(2) + sectionGap;
 
-    const int presetWidth = 58;
-    const int presetStart = margin + (content - (presetWidth * 3 + gap * 2)) / 2;
-    MoveWindow(find(IdPreset16), presetStart, y, presetWidth, 28, TRUE);
-    MoveWindow(find(IdPreset24), presetStart + presetWidth + gap, y, presetWidth, 28, TRUE);
-    MoveWindow(find(IdPreset32), presetStart + (presetWidth + gap) * 2, y, presetWidth, 28, TRUE);
-    y += 42;
+    move(lengthLabel_, margin, y, content, labelHeight);
+    y += labelHeight + Scale(6);
 
-    placeLabelByText(text.charsets, margin, y, content, 20);
-    y += 22;
+    const int stepButton = Scale(36);
+    move(lengthMinusButton_, margin, y, stepButton, fieldHeight);
+    move(
+        lengthSlider_,
+        margin + stepButton + gap,
+        y,
+        content - stepButton * 2 - gap * 2,
+        fieldHeight
+    );
+    move(lengthPlusButton_, width - margin - stepButton, y, stepButton, fieldHeight);
+    y += fieldHeight + Scale(8);
+
+    const int presetWidth = Scale(64);
+    const int presetGroupWidth = presetWidth * 3 + gap * 2;
+    const int presetStart = margin + std::max(0, (content - presetGroupWidth) / 2);
+    move(preset16Button_, presetStart, y, presetWidth, Scale(30));
+    move(preset24Button_, presetStart + presetWidth + gap, y, presetWidth, Scale(30));
+    move(preset32Button_, presetStart + (presetWidth + gap) * 2, y, presetWidth, Scale(30));
+    y += Scale(30) + sectionGap;
+    move(secondSeparator_, margin, y, content, Scale(2));
+    y += Scale(2) + sectionGap;
+
+    move(charsetsTitleLabel_, margin, y, content, labelHeight);
+    y += labelHeight + Scale(6);
+
     const int half = (content - gap) / 2;
-    MoveWindow(lowerCheck_, margin, y, half, 26, TRUE);
-    MoveWindow(upperCheck_, margin + half + gap, y, half, 26, TRUE);
-    y += 30;
-    MoveWindow(digitCheck_, margin, y, half, 26, TRUE);
-    MoveWindow(symbolCheck_, margin + half + gap, y, half, 26, TRUE);
-    y += 38;
+    const int checkHeight = Scale(26);
+    move(lowerCheck_, margin, y, half, checkHeight);
+    move(upperCheck_, margin + half + gap, y, half, checkHeight);
+    y += checkHeight + Scale(4);
+    move(digitCheck_, margin, y, half, checkHeight);
+    move(symbolCheck_, margin + half + gap, y, half, checkHeight);
+    y += checkHeight + sectionGap;
+    move(thirdSeparator_, margin, y, content, Scale(2));
+    y += Scale(2) + sectionGap;
 
-    placeLabelByText(text.advanced, margin, y, content, 20);
-    y += 22;
-    MoveWindow(similarCheck_, margin, y, content, 26, TRUE);
-    y += 30;
-    MoveWindow(duplicateCheck_, margin, y, content, 26, TRUE);
-    y += 42;
+    move(advancedTitleLabel_, margin, y, content, labelHeight);
+    y += labelHeight + Scale(6);
+    move(similarCheck_, margin, y, content, checkHeight);
+    y += checkHeight + Scale(4);
+    move(duplicateCheck_, margin, y, content, checkHeight);
+    y += checkHeight + sectionGap;
+    move(fourthSeparator_, margin, y, content, Scale(2));
+    y += Scale(2) + sectionGap;
 
-    MoveWindow(generateButton_, margin, y, content - 108, 38, TRUE);
-    MoveWindow(find(IdAbout), width - margin - 100, y, 100, 38, TRUE);
-    y += 46;
-    MoveWindow(statusLabel_, margin, y, content, 36, TRUE);
+    const int aboutWidth = Scale(112);
+    move(generateButton_, margin, y, content - aboutWidth - gap, Scale(38));
+    move(aboutButton_, width - margin - aboutWidth, y, aboutWidth, Scale(38));
+    y += Scale(38) + Scale(10);
+
+    const int statusHeight = Scale(34);
+    const int statusY = std::min(y, std::max(y, height - margin - statusHeight));
+    move(statusLabel_, margin, statusY, content, statusHeight);
 }
 
 void MainWindow::LoadState() {
@@ -594,6 +876,12 @@ void MainWindow::UpdateStrength(int score) {
         score < 60 ? text.medium :
         score < 80 ? text.strong :
                      text.veryStrong;
+
+    const WPARAM progressState =
+        score < 40 ? PBST_ERROR :
+        score < 60 ? PBST_PAUSED :
+                     PBST_NORMAL;
+    SendMessageW(strengthBar_, PBM_SETSTATE, progressState, 0);
 
     std::wstring value = std::wstring(label) + L" · " + std::to_wstring(score) + L"/100";
     SetWindowTextW(strengthLabel_, value.c_str());
