@@ -55,6 +55,7 @@ private:
 
     HFONT uiFont_ = nullptr;
     HFONT sectionFont_ = nullptr;
+    HFONT passwordFont_ = nullptr;
 
     HWND passwordLabel_ = nullptr;
     HWND passwordEdit_ = nullptr;
@@ -92,6 +93,7 @@ private:
     SecureClipboard clipboard_;
     std::string password_;
     bool revealed_ = false;
+    bool statusVisible_ = false;
     bool russian_ = false;
 };
 

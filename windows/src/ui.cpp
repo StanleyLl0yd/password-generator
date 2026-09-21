@@ -17,9 +17,9 @@ namespace {
 constexpr wchar_t kWindowClass[] = L"PasswordGeneratorNativeWindow";
 
 constexpr int kInitialClientWidth = 620;
-constexpr int kInitialClientHeight = 510;
+constexpr int kInitialClientHeight = 500;
 constexpr int kMinimumClientWidth = 520;
-constexpr int kMinimumClientHeight = 490;
+constexpr int kMinimumClientHeight = 500;
 
 constexpr DWORD kWindowStyle = WS_OVERLAPPEDWINDOW;
 
@@ -44,6 +44,9 @@ constexpr int IdAbout = 116;
 constexpr int CmdGenerate = 40001;
 constexpr int CmdCopy = 40002;
 constexpr int CmdHide = 40003;
+
+constexpr UINT_PTR kStatusTimerId = 0x5048;
+constexpr UINT kStatusVisibleMs = 5000;
 
 #ifndef TBS_TRANSPARENTBKGND
 #define TBS_TRANSPARENTBKGND 0x1000
@@ -96,7 +99,7 @@ const Texts kEnglish{
     L"Exclude duplicate characters",
     L"Generate password",
     L"About",
-    L"Password copied. It will be cleared after 60 seconds if it is still current.",
+    L"Password copied · clears in 60 seconds if unchanged.",
     L"Password length must be between 4 and 64 characters.",
     L"Select at least one character set.",
     L"Not enough unique characters for this length without duplicates.",
@@ -125,7 +128,7 @@ const Texts kRussian{
     L"Исключать повторы",
     L"Сгенерировать пароль",
     L"О приложении",
-    L"Пароль скопирован. Через 60 секунд он будет удалён, если останется текущим.",
+    L"Пароль скопирован · очистка через 60 секунд, если не изменён.",
     L"Длина пароля должна быть от 4 до 64 символов.",
     L"Выберите хотя бы один набор символов.",
     L"Недостаточно уникальных символов для такой длины без повторов.",
@@ -383,7 +386,11 @@ LRESULT MainWindow::HandleMessage(UINT message, WPARAM wParam, LPARAM lParam) {
         return 0;
 
     case WM_TIMER:
-        if (wParam == SecureClipboard::kTimerId) clipboard_.ClearIfStillCurrent(hwnd_);
+        if (wParam == SecureClipboard::kTimerId) {
+            clipboard_.ClearIfStillCurrent(hwnd_);
+        } else if (wParam == kStatusTimerId) {
+            ShowStatus(L"");
+        }
         return 0;
 
     case WM_COMMAND: {
@@ -485,6 +492,33 @@ void MainWindow::CreateFonts() {
     LOGFONTW section = metrics.lfMessageFont;
     section.lfWeight = FW_SEMIBOLD;
     sectionFont_ = CreateFontIndirectW(&section);
+
+    LOGFONTW password = metrics.lfMessageFont;
+    password.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
+    password.lfFaceName[0] = L'\0';
+    passwordFont_ = CreateFontIndirectW(&password);
+
+    if (passwordFont_ != nullptr) {
+        HDC dc = GetDC(hwnd_);
+        if (dc != nullptr) {
+            HGDIOBJ previous = SelectObject(dc, passwordFont_);
+            TEXTMETRICW textMetrics{};
+            const bool metricsAvailable = GetTextMetricsW(dc, &textMetrics) != FALSE;
+            if (previous != nullptr && previous != HGDI_ERROR) {
+                SelectObject(dc, previous);
+            }
+            ReleaseDC(hwnd_, dc);
+
+            // TMPF_FIXED_PITCH is counter-intuitive: set means variable pitch.
+            if (!metricsAvailable || (textMetrics.tmPitchAndFamily & TMPF_FIXED_PITCH) != 0) {
+                DeleteObject(passwordFont_);
+                passwordFont_ = nullptr;
+            }
+        } else {
+            DeleteObject(passwordFont_);
+            passwordFont_ = nullptr;
+        }
+    }
 }
 
 void MainWindow::DestroyFonts() {
@@ -496,6 +530,10 @@ void MainWindow::DestroyFonts() {
         DeleteObject(sectionFont_);
         sectionFont_ = nullptr;
     }
+    if (passwordFont_ != nullptr) {
+        DeleteObject(passwordFont_);
+        passwordFont_ = nullptr;
+    }
 }
 
 void MainWindow::ApplyFonts() {
@@ -503,9 +541,14 @@ void MainWindow::ApplyFonts() {
         ? uiFont_
         : static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
     const HFONT section = sectionFont_ != nullptr ? sectionFont_ : ui;
+    const HFONT password = revealed_ && passwordFont_ != nullptr ? passwordFont_ : ui;
 
     for (HWND child = GetWindow(hwnd_, GW_CHILD); child != nullptr; child = GetWindow(child, GW_HWNDNEXT)) {
         SendMessageW(child, WM_SETFONT, reinterpret_cast<WPARAM>(ui), TRUE);
+    }
+
+    if (passwordEdit_ != nullptr) {
+        SendMessageW(passwordEdit_, WM_SETFONT, reinterpret_cast<WPARAM>(password), TRUE);
     }
 
     for (HWND label : {
@@ -602,6 +645,7 @@ void MainWindow::CreateControls() {
         hwnd_, 0, L"BUTTON", text.about, BS_PUSHBUTTON | WS_TABSTOP, IdAbout
     );
     statusLabel_ = addStatic(L"", SS_LEFT | SS_NOPREFIX);
+    ShowWindow(statusLabel_, SW_HIDE);
 
     ApplyFonts();
 
@@ -623,11 +667,11 @@ void MainWindow::LayoutControls(int width, int height) {
 
     const int margin = Scale(20);
     const int gap = Scale(8);
-    const int sectionGap = Scale(14);
+    const int sectionGap = Scale(11);
     const int labelHeight = Scale(20);
     const int fieldHeight = Scale(32);
-    const int compactButtonWidth = Scale(90);
-    const int copyButtonWidth = Scale(98);
+    const int compactButtonWidth = Scale(80);
+    const int copyButtonWidth = Scale(92);
     const int content = std::max(Scale(1), width - margin * 2);
 
     int y = Scale(16);
@@ -666,7 +710,7 @@ void MainWindow::LayoutControls(int width, int height) {
     move(strengthLabel_, margin + content / 2, y, content / 2, labelHeight);
     y += labelHeight + Scale(6);
     move(strengthBar_, margin, y, content, Scale(8));
-    y += Scale(8) + sectionGap + Scale(2);
+    y += Scale(8) + sectionGap;
 
     move(lengthLabel_, margin, y, content, labelHeight);
     y += labelHeight + Scale(6);
@@ -689,7 +733,7 @@ void MainWindow::LayoutControls(int width, int height) {
     move(preset16Button_, presetStart, y, presetWidth, Scale(30));
     move(preset24Button_, presetStart + presetWidth + gap, y, presetWidth, Scale(30));
     move(preset32Button_, presetStart + (presetWidth + gap) * 2, y, presetWidth, Scale(30));
-    y += Scale(30) + sectionGap + Scale(4);
+    y += Scale(30) + sectionGap + Scale(2);
 
     move(charsetsTitleLabel_, margin, y, content, labelHeight);
     y += labelHeight + Scale(6);
@@ -701,23 +745,25 @@ void MainWindow::LayoutControls(int width, int height) {
     y += checkHeight + Scale(4);
     move(digitCheck_, margin, y, half, checkHeight);
     move(symbolCheck_, margin + half + gap, y, half, checkHeight);
-    y += checkHeight + sectionGap + Scale(4);
+    y += checkHeight + sectionGap + Scale(2);
 
     move(advancedTitleLabel_, margin, y, content, labelHeight);
     y += labelHeight + Scale(6);
     move(similarCheck_, margin, y, content, checkHeight);
     y += checkHeight + Scale(4);
     move(duplicateCheck_, margin, y, content, checkHeight);
-    y += checkHeight + sectionGap + Scale(4);
+    y += checkHeight + sectionGap + Scale(2);
 
     const int aboutWidth = Scale(112);
     move(generateButton_, margin, y, content - aboutWidth - gap, Scale(38));
     move(aboutButton_, width - margin - aboutWidth, y, aboutWidth, Scale(38));
     y += Scale(38) + Scale(10);
 
-    const int statusHeight = Scale(28);
-    const int statusY = std::max(y + Scale(2), height - margin - statusHeight);
-    move(statusLabel_, margin, statusY, content, statusHeight);
+    if (statusVisible_) {
+        const int statusHeight = Scale(20);
+        const int statusY = std::max(y + Scale(2), height - margin - statusHeight);
+        move(statusLabel_, margin, statusY, content, statusHeight);
+    }
 }
 
 void MainWindow::LoadState() {
@@ -808,6 +854,11 @@ void MainWindow::CopyPassword() {
 void MainWindow::SetRevealed(bool revealed) {
     revealed_ = revealed;
     SendMessageW(passwordEdit_, EM_SETPASSWORDCHAR, revealed ? 0 : 0x25CF, 0);
+    const HFONT ui = uiFont_ != nullptr
+        ? uiFont_
+        : static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
+    const HFONT password = revealed && passwordFont_ != nullptr ? passwordFont_ : ui;
+    SendMessageW(passwordEdit_, WM_SETFONT, reinterpret_cast<WPARAM>(password), TRUE);
     InvalidateRect(passwordEdit_, nullptr, TRUE);
     SetWindowTextW(revealButton_, revealed ? T(russian_).hide : T(russian_).show);
 
@@ -842,7 +893,19 @@ void MainWindow::UpdateStrength(int score) {
 }
 
 void MainWindow::ShowStatus(const std::wstring& text) {
+    KillTimer(hwnd_, kStatusTimerId);
+
+    statusVisible_ = !text.empty();
     SetWindowTextW(statusLabel_, text.c_str());
+    ShowWindow(statusLabel_, statusVisible_ ? SW_SHOWNA : SW_HIDE);
+
+    if (statusVisible_) {
+        SetTimer(hwnd_, kStatusTimerId, kStatusVisibleMs, nullptr);
+    }
+
+    RECT client{};
+    GetClientRect(hwnd_, &client);
+    LayoutControls(client.right - client.left, client.bottom - client.top);
 }
 
 HRESULT CALLBACK MainWindow::AboutCallback(
