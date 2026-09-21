@@ -19,7 +19,7 @@ constexpr wchar_t kWindowClass[] = L"PasswordGeneratorNativeWindow";
 constexpr int kInitialClientWidth = 620;
 constexpr int kInitialClientHeight = 500;
 constexpr int kMinimumClientWidth = 520;
-constexpr int kMinimumClientHeight = 480;
+constexpr int kMinimumClientHeight = 500;
 
 constexpr DWORD kWindowStyle = WS_OVERLAPPEDWINDOW;
 
@@ -504,7 +504,7 @@ void MainWindow::CreateFonts() {
             HGDIOBJ previous = SelectObject(dc, passwordFont_);
             TEXTMETRICW textMetrics{};
             const bool metricsAvailable = GetTextMetricsW(dc, &textMetrics) != FALSE;
-            if (previous != nullptr) {
+            if (previous != nullptr && previous != HGDI_ERROR) {
                 SelectObject(dc, previous);
             }
             ReleaseDC(hwnd_, dc);
@@ -514,6 +514,9 @@ void MainWindow::CreateFonts() {
                 DeleteObject(passwordFont_);
                 passwordFont_ = nullptr;
             }
+        } else {
+            DeleteObject(passwordFont_);
+            passwordFont_ = nullptr;
         }
     }
 }
@@ -749,7 +752,7 @@ void MainWindow::LayoutControls(int width, int height) {
     move(similarCheck_, margin, y, content, checkHeight);
     y += checkHeight + Scale(4);
     move(duplicateCheck_, margin, y, content, checkHeight);
-    y += checkHeight + sectionGap + Scale(4);
+    y += checkHeight + sectionGap + Scale(2);
 
     const int aboutWidth = Scale(112);
     move(generateButton_, margin, y, content - aboutWidth - gap, Scale(38));
