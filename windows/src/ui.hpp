@@ -30,7 +30,6 @@ private:
     void CreateFonts();
     void DestroyFonts();
     void ApplyFonts();
-    void UpdateWindowChrome();
     void LoadState();
     void SaveState();
     void Generate();
