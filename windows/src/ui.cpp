@@ -5,9 +5,7 @@
 #include "version.hpp"
 
 #include <commctrl.h>
-#include <dwmapi.h>
 #include <shellapi.h>
-#include <uxtheme.h>
 
 #include <algorithm>
 #include <array>
@@ -297,7 +295,6 @@ LRESULT MainWindow::HandleMessage(UINT message, WPARAM wParam, LPARAM lParam) {
         dpi_ = GetDpiForWindow(hwnd_);
         CreateFonts();
         CreateControls();
-        UpdateWindowChrome();
         LoadState();
         Generate();
         return 0;
@@ -514,19 +511,6 @@ void MainWindow::ApplyFonts() {
             SendMessageW(label, WM_SETFONT, reinterpret_cast<WPARAM>(section), TRUE);
         }
     }
-}
-
-void MainWindow::UpdateWindowChrome() {
-    // DWMWA_WINDOW_CORNER_PREFERENCE = 33, DWMWCP_ROUND = 2 on Windows 11.
-    // Windows 10 simply ignores this request.
-    constexpr DWORD kWindowCornerPreferenceAttribute = 33;
-    constexpr DWORD kRoundPreference = 2;
-    DwmSetWindowAttribute(
-        hwnd_,
-        static_cast<DWMWINDOWATTRIBUTE>(kWindowCornerPreferenceAttribute),
-        &kRoundPreference,
-        sizeof(kRoundPreference)
-    );
 }
 
 void MainWindow::CreateControls() {
