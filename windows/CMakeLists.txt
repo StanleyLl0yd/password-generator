@@ -24,6 +24,12 @@ target_compile_options(password_generator_core PRIVATE /W4 /WX /permissive- /EHs
 target_link_libraries(password_generator_core PUBLIC bcrypt advapi32)
 
 set(GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+file(MAKE_DIRECTORY "${GENERATED_DIR}")
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/version.hpp.in"
+    "${GENERATED_DIR}/version.hpp"
+    @ONLY
+)
 set(GENERATED_ICON "${GENERATED_DIR}/PasswordGenerator.ico")
 
 add_custom_command(
@@ -54,8 +60,17 @@ add_executable(PasswordGenerator WIN32
     "${GENERATED_DIR}/password-generator.rc"
 )
 add_dependencies(PasswordGenerator password_generator_icon)
-target_include_directories(PasswordGenerator PRIVATE res)
-target_compile_definitions(PasswordGenerator PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
+target_include_directories(PasswordGenerator PRIVATE res "${GENERATED_DIR}")
+target_compile_definitions(
+    PasswordGenerator
+    PRIVATE
+        UNICODE
+        _UNICODE
+        WIN32_LEAN_AND_MEAN
+        NOMINMAX
+        WINVER=0x0A00
+        _WIN32_WINNT=0x0A00
+)
 target_compile_options(PasswordGenerator PRIVATE /W4 /WX /permissive- /EHsc /utf-8)
 target_link_options(PasswordGenerator PRIVATE
     /DYNAMICBASE
@@ -70,8 +85,6 @@ target_link_libraries(PasswordGenerator PRIVATE
     gdi32
     comctl32
     shell32
-    uxtheme
-    dwmapi
 )
 
 enable_testing()
