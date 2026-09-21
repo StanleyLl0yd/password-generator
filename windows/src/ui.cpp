@@ -556,12 +556,6 @@ void MainWindow::CreateControls() {
     );
     SendMessageW(lengthSlider_, TBM_SETRANGE, TRUE, MAKELONG(kMinLength, kMaxLength));
     SendMessageW(lengthSlider_, TBM_SETPAGESIZE, 0, 4);
-    SendMessageW(
-        lengthSlider_,
-        TBM_SETBKCOLOR,
-        0,
-        static_cast<LPARAM>(GetSysColor(COLOR_3DFACE))
-    );
 
     lengthMinusButton_ = AddControl(
         hwnd_, 0, L"BUTTON", L"−", BS_PUSHBUTTON | WS_TABSTOP, IdLengthMinus
