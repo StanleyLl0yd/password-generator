@@ -64,7 +64,6 @@ private:
     HWND strengthTitleLabel_ = nullptr;
     HWND strengthBar_ = nullptr;
     HWND strengthLabel_ = nullptr;
-    HWND firstSeparator_ = nullptr;
 
     HWND lengthLabel_ = nullptr;
     HWND lengthSlider_ = nullptr;
@@ -73,19 +72,16 @@ private:
     HWND preset16Button_ = nullptr;
     HWND preset24Button_ = nullptr;
     HWND preset32Button_ = nullptr;
-    HWND secondSeparator_ = nullptr;
 
     HWND charsetsTitleLabel_ = nullptr;
     HWND lowerCheck_ = nullptr;
     HWND upperCheck_ = nullptr;
     HWND digitCheck_ = nullptr;
     HWND symbolCheck_ = nullptr;
-    HWND thirdSeparator_ = nullptr;
 
     HWND advancedTitleLabel_ = nullptr;
     HWND similarCheck_ = nullptr;
     HWND duplicateCheck_ = nullptr;
-    HWND fourthSeparator_ = nullptr;
 
     HWND generateButton_ = nullptr;
     HWND aboutButton_ = nullptr;
