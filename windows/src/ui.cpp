@@ -612,28 +612,6 @@ void MainWindow::CreateControls() {
         MAKELPARAM(Scale(8), Scale(8))
     );
 
-    for (HWND control : {
-            passwordEdit_,
-            revealButton_,
-            copyButton_,
-            strengthBar_,
-            lengthSlider_,
-            lengthMinusButton_,
-            lengthPlusButton_,
-            preset16Button_,
-            preset24Button_,
-            preset32Button_,
-            lowerCheck_,
-            upperCheck_,
-            digitCheck_,
-            symbolCheck_,
-            similarCheck_,
-            duplicateCheck_,
-            generateButton_,
-            aboutButton_
-        }) {
-        SetWindowTheme(control, L"Explorer", nullptr);
-    }
 
     RECT client{};
     GetClientRect(hwnd_, &client);
