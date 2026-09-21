@@ -117,6 +117,15 @@ jobs:
         shell: pwsh
         run: windows/scripts/verify-binary.ps1 -Executable "build/windows/Release/PasswordGenerator.exe"
 
+      - name: Upload Windows UI preview
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: password-generator-windows-ui-preview-${{ github.sha }}
+          path: build/windows/Release/PasswordGenerator.exe
+          if-no-files-found: error
+          retention-days: 7
+
   macos:
     name: macOS native
     runs-on: macos-15
