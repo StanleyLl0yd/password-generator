@@ -85,8 +85,6 @@ target_link_libraries(PasswordGenerator PRIVATE
     gdi32
     comctl32
     shell32
-    uxtheme
-    dwmapi
 )
 
 enable_testing()
