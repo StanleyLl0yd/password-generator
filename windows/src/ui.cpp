@@ -762,7 +762,7 @@ void MainWindow::LayoutControls(int width, int height) {
     y += Scale(38) + Scale(10);
 
     const int statusHeight = Scale(34);
-    const int statusY = std::min(y, std::max(y, height - margin - statusHeight));
+    const int statusY = std::max(y, height - margin - statusHeight);
     move(statusLabel_, margin, statusY, content, statusHeight);
 }
 
