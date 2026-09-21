@@ -208,7 +208,7 @@ bool MainWindow::Create(HINSTANCE instance, int showCommand) {
         .hInstance = instance_,
         .hIcon = LoadIconW(instance_, MAKEINTRESOURCEW(IDI_APP_ICON)),
         .hCursor = LoadCursorW(nullptr, IDC_ARROW),
-        .hbrBackground = GetSysColorBrush(COLOR_WINDOW),
+        .hbrBackground = GetSysColorBrush(COLOR_3DFACE),
         .lpszMenuName = nullptr,
         .lpszClassName = kWindowClass,
         .hIconSm = LoadIconW(instance_, MAKEINTRESOURCEW(IDI_APP_ICON))
@@ -351,9 +351,17 @@ LRESULT MainWindow::HandleMessage(UINT message, WPARAM wParam, LPARAM lParam) {
     case WM_CTLCOLORSTATIC: {
         HDC dc = reinterpret_cast<HDC>(wParam);
         HWND control = reinterpret_cast<HWND>(lParam);
+
+        if (control == passwordEdit_) {
+            SetBkMode(dc, OPAQUE);
+            SetBkColor(dc, GetSysColor(COLOR_WINDOW));
+            SetTextColor(dc, GetSysColor(COLOR_WINDOWTEXT));
+            return reinterpret_cast<LRESULT>(GetSysColorBrush(COLOR_3DFACE));
+        }
+
         SetBkMode(dc, TRANSPARENT);
         SetTextColor(dc, GetSysColor(control == statusLabel_ ? COLOR_GRAYTEXT : COLOR_WINDOWTEXT));
-        return reinterpret_cast<LRESULT>(GetSysColorBrush(COLOR_WINDOW));
+        return reinterpret_cast<LRESULT>(GetSysColorBrush(COLOR_3DFACE));
     }
 
     case WM_CTLCOLORBTN: {
@@ -548,6 +556,12 @@ void MainWindow::CreateControls() {
     );
     SendMessageW(lengthSlider_, TBM_SETRANGE, TRUE, MAKELONG(kMinLength, kMaxLength));
     SendMessageW(lengthSlider_, TBM_SETPAGESIZE, 0, 4);
+    SendMessageW(
+        lengthSlider_,
+        TBM_SETBKCOLOR,
+        0,
+        static_cast<LPARAM>(GetSysColor(COLOR_3DFACE))
+    );
 
     lengthMinusButton_ = AddControl(
         hwnd_, 0, L"BUTTON", L"−", BS_PUSHBUTTON | WS_TABSTOP, IdLengthMinus
