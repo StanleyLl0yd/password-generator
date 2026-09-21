@@ -27,6 +27,10 @@ private:
     LRESULT HandleMessage(UINT message, WPARAM wParam, LPARAM lParam);
     void CreateControls();
     void LayoutControls(int width, int height);
+    void CreateFonts();
+    void DestroyFonts();
+    void ApplyFonts();
+    void UpdateWindowChrome();
     void LoadState();
     void SaveState();
     void Generate();
@@ -39,27 +43,53 @@ private:
     void ShowStatus(const std::wstring& text);
     void ClearPassword();
 
+    int Scale(int value) const;
+    bool IsCheckbox(HWND control) const;
+
     static bool IsRussian();
     static std::wstring Widen(const std::string& value);
 
     HINSTANCE instance_ = nullptr;
     HWND hwnd_ = nullptr;
     HACCEL accelerators_ = nullptr;
+    UINT dpi_ = 96;
 
+    HFONT uiFont_ = nullptr;
+    HFONT sectionFont_ = nullptr;
+
+    HWND passwordLabel_ = nullptr;
     HWND passwordEdit_ = nullptr;
     HWND revealButton_ = nullptr;
     HWND copyButton_ = nullptr;
+
+    HWND strengthTitleLabel_ = nullptr;
     HWND strengthBar_ = nullptr;
     HWND strengthLabel_ = nullptr;
+    HWND firstSeparator_ = nullptr;
+
     HWND lengthLabel_ = nullptr;
     HWND lengthSlider_ = nullptr;
+    HWND lengthMinusButton_ = nullptr;
+    HWND lengthPlusButton_ = nullptr;
+    HWND preset16Button_ = nullptr;
+    HWND preset24Button_ = nullptr;
+    HWND preset32Button_ = nullptr;
+    HWND secondSeparator_ = nullptr;
+
+    HWND charsetsTitleLabel_ = nullptr;
     HWND lowerCheck_ = nullptr;
     HWND upperCheck_ = nullptr;
     HWND digitCheck_ = nullptr;
     HWND symbolCheck_ = nullptr;
+    HWND thirdSeparator_ = nullptr;
+
+    HWND advancedTitleLabel_ = nullptr;
     HWND similarCheck_ = nullptr;
     HWND duplicateCheck_ = nullptr;
+    HWND fourthSeparator_ = nullptr;
+
     HWND generateButton_ = nullptr;
+    HWND aboutButton_ = nullptr;
     HWND statusLabel_ = nullptr;
 
     Preferences preferences_;
