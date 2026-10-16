@@ -182,6 +182,7 @@ dependencies {
 val dependencyAuditFile = layout.buildDirectory.file("reports/dependencies/coordinates.txt")
 tasks.register("writeDependencyAudit") {
     outputs.file(dependencyAuditFile)
+    outputs.upToDateWhen { false }
     doLast {
         val loadedR8 = com.android.tools.r8.Version.getVersionString()
         check(loadedR8.startsWith(libs.versions.r8.get())) { "Unexpected loaded R8: $loadedR8" }

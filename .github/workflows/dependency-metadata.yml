@@ -72,3 +72,25 @@ jobs:
             METADATA_SHA256
           if-no-files-found: error
           retention-days: 14
+
+  qodana-image-review:
+    name: Read official Qodana image digest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Read registry metadata for explicit pin review
+        run: |
+          curl --fail --silent --show-error https://hub.docker.com/v2/repositories/jetbrains/qodana-jvm-android/tags/2026.2 > "$RUNNER_TEMP/qodana-image.json"
+          python3 - <<'DIGEST'
+          import json
+          import os
+          import re
+          from pathlib import Path
+          data = json.loads(Path(os.environ["RUNNER_TEMP"], "qodana-image.json").read_text())
+          digest = data["digest"]
+          if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+              raise SystemExit("Invalid registry image digest")
+          print("REVIEWED_QODANA_IMAGE=" + digest)
+          print(json.dumps(data.get("images"), sort_keys=True))
+          DIGEST
