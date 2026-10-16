@@ -182,6 +182,9 @@ val dependencyAuditFile = layout.buildDirectory.file("reports/dependencies/coord
 tasks.register("writeDependencyAudit") {
     outputs.file(dependencyAuditFile)
     doLast {
+        val loadedR8 = com.android.tools.r8.Version.getVersionString()
+        check(loadedR8.startsWith(libs.versions.r8.get())) { "Unexpected loaded R8: $loadedR8" }
+        println("Verified loaded R8: $loadedR8")
         val audited = listOf(
             "releaseRuntimeClasspath", "debugUnitTestRuntimeClasspath",
             "debugAndroidTestRuntimeClasspath", "detekt"
