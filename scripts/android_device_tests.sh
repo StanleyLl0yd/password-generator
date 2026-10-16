@@ -23,8 +23,21 @@ grep -Eq '^OK \([1-9][0-9]* tests?\)' build/instrumentation.txt
 if [[ "$api" = 36 ]]; then
   mkdir -p build/store-screenshots
   adb pull /sdcard/Android/data/com.sl.passwordgenerator/files/store-screenshots/. build/store-screenshots/
-  test -s build/store-screenshots/01-generator.png
-  test -s build/store-screenshots/02-about.png
+  python3 - <<'CHECK_SCREENSHOTS'
+from pathlib import Path
+import struct
+for name in ('01-generator.png', '02-about.png'):
+    with (Path('build/store-screenshots') / name).open('rb') as image:
+        header = image.read(33)
+    if len(header) != 33 or header[:8] != b'\x89PNG\r\n\x1a\n' or header[8:16] != b'\x00\x00\x00\rIHDR':
+        raise SystemExit(f'{name}: invalid PNG header')
+    width, height, depth, color, _, _, _ = struct.unpack('>IIBBBBB', header[16:29])
+    if depth != 8 or color != 2:
+        raise SystemExit(f'{name}: Google Play requires 24-bit RGB PNG without alpha')
+    if not (320 <= min(width, height) <= max(width, height) <= 3840) or max(width, height) > 2 * min(width, height):
+        raise SystemExit(f'{name}: unsupported screenshot dimensions {width}x{height}')
+    print(f'{name}: {width}x{height}, 24-bit RGB PNG: OK')
+CHECK_SCREENSHOTS
   git rev-parse HEAD > build/store-screenshots/SOURCE_COMMIT
 fi
 
