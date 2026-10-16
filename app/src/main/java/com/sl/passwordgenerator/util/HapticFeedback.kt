@@ -25,6 +25,7 @@ object HapticFeedback {
             )
             vibrator.vibrate(effect)
         } catch (_: Exception) {
+            // Haptics are optional; a vibration failure must not interrupt password generation.
         }
     }
 

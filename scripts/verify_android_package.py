@@ -34,6 +34,7 @@ def verify_manifest(text, version, version_code):
     app = root.find('application')
     require(app is not None, 'Missing application')
     require(app.get(ANDROID + 'allowBackup') == 'false', 'Backup must be disabled')
+    require(app.get(ANDROID + 'usesCleartextTraffic') == 'false', 'Cleartext traffic must be explicitly disabled')
     require(app.get(ANDROID + 'debuggable', 'false') == 'false', 'Release is debuggable')
     for tag in ('activity', 'activity-alias', 'service', 'receiver', 'provider'):
         for node in app.findall(tag):
