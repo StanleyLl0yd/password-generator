@@ -9,7 +9,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isRoot
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -45,7 +45,7 @@ class StoreScreenshotsTest {
         val about = capture(
             "02-about.png",
             rule.onNode(
-                isRoot() and hasAnyDescendant(hasText(context.getString(R.string.about_description))),
+                isDialog() and hasAnyDescendant(hasText(context.getString(R.string.about_description))),
                 useUnmergedTree = true
             )
         )
