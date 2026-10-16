@@ -15,7 +15,10 @@ void Require(bool condition, const char* message) {
 int main() {
     HWND owner = CreateWindowExW(0, L"STATIC", L"Clipboard test", 0, 0, 0, 0, 0,
                                 HWND_MESSAGE, nullptr, GetModuleHandleW(nullptr), nullptr);
-    Require(owner != nullptr, "clipboard owner created");
+    if (owner == nullptr) {
+        std::cerr << "FAIL: clipboard owner creation failed\n";
+        return 1;
+    }
     pg::SecureClipboard first;
     pg::SecureClipboard second;
     Require(first.Copy(owner, L"clipboard-test-fixture"), "initial copy");

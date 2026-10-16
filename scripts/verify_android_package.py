@@ -50,8 +50,9 @@ def verify_native_libraries(archive):
             if not name.endswith('.so'):
                 continue
             data = bundle.read(name)
-            require(data[:4] == b'\x7fELF', f'{name}: invalid ELF')
+            require(len(data) >= 16 and data[:4] == b'\x7fELF', f'{name}: invalid ELF')
             require(data[5] == 1, f'{name}: unsupported ELF endianness')
+            require(len(data) >= (64 if data[4] == 2 else 52), f'{name}: truncated ELF header')
             if data[4] == 2:
                 phoff = struct.unpack_from('<Q', data, 32)[0]
                 size, count = struct.unpack_from('<HH', data, 54)
@@ -78,7 +79,6 @@ def verify_native_libraries(archive):
                 require(alignment > 0 and alignment & (alignment - 1) == 0, f'{name}: invalid alignment')
                 if data[4] == 2:
                     require(alignment >= 16384, f'{name}: PT_LOAD below 16 KB')
-                if data[4] == 2:
                     require(offset % 16384 == address % 16384, f'{name}: PT_LOAD offset alignment')
             require(loads, f'{name}: no loadable segments')
             native_count += 1
