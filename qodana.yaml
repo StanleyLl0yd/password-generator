@@ -1,5 +1,5 @@
 version: "1.0"
-linter: jetbrains/qodana-jvm-android:2026.2
+linter: jetbrains/qodana-jvm-android:2026.2@sha256:8a545794078fe9c39beb05061aa8bb4037c45a365a7b2f9f3e61512eafc64b99
 profile:
   name: qodana.recommended
 failThreshold: 0

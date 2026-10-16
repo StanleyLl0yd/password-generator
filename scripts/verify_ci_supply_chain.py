@@ -61,6 +61,14 @@ for root in ROOTS:
                         f"{path}:{number}: container image must be pinned by sha256 digest"
                     )
 
+qodana_path = Path("qodana.yaml")
+if qodana_path.exists():
+    for line in qodana_path.read_text(encoding="utf-8").splitlines():
+        if line.startswith("linter:"):
+            target = line.split(":", 1)[1].strip()
+            if target.startswith("jetbrains/") and not DIGEST.search(target):
+                errors.append("qodana.yaml: container linter must be pinned by sha256 digest")
+
 if errors:
     raise SystemExit("\n".join(errors))
 
