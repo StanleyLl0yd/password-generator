@@ -96,7 +96,7 @@ CI дополнительно проверяет release APK с R8/shrink resour
 
 | Категория | Технология |
 | --- | --- |
-| Android | Kotlin 2.2.0, Jetpack Compose, Material 3, DataStore |
+| Android | Kotlin 2.4.20, Jetpack Compose, Material 3, DataStore |
 | Windows | C++20, Win32, Common Controls, BCrypt, Registry |
 | macOS | Swift, AppKit, Foundation, Security, UserDefaults |
 | Общее | Спецификации продукта, privacy/UX contracts и проверки паритета |

@@ -96,7 +96,7 @@ A local release build requires a local `key.properties` that points to a keystor
 
 | Category | Technology |
 | --- | --- |
-| Android | Kotlin 2.2.0, Jetpack Compose, Material 3, DataStore |
+| Android | Kotlin 2.4.20, Jetpack Compose, Material 3, DataStore |
 | Windows | C++20, Win32, Common Controls, BCrypt, Registry |
 | macOS | Swift, AppKit, Foundation, Security, UserDefaults |
 | Shared | Product specifications, privacy/UX contracts and parity checks |

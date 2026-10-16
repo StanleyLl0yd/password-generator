@@ -1,0 +1,55 @@
+name: Prepare dependency verification metadata
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - gradle/libs.versions.toml
+      - build.gradle.kts
+      - .github/workflows/dependency-metadata.yml
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: dependency-metadata-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    name: Prepare reviewable checksums
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+      - name: Verify supply chain
+        run: python3 scripts/verify_ci_supply_chain.py
+      - name: Set up Android build environment
+        uses: ./.github/actions/android-gradle-setup
+      - name: Install Android 36 platform
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Generate proposed metadata and verify source
+        run: |
+          ./gradlew --write-verification-metadata sha256 writeDependencyAudit assembleDebug assembleDebugAndroidTest testDebugUnitTest detekt --stacktrace
+          git rev-parse HEAD > SOURCE_COMMIT
+          sha256sum gradle/verification-metadata.xml > METADATA_SHA256
+      - name: Audit proposed resolved dependencies
+        run: python3 scripts/audit_android_dependencies.py
+      - name: Upload metadata for explicit review
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: dependency-metadata-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            gradle/verification-metadata.xml
+            app/build/reports/dependencies/
+            SOURCE_COMMIT
+            METADATA_SHA256
+          if-no-files-found: error
+          retention-days: 14
