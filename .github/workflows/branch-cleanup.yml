@@ -23,9 +23,16 @@ jobs:
         with:
           script: |
             const ref = `heads/${context.payload.pull_request.head.ref}`;
-            await github.rest.git.deleteRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref
-            });
-            core.info(`Deleted ${ref}`);
+            try {
+              await github.rest.git.deleteRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref
+              });
+              core.info(`Deleted ${ref}`);
+            } catch (error) {
+              if (error.status !== 422 || error.response?.data?.message !== 'Reference does not exist') {
+                throw error;
+              }
+              core.info(`Already deleted ${ref}`);
+            }

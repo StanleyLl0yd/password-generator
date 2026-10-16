@@ -7,10 +7,20 @@ test "${#tests[@]}" = 1
 adb install -r "${apps[0]}"
 adb install -r "${tests[0]}"
 mkdir -p build
+api="$(adb shell getprop ro.build.version.sdk | tr -d '\r')"
+screenshots_class=com.sl.passwordgenerator.StoreScreenshotsTest
+test_filter=()
+if [[ "$api" = 36 ]]; then
+  adb shell am instrument -w -r -e class "$screenshots_class" \
+    com.sl.passwordgenerator.test/androidx.test.runner.AndroidJUnitRunner | tee build/store-screenshots-test.txt
+  grep -Eq '^OK \([1-9][0-9]* tests?\)' build/store-screenshots-test.txt
+  test_filter=(-e notClass "$screenshots_class")
+fi
 adb shell am instrument -w -r \
+  "${test_filter[@]}" \
   com.sl.passwordgenerator.test/androidx.test.runner.AndroidJUnitRunner | tee build/instrumentation.txt
 grep -Eq '^OK \([1-9][0-9]* tests?\)' build/instrumentation.txt
-if [[ "$(adb shell getprop ro.build.version.sdk | tr -d '\r')" = 36 ]]; then
+if [[ "$api" = 36 ]]; then
   mkdir -p build/store-screenshots
   adb pull /sdcard/Android/data/com.sl.passwordgenerator/files/store-screenshots/. build/store-screenshots/
   test -s build/store-screenshots/01-generator.png
