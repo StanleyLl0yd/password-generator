@@ -39,6 +39,11 @@ jobs:
           ./gradlew --write-verification-metadata sha256 writeDependencyAudit assembleDebug assembleDebugAndroidTest testDebugUnitTest detekt --stacktrace
           git rev-parse HEAD > SOURCE_COMMIT
           sha256sum gradle/verification-metadata.xml > METADATA_SHA256
+      - name: Expose proposed checksums for review
+        run: |
+          echo BEGIN_REVIEWED_DEPENDENCY_METADATA
+          cat gradle/verification-metadata.xml
+          echo END_REVIEWED_DEPENDENCY_METADATA
       - name: Audit proposed resolved dependencies
         run: python3 scripts/audit_android_dependencies.py
       - name: Upload metadata for explicit review
