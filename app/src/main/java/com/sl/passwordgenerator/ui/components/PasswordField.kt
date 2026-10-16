@@ -151,7 +151,7 @@ fun PasswordField(
                         } else {
                             MaterialTheme.colorScheme.onSurface
                         },
-                        maxLines = if (passwordVisible) 2 else 1,
+                        maxLines = if (passwordVisible) Int.MAX_VALUE else 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
