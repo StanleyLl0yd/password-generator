@@ -6,6 +6,7 @@ import java.io.FileInputStream
 import javax.imageio.ImageIO
 import java.util.Properties
 import org.gradle.api.GradleException
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 
 plugins {
     alias(libs.plugins.android.application)
@@ -106,8 +107,8 @@ android {
         applicationId = "com.sl.passwordgenerator"
         minSdk = 26
         targetSdk = 36
-        versionCode = 19
-        versionName = "1.6.1"
+        versionCode = 20
+        versionName = "1.6.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -176,4 +177,30 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+val dependencyAuditFile = layout.buildDirectory.file("reports/dependencies/coordinates.txt")
+tasks.register("writeDependencyAudit") {
+    outputs.file(dependencyAuditFile)
+    outputs.upToDateWhen { false }
+    doLast {
+        val loadedR8 = com.android.tools.r8.Version.getVersionString()
+        check(loadedR8.startsWith(libs.versions.r8.get())) { "Unexpected loaded R8: $loadedR8" }
+        println("Verified loaded R8: $loadedR8")
+        val audited = listOf(
+            "releaseRuntimeClasspath", "debugUnitTestRuntimeClasspath",
+            "debugAndroidTestRuntimeClasspath", "detekt"
+        ).map { configurations.getByName(it) } + listOf(rootProject.buildscript.configurations.getByName("classpath"))
+        val coordinates = audited.flatMap { configuration ->
+            configuration.incoming.resolutionResult.allComponents.mapNotNull {
+                (it.id as? ModuleComponentIdentifier)?.let { id ->
+                    "${id.group}:${id.module}:${id.version}"
+                }
+            }
+        }.toSortedSet()
+        dependencyAuditFile.get().asFile.apply {
+            parentFile.mkdirs()
+            writeText(coordinates.joinToString("\n", postfix = "\n"))
+        }
+    }
 }

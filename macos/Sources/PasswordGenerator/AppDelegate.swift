@@ -65,6 +65,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func copyGeneratedPassword(_ sender: Any?) {
-        mainWindowController?.handleCopyCommand()
+        mainWindowController?.copyPassword(sender)
     }
 }

@@ -5,7 +5,6 @@ final class SecureClipboard {
     static let clearDelay: TimeInterval = 60
 
     private var workItem: DispatchWorkItem?
-    private var copiedValue: String?
     private var changeCount: Int?
 
     func copy(_ password: String) {
@@ -16,7 +15,6 @@ final class SecureClipboard {
         pasteboard.setString(password, forType: .string)
 
         workItem?.cancel()
-        copiedValue = password
         changeCount = pasteboard.changeCount
 
         let item = DispatchWorkItem { [weak self] in
@@ -31,7 +29,6 @@ final class SecureClipboard {
     func forget() {
         workItem?.cancel()
         workItem = nil
-        copiedValue = nil
         changeCount = nil
     }
 
@@ -39,10 +36,8 @@ final class SecureClipboard {
         defer { forget() }
 
         guard
-            let copiedValue,
             let changeCount,
-            NSPasteboard.general.changeCount == changeCount,
-            NSPasteboard.general.string(forType: .string) == copiedValue
+            NSPasteboard.general.changeCount == changeCount
         else {
             return
         }

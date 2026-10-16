@@ -130,6 +130,43 @@ class PasswordGeneratorTest {
         assertTrue(generator.estimatePasswordScore("fK7!pQ3@vN9#xR4%") >= 80)
     }
 
+    @Test
+    fun generationContractHoldsAcrossAllOptionsAndBoundaryLengths() {
+        for (mask in 0..15) for (flags in 0..3) for (length in listOf(4, 16, 64)) {
+            assertGenerationContract(mask, flags and 1 != 0, flags and 2 != 0, length)
+        }
+    }
+
+    private fun assertGenerationContract(mask: Int, similar: Boolean, duplicates: Boolean, length: Int) {
+        val groups = listOf(
+            PasswordConstants.LOWERCASE_CHARS, PasswordConstants.UPPERCASE_CHARS,
+            PasswordConstants.DIGIT_CHARS, PasswordConstants.SYMBOL_CHARS
+        )
+        val enabled = groups.filterIndexed { index, _ -> mask and (1 shl index) != 0 }
+            .map { group -> if (similar) group.filterNot { it in PasswordConstants.SIMILAR_CHARS } else group }
+        val pool = enabled.joinToString("")
+        val preferences = config(
+            length, mask and 1 != 0, mask and 2 != 0, mask and 4 != 0,
+            mask and 8 != 0, similar, duplicates
+        )
+        val result = generator.generate(preferences)
+        when {
+            pool.isEmpty() -> assertEquals(
+                PasswordGenerationResult.Error(PasswordGenerationError.NO_CHARSETS), result
+            )
+            duplicates && length > pool.length -> assertEquals(
+                PasswordGenerationResult.Error(PasswordGenerationError.NOT_ENOUGH_UNIQUE_CHARS), result
+            )
+            else -> {
+                val password = (result as PasswordGenerationResult.Success).password
+                assertEquals(length, password.length)
+                assertTrue(password.all { it in pool })
+                assertTrue(enabled.all { group -> password.any { it in group } })
+                if (duplicates) assertEquals(length, password.toSet().size)
+            }
+        }
+    }
+
     private fun generatePassword(config: GeneratorPreferences): String =
         when (val result = generator.generate(config)) {
             is PasswordGenerationResult.Success -> result.password

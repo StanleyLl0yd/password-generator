@@ -1,6 +1,11 @@
 name: Security and Quality
 
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/security.yml
+      - qodana.yaml
   workflow_dispatch:
   schedule:
     - cron: "47 4 * * 1"
@@ -37,13 +42,27 @@ jobs:
       - name: Install Android 36 platform
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Prepare Gradle dependencies
-        run: ./gradlew :app:dependencies --stacktrace
+      - name: Prepare Gradle dependencies and generated resources
+        run: ./gradlew assembleDebug --stacktrace
 
       - name: Run Qodana
         uses: JetBrains/qodana-action@10be11607eb323a180e2b76b26c9c5cdceac3e77 # v2026.2.1
         with:
-          args: --within-docker,false,--print-problems
+          args: --within-docker false --print-problems
           pr-mode: false
           upload-result: true
           artifact-name: qodana-report
+
+      - name: Summarize analysis and sanity diagnostics
+        if: always()
+        run: |
+          python3 - <<'REPORT'
+          import json
+          import os
+          from pathlib import Path
+          for path in Path(os.environ["RUNNER_TEMP"], "qodana", "results").rglob("*.sarif.json"):
+              report = json.loads(path.read_text())
+              for run in report.get("runs", []):
+                  for result in run.get("results", []):
+                      print(json.dumps({key: result.get(key) for key in ("ruleId", "message", "locations")}))
+          REPORT

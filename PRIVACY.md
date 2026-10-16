@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: September 18, 2026
+Last updated: October 16, 2026
 
 Password Generator is a privacy-focused offline password generator with native applications for Android, Windows, and macOS.
 
@@ -30,11 +30,15 @@ Generated passwords are kept only in process memory and are not stored persisten
 
 When a password is explicitly revealed, the application enables the strongest practical native screen-capture exclusion available on that platform. This is a best-effort operating-system protection and does not claim to prevent physical photography or capture by privileged/compromised software.
 
+On current macOS releases, `NSWindow.sharingType` is a legacy sharing hint, not a reliable restriction on screen recording. A revealed password may still be captured by screen-recording software. The application retains the native hint for older supported systems and does not claim a macOS capture guarantee.
+
 ## Clipboard
 
 When the user copies a password, it is placed in the operating system clipboard.
 
 Where the platform supports the relevant mechanism, Password Generator treats the value as sensitive and schedules cleanup after 60 seconds. Cleanup is conditional: the application clears only its own still-current copied value and does not erase clipboard content that has subsequently been replaced by the user or another application.
+
+On Windows, the application requests exclusion of its clipboard value from Windows clipboard history and Cloud Clipboard using the native exclusion marker.
 
 Clipboard behavior is also subject to operating-system policies and other software with clipboard access.
 

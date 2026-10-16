@@ -68,3 +68,6 @@ CMakeCache.txt
 *.msix
 *.dmg
 *.app/
+
+__pycache__/
+*.pyc

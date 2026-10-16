@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 
 ROOTS = (Path(".github/workflows"), Path(".github/actions"))
-ACTION_REF = re.compile(r"^\s*uses:\s*([^\s#]+)")
+ACTION_REF = re.compile(r"^\s*(?:-\s*)?uses:\s*([^\s#]+)")
 IMAGE = re.compile(r"^\s*image:\s*([^\s#]+)")
 FULL_SHA = re.compile(r"^[0-9a-f]{40}$")
 DIGEST = re.compile(r"@sha256:[0-9a-f]{64}$")
@@ -60,6 +60,14 @@ for root in ROOTS:
                     errors.append(
                         f"{path}:{number}: container image must be pinned by sha256 digest"
                     )
+
+qodana_path = Path("qodana.yaml")
+if qodana_path.exists():
+    for line in qodana_path.read_text(encoding="utf-8").splitlines():
+        if line.startswith("linter:"):
+            target = line.split(":", 1)[1].strip()
+            if target.startswith("jetbrains/") and not DIGEST.search(target):
+                errors.append("qodana.yaml: container linter must be pinned by sha256 digest")
 
 if errors:
     raise SystemExit("\n".join(errors))

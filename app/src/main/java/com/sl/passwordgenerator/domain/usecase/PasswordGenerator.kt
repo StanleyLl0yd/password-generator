@@ -90,13 +90,13 @@ class PasswordGenerator {
         val availableChars = if (excludeDuplicates) pool.allChars.toMutableList() else null
 
         for (group in pool.groups) {
-            val char = group[secureRandom.nextInt(group.length)]
+            val char: Char = group[secureRandom.nextInt(group.length)]
             result.append(char)
             availableChars?.remove(char)
         }
 
         while (result.length < length) {
-            val char = availableChars?.let { chars ->
+            val char: Char = availableChars?.let { chars ->
                 chars.removeAt(secureRandom.nextInt(chars.size))
             } ?: pool.allChars[secureRandom.nextInt(pool.allChars.length)]
             result.append(char)

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 
-project(PasswordGeneratorWindows VERSION 1.6.1 LANGUAGES CXX)
+project(PasswordGeneratorWindows VERSION 1.6.2 LANGUAGES CXX)
 
 if(NOT WIN32)
     message(FATAL_ERROR "The Windows application must be built on Windows.")
@@ -20,7 +20,7 @@ add_library(password_generator_core
 )
 target_include_directories(password_generator_core PUBLIC src)
 target_compile_definitions(password_generator_core PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-target_compile_options(password_generator_core PRIVATE /W4 /WX /permissive- /EHsc /utf-8)
+target_compile_options(password_generator_core PRIVATE /W4 /WX /permissive- /EHsc /utf-8 /analyze)
 target_link_libraries(password_generator_core PUBLIC bcrypt advapi32)
 
 set(GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
@@ -46,7 +46,6 @@ add_custom_command(
 add_custom_target(password_generator_icon DEPENDS "${GENERATED_ICON}")
 
 file(TO_CMAKE_PATH "${GENERATED_ICON}" ICON_PATH)
-file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/res/password-generator.manifest" MANIFEST_PATH)
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/res/password-generator.rc.in"
     "${GENERATED_DIR}/password-generator.rc"
@@ -71,7 +70,7 @@ target_compile_definitions(
         WINVER=0x0A00
         _WIN32_WINNT=0x0A00
 )
-target_compile_options(PasswordGenerator PRIVATE /W4 /WX /permissive- /EHsc /utf-8)
+target_compile_options(PasswordGenerator PRIVATE /W4 /WX /permissive- /EHsc /utf-8 /analyze)
 target_link_options(PasswordGenerator PRIVATE
     /DYNAMICBASE
     /NXCOMPAT
@@ -90,8 +89,15 @@ target_link_libraries(PasswordGenerator PRIVATE
 enable_testing()
 add_executable(password_generator_tests tests/generator_tests.cpp)
 target_compile_definitions(password_generator_tests PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-target_compile_options(password_generator_tests PRIVATE /W4 /WX /permissive- /EHsc /utf-8)
+target_compile_options(password_generator_tests PRIVATE /W4 /WX /permissive- /EHsc /utf-8 /analyze)
 target_link_libraries(password_generator_tests PRIVATE password_generator_core)
 add_test(NAME generator_contract COMMAND password_generator_tests)
+
+add_executable(clipboard_tests tests/clipboard_tests.cpp src/clipboard.cpp)
+target_include_directories(clipboard_tests PRIVATE src)
+target_compile_definitions(clipboard_tests PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
+target_compile_options(clipboard_tests PRIVATE /W4 /WX /permissive- /EHsc /utf-8 /analyze)
+target_link_libraries(clipboard_tests PRIVATE user32)
+add_test(NAME clipboard_ownership COMMAND clipboard_tests)
 
 install(TARGETS PasswordGenerator RUNTIME DESTINATION .)

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
+import json
 import re
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -32,24 +33,32 @@ for needle, haystack, label in checks:
     if needle not in haystack:
         raise SystemExit(f"{label} is not synchronized with VERSION={version}")
 
+vectors = json.loads((ROOT / "shared/test-vectors/generator-contract.json").read_text())
 constants = {
-    "MIN_LENGTH": ("4", "kMinLength = 4", "minLength = 4"),
-    "MAX_LENGTH": ("64", "kMaxLength = 64", "maxLength = 64"),
-    "DEFAULT_LENGTH": ("16", "kDefaultLength = 16", "defaultLength = 16"),
-    "SIMILAR_CHARS": ('"iIl1oO0B8G6S5Z2"', '"iIl1oO0B8G6S5Z2"', '"iIl1oO0B8G6S5Z2"'),
-    "LOWERCASE_CHARS": ('"abcdefghijklmnopqrstuvwxyz"', '"abcdefghijklmnopqrstuvwxyz"', '"abcdefghijklmnopqrstuvwxyz"'),
-    "UPPERCASE_CHARS": ('"ABCDEFGHIJKLMNOPQRSTUVWXYZ"', '"ABCDEFGHIJKLMNOPQRSTUVWXYZ"', '"ABCDEFGHIJKLMNOPQRSTUVWXYZ"'),
-    "DIGIT_CHARS": ('"0123456789"', '"0123456789"', '"0123456789"'),
-    "SYMBOL_CHARS": ('"!@#$%^&*()-_=+[]{};:,.<>?/|"', '"!@#$%^&*()-_=+[]{};:,.<>?/|"', '"!@#$%^&*()-_=+[]{};:,.<>?/|"'),
-    "FULL_CHARSPACE": ("89", "kFullCharSpace = 89", "fullCharSpace = 89"),
+    "minLength": ("MIN_LENGTH", "kMinLength", "minLength"),
+    "maxLength": ("MAX_LENGTH", "kMaxLength", "maxLength"),
+    "defaultLength": ("DEFAULT_LENGTH", "kDefaultLength", "defaultLength"),
+    "referenceLengthForMaxScore": ("REF_LENGTH_FOR_MAX_SCORE", "kReferenceLengthForMaxScore", "referenceLengthForMaxScore"),
+    "similar": ("SIMILAR_CHARS", "kSimilarChars", "similar"),
+    "lowercase": ("LOWERCASE_CHARS", "kLowercaseChars", "lowercase"),
+    "uppercase": ("UPPERCASE_CHARS", "kUppercaseChars", "uppercase"),
+    "digits": ("DIGIT_CHARS", "kDigitChars", "digits"),
+    "symbols": ("SYMBOL_CHARS", "kSymbolChars", "symbols"),
+    "fullCharacterSpace": ("FULL_CHARSPACE", "kFullCharSpace", "fullCharSpace"),
 }
 
-for name, (kotlin, cpp, swift) in constants.items():
-    if kotlin not in kotlin_constants:
-        raise SystemExit(f"Android constant drift: {name}")
-    if cpp not in cpp_constants:
-        raise SystemExit(f"Windows constant drift: {name}")
-    if swift not in swift_constants:
-        raise SystemExit(f"macOS constant drift: {name}")
+for key, names in constants.items():
+    for language, name, source in zip(
+        ("Android", "Windows", "macOS"), names,
+        (kotlin_constants, cpp_constants, swift_constants)
+    ):
+        match = re.search(r"\b" + name + r'(?:\[\])?\s*=\s*(Array\("[^"\n]*"\)|"[^"\n]*"|[0-9.]+)(?:;|[ \t]*$)', source, re.MULTILINE)
+        if not match:
+            raise SystemExit(f"{language} constant missing: {name}")
+        literal = match[1]
+        if literal.startswith("Array(") and literal.endswith(")"):
+            literal = literal[6:-1]
+        if json.loads(literal) != vectors["constants"][key]:
+            raise SystemExit(f"{language} constant drift: {name}")
 
 print(f"Platform contract synchronized for Password Generator {version}")

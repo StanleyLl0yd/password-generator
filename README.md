@@ -13,14 +13,14 @@ A privacy-focused offline password generator with fully native implementations f
 
 [⬇️ Download the latest APK](https://github.com/StanleyLl0yd/password-generator/releases/latest)
 
-Current source version: **1.6.1** · Android `versionCode 19` · unified native release for Android, Windows, and macOS.
+Current source version: **1.6.2** · Android `versionCode 20` · unified native release for Android, Windows, and macOS.
 
 ## Platforms
 
 | Platform | Native stack | Minimum |
 | --- | --- | --- |
 | Android | Kotlin + Jetpack Compose + Material 3 | Android 8.0 / API 26 |
-| Windows | C++20 + Win32 / Common Controls | Windows 10 |
+| Windows | C++20 + Win32 / Common Controls | Windows 10 1607+ |
 | macOS | Swift + AppKit / Foundation / Security | macOS 13 |
 
 The desktop applications intentionally use no third-party runtime libraries or cross-platform UI framework. Product behavior is shared through specifications and contract tests, while each platform uses its operating system's native cryptographic RNG, controls, preferences and clipboard APIs.
@@ -40,7 +40,7 @@ The desktop applications intentionally use no third-party runtime libraries or c
 - English and Russian localization
 - About section with description, installed version, author, license, Privacy Policy and official project website links
 
-Passwords are generated locally with `SecureRandom`.
+Passwords use the native cryptographic RNG: Android `SecureRandom`, Windows `BCryptGenRandom`, macOS `SecRandomCopyBytes`.
 
 ## 🔒 Privacy & security
 
@@ -74,7 +74,7 @@ Requirements:
 
 - JDK 17
 - Android SDK 36
-- Gradle 8.13 (included through the Gradle Wrapper)
+- Gradle 8.14.6 (included through the Gradle Wrapper)
 
 ```bash
 git clone https://github.com/StanleyLl0yd/password-generator.git
@@ -96,11 +96,11 @@ A local release build requires a local `key.properties` that points to a keystor
 
 | Category | Technology |
 | --- | --- |
-| Android | Kotlin 2.2.0, Jetpack Compose, Material 3, DataStore |
+| Android | Kotlin 2.4.20, Jetpack Compose, Material 3, DataStore |
 | Windows | C++20, Win32, Common Controls, BCrypt, Registry |
 | macOS | Swift, AppKit, Foundation, Security, UserDefaults |
 | Shared | Product specifications, privacy/UX contracts and parity checks |
-| Android build | Gradle 8.13, AGP 8.13.2, Kotlin DSL |
+| Android build | Gradle 8.14.6, AGP 8.13.2, Kotlin DSL |
 | Windows build | CMake + MSVC |
 | macOS build | SwiftPM |
 
@@ -129,6 +129,12 @@ Qodana runs as a scheduled/manual defense-in-depth scan rather than a merge-bloc
 - Русский
 
 The interface follows the device language automatically.
+
+## Google Play preparation
+
+The 1.6.2 source is prepared as a release candidate. See [submission kit](store-assets/google-play/submission-checklist.ru.md) for signed AAB preparation, store text/media, Data safety, Play App Signing compatibility and device acceptance. A candidate build uploads protected artifacts without publishing a public release or sending anything to Google Play.
+
+CI runs instrumentation tests on API 26 and 36, captures current masked screenshots, checks the compiled APK/AAB manifest, validates the bundle and verifies 16 KB ELF/ZIP alignment. [Repository audit](docs/audit/2026-10-16.md) records coverage and verification limits.
 
 ## 📊 Changelog
 

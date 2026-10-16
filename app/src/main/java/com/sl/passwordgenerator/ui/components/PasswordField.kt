@@ -30,7 +30,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,18 +52,15 @@ fun PasswordField(
     hidePasswordContentDescription: String,
     onCopyClick: () -> Unit,
     modifier: Modifier = Modifier,
-    isGenerating: Boolean = false
+    isGenerating: Boolean = false,
+    generationId: Long = 0
 ) {
-    var passwordVisible by remember { mutableStateOf(false) }
+    var passwordVisible by remember(password, generationId) { mutableStateOf(false) }
     val window = LocalContext.current.findActivity()?.window
 
     DisposableEffect(window, passwordVisible) {
         window.setSensitiveContentProtection(passwordVisible)
         onDispose { window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE) }
-    }
-
-    LaunchedEffect(password) {
-        passwordVisible = false
     }
 
     Column(
@@ -126,7 +122,7 @@ fun PasswordField(
         ) { animatedPassword ->
             val displayedPassword = when {
                 animatedPassword.isEmpty() -> "—"
-                passwordVisible -> animatedPassword
+                passwordVisible && animatedPassword == password -> animatedPassword
                 else -> "•".repeat(animatedPassword.length)
             }
 
@@ -155,7 +151,7 @@ fun PasswordField(
                         } else {
                             MaterialTheme.colorScheme.onSurface
                         },
-                        maxLines = if (passwordVisible) 2 else 1,
+                        maxLines = if (passwordVisible) Int.MAX_VALUE else 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }

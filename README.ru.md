@@ -13,14 +13,14 @@
 
 [⬇️ Скачать последнюю версию APK](https://github.com/StanleyLl0yd/password-generator/releases/latest)
 
-Текущая версия исходного кода: **1.6.1** · Android `versionCode 19` · единый нативный релиз для Android, Windows и macOS.
+Текущая версия исходного кода: **1.6.2** · Android `versionCode 20` · единый нативный релиз для Android, Windows и macOS.
 
 ## Платформы
 
 | Платформа | Нативный стек | Минимальная версия |
 | --- | --- | --- |
 | Android | Kotlin + Jetpack Compose + Material 3 | Android 8.0 / API 26 |
-| Windows | C++20 + Win32 / Common Controls | Windows 10 |
+| Windows | C++20 + Win32 / Common Controls | Windows 10 1607+ |
 | macOS | Swift + AppKit / Foundation / Security | macOS 13 |
 
 Desktop-версии принципиально не используют сторонние runtime-библиотеки и кроссплатформенные UI-фреймворки. Общее поведение задаётся спецификациями и contract-тестами, а каждая платформа использует нативные криптографический RNG, элементы интерфейса, настройки и API буфера обмена своей ОС.
@@ -40,7 +40,7 @@ Desktop-версии принципиально не используют сто
 - Английская и русская локализация
 - Раздел «О приложении» с описанием, установленной версией, автором, лицензией, Политикой конфиденциальности и ссылкой на официальный сайт приложения
 
-Пароли создаются локально с использованием `SecureRandom`.
+Пароли создаются нативным криптографическим RNG: Android `SecureRandom`, Windows `BCryptGenRandom`, macOS `SecRandomCopyBytes`.
 
 ## 🔒 Приватность и безопасность
 
@@ -74,7 +74,7 @@ Desktop-версии принципиально не используют сто
 
 - JDK 17
 - Android SDK 36
-- Gradle 8.13 (включён через Gradle Wrapper)
+- Gradle 8.14.6 (включён через Gradle Wrapper)
 
 ```bash
 git clone https://github.com/StanleyLl0yd/password-generator.git
@@ -96,11 +96,11 @@ CI дополнительно проверяет release APK с R8/shrink resour
 
 | Категория | Технология |
 | --- | --- |
-| Android | Kotlin 2.2.0, Jetpack Compose, Material 3, DataStore |
+| Android | Kotlin 2.4.20, Jetpack Compose, Material 3, DataStore |
 | Windows | C++20, Win32, Common Controls, BCrypt, Registry |
 | macOS | Swift, AppKit, Foundation, Security, UserDefaults |
 | Общее | Спецификации продукта, privacy/UX contracts и проверки паритета |
-| Android build | Gradle 8.13, AGP 8.13.2, Kotlin DSL |
+| Android build | Gradle 8.14.6, AGP 8.13.2, Kotlin DSL |
 | Windows build | CMake + MSVC |
 | macOS build | SwiftPM |
 
@@ -129,6 +129,12 @@ Qodana запускается по расписанию или вручную к
 - Русский
 
 Язык интерфейса автоматически следует языку устройства.
+
+## Подготовка Google Play
+
+Исходный код 1.6.2 подготовлен как кандидат. [Комплект публикации](store-assets/google-play/submission-checklist.ru.md) включает инструкции по подписанному AAB, тексты и медиа, Data safety, совместимость Play App Signing и физическую приёмку. Сборка кандидата сохраняет защищённые артефакты без публичного релиза и отправки в Google Play.
+
+CI исполняет инструментальные тесты на API 26 и 36, снимает актуальные скриншоты со скрытым паролем, проверяет compiled manifest APK/AAB, структуру bundle и 16 КБ ELF/ZIP alignment. Охват и ограничения проверки указаны в [аудите репозитория](docs/audit/2026-10-16.md).
 
 ## 📊 История версий
 

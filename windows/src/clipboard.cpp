@@ -29,10 +29,14 @@ bool SecureClipboard::Copy(HWND owner, const std::wstring& password) {
         return false;
     }
 
-    CloseClipboard();
+    const UINT excluded = RegisterClipboardFormatW(L"ExcludeClipboardContentFromMonitorProcessing");
+    HGLOBAL marker = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(DWORD));
+    if (marker != nullptr && (excluded == 0 || SetClipboardData(excluded, marker) == nullptr)) {
+        GlobalFree(marker);
+    }
 
     Forget();
-    copied_ = password;
+    CloseClipboard();
     sequence_ = GetClipboardSequenceNumber();
     SetTimer(owner, kTimerId, kClearDelayMs, nullptr);
     return true;
@@ -41,19 +45,13 @@ bool SecureClipboard::Copy(HWND owner, const std::wstring& password) {
 void SecureClipboard::ClearIfStillCurrent(HWND owner) {
     KillTimer(owner, kTimerId);
 
-    if (copied_.empty() || sequence_ == 0 || GetClipboardSequenceNumber() != sequence_) {
+    if (sequence_ == 0) {
         Forget();
         return;
     }
 
     if (OpenClipboard(owner)) {
-        HANDLE data = GetClipboardData(CF_UNICODETEXT);
-        if (data != nullptr) {
-            const auto* text = static_cast<const wchar_t*>(GlobalLock(data));
-            const bool matches = text != nullptr && copied_ == text;
-            if (text != nullptr) GlobalUnlock(data);
-            if (matches) EmptyClipboard();
-        }
+        if (GetClipboardOwner() == owner && GetClipboardSequenceNumber() == sequence_) EmptyClipboard();
         CloseClipboard();
     }
 
@@ -61,10 +59,6 @@ void SecureClipboard::ClearIfStillCurrent(HWND owner) {
 }
 
 void SecureClipboard::Forget() {
-    if (!copied_.empty()) {
-        SecureZeroMemory(copied_.data(), copied_.size() * sizeof(wchar_t));
-        copied_.clear();
-    }
     sequence_ = 0;
 }
 

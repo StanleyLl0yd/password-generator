@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -229,6 +230,7 @@ private fun PasswordGeneratorContent(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .wrapContentWidth(Alignment.CenterHorizontally)
             .widthIn(max = 560.dp)
             .verticalScroll(scrollState)
             .padding(horizontal = 14.dp, vertical = 4.dp),
@@ -236,6 +238,7 @@ private fun PasswordGeneratorContent(
     ) {
         PasswordCard(
             password = state.password,
+            generationId = state.generationId,
             strengthScore = state.strengthScore,
             strengthLabel = state.strengthScore.toStrengthLabel(),
             isGenerating = state.isGenerating,
@@ -295,6 +298,7 @@ private fun PasswordGeneratorContent(
 @Composable
 private fun PasswordCard(
     password: String,
+    generationId: Long,
     strengthScore: Int,
     strengthLabel: String,
     isGenerating: Boolean,
@@ -313,6 +317,7 @@ private fun PasswordCard(
         ) {
             PasswordField(
                 password = password,
+                generationId = generationId,
                 label = stringResource(R.string.password_label),
                 copyLabel = stringResource(R.string.copy_button),
                 showPasswordContentDescription = stringResource(R.string.show_password),
