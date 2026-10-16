@@ -60,7 +60,7 @@ fun StrengthIndicator(
             Text(
                 text = strengthLabel,
                 style = MaterialTheme.typography.bodySmall,
-                color = animatedColor,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Medium
             )
         }

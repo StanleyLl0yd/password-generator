@@ -20,7 +20,7 @@
 | Платформа | Нативный стек | Минимальная версия |
 | --- | --- | --- |
 | Android | Kotlin + Jetpack Compose + Material 3 | Android 8.0 / API 26 |
-| Windows | C++20 + Win32 / Common Controls | Windows 10 |
+| Windows | C++20 + Win32 / Common Controls | Windows 10 1607+ |
 | macOS | Swift + AppKit / Foundation / Security | macOS 13 |
 
 Desktop-версии принципиально не используют сторонние runtime-библиотеки и кроссплатформенные UI-фреймворки. Общее поведение задаётся спецификациями и contract-тестами, а каждая платформа использует нативные криптографический RNG, элементы интерфейса, настройки и API буфера обмена своей ОС.

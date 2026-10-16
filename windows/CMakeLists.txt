@@ -20,7 +20,7 @@ add_library(password_generator_core
 )
 target_include_directories(password_generator_core PUBLIC src)
 target_compile_definitions(password_generator_core PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-target_compile_options(password_generator_core PRIVATE /W4 /WX /permissive- /EHsc /utf-8)
+target_compile_options(password_generator_core PRIVATE /W4 /WX /permissive- /EHsc /utf-8 /analyze)
 target_link_libraries(password_generator_core PUBLIC bcrypt advapi32)
 
 set(GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
@@ -71,7 +71,7 @@ target_compile_definitions(
         WINVER=0x0A00
         _WIN32_WINNT=0x0A00
 )
-target_compile_options(PasswordGenerator PRIVATE /W4 /WX /permissive- /EHsc /utf-8)
+target_compile_options(PasswordGenerator PRIVATE /W4 /WX /permissive- /EHsc /utf-8 /analyze)
 target_link_options(PasswordGenerator PRIVATE
     /DYNAMICBASE
     /NXCOMPAT
@@ -90,14 +90,14 @@ target_link_libraries(PasswordGenerator PRIVATE
 enable_testing()
 add_executable(password_generator_tests tests/generator_tests.cpp)
 target_compile_definitions(password_generator_tests PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-target_compile_options(password_generator_tests PRIVATE /W4 /WX /permissive- /EHsc /utf-8)
+target_compile_options(password_generator_tests PRIVATE /W4 /WX /permissive- /EHsc /utf-8 /analyze)
 target_link_libraries(password_generator_tests PRIVATE password_generator_core)
 add_test(NAME generator_contract COMMAND password_generator_tests)
 
 add_executable(clipboard_tests tests/clipboard_tests.cpp src/clipboard.cpp)
 target_include_directories(clipboard_tests PRIVATE src)
 target_compile_definitions(clipboard_tests PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-target_compile_options(clipboard_tests PRIVATE /W4 /WX /permissive- /EHsc /utf-8)
+target_compile_options(clipboard_tests PRIVATE /W4 /WX /permissive- /EHsc /utf-8 /analyze)
 target_link_libraries(clipboard_tests PRIVATE user32)
 add_test(NAME clipboard_ownership COMMAND clipboard_tests)
 

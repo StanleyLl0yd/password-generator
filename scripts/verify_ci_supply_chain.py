@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 
 ROOTS = (Path(".github/workflows"), Path(".github/actions"))
-ACTION_REF = re.compile(r"^\s*uses:\s*([^\s#]+)")
+ACTION_REF = re.compile(r"^\s*(?:-\s*)?uses:\s*([^\s#]+)")
 IMAGE = re.compile(r"^\s*image:\s*([^\s#]+)")
 FULL_SHA = re.compile(r"^[0-9a-f]{40}$")
 DIGEST = re.compile(r"@sha256:[0-9a-f]{64}$")
