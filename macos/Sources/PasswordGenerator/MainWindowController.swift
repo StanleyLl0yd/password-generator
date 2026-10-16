@@ -88,7 +88,7 @@ final class MainWindowController: NSWindowController {
         setRevealed(!revealed)
     }
 
-    @objc func hidePassword(_ sender: Any?) {
+    override func cancelOperation(_ sender: Any?) {
         if revealed { setRevealed(false) }
     }
 
@@ -156,10 +156,6 @@ final class MainWindowController: NSWindowController {
             let url = URL(string: value)
         else { return }
         NSWorkspace.shared.open(url)
-    }
-
-    func handleCopyCommand() {
-        copyPassword(nil)
     }
 
     private func buildUI() {

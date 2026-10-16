@@ -46,7 +46,6 @@ add_custom_command(
 add_custom_target(password_generator_icon DEPENDS "${GENERATED_ICON}")
 
 file(TO_CMAKE_PATH "${GENERATED_ICON}" ICON_PATH)
-file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/res/password-generator.manifest" MANIFEST_PATH)
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/res/password-generator.rc.in"
     "${GENERATED_DIR}/password-generator.rc"
