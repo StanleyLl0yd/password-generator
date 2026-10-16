@@ -6,6 +6,7 @@ on:
     paths:
       - gradle/libs.versions.toml
       - build.gradle.kts
+      - gradle/wrapper/gradle-wrapper.properties
       - .github/workflows/dependency-metadata.yml
   workflow_dispatch:
 
@@ -39,6 +40,16 @@ jobs:
           ./gradlew --write-verification-metadata sha256 writeDependencyAudit assembleDebug assembleDebugAndroidTest testDebugUnitTest detekt --stacktrace
           git rev-parse HEAD > SOURCE_COMMIT
           sha256sum gradle/verification-metadata.xml > METADATA_SHA256
+      - name: Prepare current Gradle wrapper for review
+        run: |
+          checksum="$(sed -n 's/^distributionSha256Sum=//p' gradle/wrapper/gradle-wrapper.properties)"
+          ./gradlew wrapper --gradle-distribution-sha256-sum="$checksum"
+          echo BEGIN_REVIEWED_WRAPPER_BASE64
+          base64 -w 0 gradle/wrapper/gradle-wrapper.jar
+          echo
+          echo END_REVIEWED_WRAPPER_BASE64
+          sha256sum gradle/wrapper/gradle-wrapper.jar gradlew gradlew.bat
+          git diff -- gradlew gradlew.bat gradle/wrapper/gradle-wrapper.properties
       - name: Expose proposed checksums for review
         run: |
           echo BEGIN_REVIEWED_DEPENDENCY_METADATA
@@ -52,6 +63,9 @@ jobs:
         with:
           name: dependency-metadata-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
+            gradle/wrapper/
+            gradlew
+            gradlew.bat
             gradle/verification-metadata.xml
             app/build/reports/dependencies/
             SOURCE_COMMIT

@@ -52,3 +52,17 @@ jobs:
           pr-mode: false
           upload-result: true
           artifact-name: qodana-report
+
+      - name: Summarize analysis and sanity diagnostics
+        if: always()
+        run: |
+          python3 - <<'REPORT'
+          import json
+          import os
+          from pathlib import Path
+          for path in Path(os.environ["RUNNER_TEMP"], "qodana", "results").rglob("*.sarif.json"):
+              report = json.loads(path.read_text())
+              for run in report.get("runs", []):
+                  for result in run.get("results", []):
+                      print(json.dumps({key: result.get(key) for key in ("ruleId", "message", "locations")}))
+          REPORT

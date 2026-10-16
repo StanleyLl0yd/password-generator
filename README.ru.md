@@ -74,7 +74,7 @@ Desktop-версии принципиально не используют сто
 
 - JDK 17
 - Android SDK 36
-- Gradle 8.13 (включён через Gradle Wrapper)
+- Gradle 8.14.6 (включён через Gradle Wrapper)
 
 ```bash
 git clone https://github.com/StanleyLl0yd/password-generator.git
@@ -100,7 +100,7 @@ CI дополнительно проверяет release APK с R8/shrink resour
 | Windows | C++20, Win32, Common Controls, BCrypt, Registry |
 | macOS | Swift, AppKit, Foundation, Security, UserDefaults |
 | Общее | Спецификации продукта, privacy/UX contracts и проверки паритета |
-| Android build | Gradle 8.13, AGP 8.13.2, Kotlin DSL |
+| Android build | Gradle 8.14.6, AGP 8.13.2, Kotlin DSL |
 | Windows build | CMake + MSVC |
 | macOS build | SwiftPM |
 

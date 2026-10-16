@@ -6,6 +6,7 @@ import java.io.FileInputStream
 import javax.imageio.ImageIO
 import java.util.Properties
 import org.gradle.api.GradleException
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 
 plugins {
     alias(libs.plugins.android.application)
@@ -191,7 +192,7 @@ tasks.register("writeDependencyAudit") {
         ).map { configurations.getByName(it) } + listOf(rootProject.buildscript.configurations.getByName("classpath"))
         val coordinates = audited.flatMap { configuration ->
             configuration.incoming.resolutionResult.allComponents.mapNotNull {
-                (it.id as? org.gradle.api.artifacts.component.ModuleComponentIdentifier)?.let { id ->
+                (it.id as? ModuleComponentIdentifier)?.let { id ->
                     "${id.group}:${id.module}:${id.version}"
                 }
             }
