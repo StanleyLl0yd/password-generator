@@ -1,4 +1,10 @@
 buildscript {
+    repositories {
+        maven {
+            url = uri("https://storage.googleapis.com/r8-releases/raw")
+            content { includeModule("com.android.tools", "r8") }
+        }
+    }
     dependencies {
         // Keep AGP's JavaPoet classpath on the checksum-verified artifact.
         classpath(libs.javapoet)
