@@ -52,9 +52,10 @@ fun PasswordField(
     hidePasswordContentDescription: String,
     onCopyClick: () -> Unit,
     modifier: Modifier = Modifier,
-    isGenerating: Boolean = false
+    isGenerating: Boolean = false,
+    generationId: Long = 0
 ) {
-    var passwordVisible by remember(password) { mutableStateOf(false) }
+    var passwordVisible by remember(password, generationId) { mutableStateOf(false) }
     val window = LocalContext.current.findActivity()?.window
 
     DisposableEffect(window, passwordVisible) {

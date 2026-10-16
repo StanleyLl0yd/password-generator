@@ -30,8 +30,8 @@ bool SecureClipboard::Copy(HWND owner, const std::wstring& password) {
     }
 
     Forget();
-    sequence_ = GetClipboardSequenceNumber();
     CloseClipboard();
+    sequence_ = GetClipboardSequenceNumber();
     SetTimer(owner, kTimerId, kClearDelayMs, nullptr);
     return true;
 }
@@ -45,7 +45,7 @@ void SecureClipboard::ClearIfStillCurrent(HWND owner) {
     }
 
     if (OpenClipboard(owner)) {
-        if (GetClipboardSequenceNumber() == sequence_) EmptyClipboard();
+        if (GetClipboardOwner() == owner && GetClipboardSequenceNumber() == sequence_) EmptyClipboard();
         CloseClipboard();
     }
 

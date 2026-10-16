@@ -3,6 +3,13 @@ description: Validate signed package identity, offline manifest, bundle structur
 runs:
   using: composite
   steps:
+    - name: Install checksum-pinned XML parser in an isolated environment
+      shell: bash
+      run: |
+        set -euo pipefail
+        python3 -m venv "$RUNNER_TEMP/release-verification-python"
+        "$RUNNER_TEMP/release-verification-python/bin/python" -m pip install --require-hashes --only-binary=:all: -r scripts/requirements-ci.txt
+        echo "$RUNNER_TEMP/release-verification-python/bin" >> "$GITHUB_PATH"
     - name: Validate APK and AAB
       shell: bash
       run: |

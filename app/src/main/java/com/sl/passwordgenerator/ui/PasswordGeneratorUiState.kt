@@ -7,6 +7,7 @@ data class PasswordGeneratorUiState(
     val preferences: GeneratorPreferences = GeneratorPreferences(),
     val password: String = "",
     val strengthScore: Int = 0,
+    val generationId: Long = 0,
     val isGenerating: Boolean = false
 ) {
     override fun toString(): String =

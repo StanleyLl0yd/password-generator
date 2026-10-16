@@ -184,7 +184,7 @@ tasks.register("writeDependencyAudit") {
         val audited = listOf(
             "releaseRuntimeClasspath", "debugUnitTestRuntimeClasspath",
             "debugAndroidTestRuntimeClasspath", "detekt"
-        ).map { configurations.getByName(it) } + rootProject.buildscript.configurations.getByName("classpath")
+        ).map { configurations.getByName(it) } + listOf(rootProject.buildscript.configurations.getByName("classpath"))
         val coordinates = audited.flatMap { configuration ->
             configuration.incoming.resolutionResult.allComponents.mapNotNull {
                 (it.id as? org.gradle.api.artifacts.component.ModuleComponentIdentifier)?.let { id ->

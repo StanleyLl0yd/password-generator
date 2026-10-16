@@ -4,7 +4,7 @@ import argparse
 from pathlib import Path
 import re
 import struct
-import xml.etree.ElementTree as ET
+from defusedxml import ElementTree as ET
 import zipfile
 
 ANDROID = '{http://schemas.android.com/apk/res/android}'
@@ -21,7 +21,7 @@ def require(condition, message):
 
 
 def verify_manifest(text, version, version_code):
-    root = ET.fromstring(text)
+    root = ET.fromstring(text, forbid_dtd=True)
     require(root.get('package') == PACKAGE, 'Package identity changed')
     require(root.get(ANDROID + 'versionName') == version, 'Version name mismatch')
     require(root.get(ANDROID + 'versionCode') == str(version_code), 'Version code mismatch')

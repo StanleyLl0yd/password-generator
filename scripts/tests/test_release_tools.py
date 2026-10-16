@@ -9,6 +9,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 import zipfile
+from defusedxml.common import DTDForbidden
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -46,6 +47,11 @@ class PackageVerificationTests(unittest.TestCase):
         ]:
             with self.subTest(changed=changed), self.assertRaises(ValueError):
                 package.verify_manifest(MANIFEST.replace(original, changed), '1.6.2', 20)
+
+    def test_rejects_xml_doctype_and_entity_declarations(self):
+        document = '<!DOCTYPE manifest [<!ENTITY secret SYSTEM "file:///etc/passwd">]>' + MANIFEST
+        with self.assertRaises(DTDForbidden):
+            package.verify_manifest(document, '1.6.2', 20)
 
     def check_elf(self, data):
         with tempfile.TemporaryDirectory() as directory:
@@ -104,10 +110,6 @@ class ReadProperties { public static void main(String[] args) throws Exception {
             finally:
                 os.chdir(previous)
 
-
-if __name__ == '__main__':
-    unittest.main()
-
 class MetadataTests(unittest.TestCase):
     def test_platform_contract_rejects_named_constant_drift(self):
         paths = [
@@ -129,3 +131,7 @@ class MetadataTests(unittest.TestCase):
             result = subprocess.run(['python3', str(root / paths[0])], capture_output=True, text=True)
             self.assertNotEqual(0, result.returncode)
             self.assertIn('Android constant drift: MIN_LENGTH', result.stderr)
+
+
+if __name__ == '__main__':
+    unittest.main()

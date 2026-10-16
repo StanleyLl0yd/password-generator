@@ -236,6 +236,7 @@ private fun PasswordGeneratorContent(
     ) {
         PasswordCard(
             password = state.password,
+            generationId = state.generationId,
             strengthScore = state.strengthScore,
             strengthLabel = state.strengthScore.toStrengthLabel(),
             isGenerating = state.isGenerating,
@@ -295,6 +296,7 @@ private fun PasswordGeneratorContent(
 @Composable
 private fun PasswordCard(
     password: String,
+    generationId: Long,
     strengthScore: Int,
     strengthLabel: String,
     isGenerating: Boolean,
@@ -313,6 +315,7 @@ private fun PasswordCard(
         ) {
             PasswordField(
                 password = password,
+                generationId = generationId,
                 label = stringResource(R.string.password_label),
                 copyLabel = stringResource(R.string.copy_button),
                 showPasswordContentDescription = stringResource(R.string.show_password),

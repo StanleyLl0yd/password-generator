@@ -103,6 +103,7 @@ class PasswordGeneratorViewModel(application: Application) : AndroidViewModel(ap
                     _uiState.update {
                         it.copy(
                             password = result.password,
+                            generationId = it.generationId + 1,
                             strengthScore = strengthScore,
                             isGenerating = false
                         )

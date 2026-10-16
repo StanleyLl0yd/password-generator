@@ -21,8 +21,9 @@ class PasswordFieldSecurityTest {
     @Test
     fun replacementIsMaskedBeforeItsFirstFrameAndOldAnimationCannotRevealIt() {
         val password = mutableStateOf("test-secret-one")
+        val generationId = mutableStateOf(0L)
         rule.setContent {
-            PasswordField(password.value, "Password", "Copy", "Show", "Hide", {})
+            PasswordField(password.value, "Password", "Copy", "Show", "Hide", {}, generationId = generationId.value)
         }
         rule.onNodeWithContentDescription("Show").performClick()
         rule.onNodeWithText("test-secret-one").assertIsDisplayed()
@@ -43,6 +44,12 @@ class PasswordFieldSecurityTest {
         rule.runOnIdle {
             assertEquals(WindowManager.LayoutParams.FLAG_SECURE, secureFlag())
         }
+        rule.runOnIdle { generationId.value += 1 }
+        rule.mainClock.advanceTimeByFrame()
+        rule.onNodeWithText("test-secret-two").assertDoesNotExist()
+        rule.runOnIdle { assertEquals(0, secureFlag()) }
+        rule.onNodeWithContentDescription("Show").performClick()
+        rule.mainClock.advanceTimeByFrame()
         rule.onNodeWithContentDescription("Hide").performClick()
         rule.mainClock.advanceTimeByFrame()
         rule.onNodeWithText("test-secret-two").assertDoesNotExist()
