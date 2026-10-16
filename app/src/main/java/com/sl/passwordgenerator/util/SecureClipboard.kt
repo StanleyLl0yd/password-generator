@@ -35,6 +35,13 @@ object SecureClipboard {
 
         pendingClear?.let(handler::removeCallbacks)
         pendingClear = Runnable {
+            clearIfStillCurrent(clipboard, clearToken)
+            pendingClear = null
+        }.also { handler.postDelayed(it, AUTO_CLEAR_DELAY_MS) }
+    }
+
+    internal fun clearIfStillCurrent(clipboard: ClipboardManager, clearToken: String) {
+        try {
             val currentToken = clipboard.primaryClipDescription
                 ?.extras
                 ?.getString(CLEAR_TOKEN_KEY)
@@ -46,7 +53,8 @@ object SecureClipboard {
                     clipboard.setPrimaryClip(ClipData.newPlainText("", ""))
                 }
             }
-            pendingClear = null
-        }.also { handler.postDelayed(it, AUTO_CLEAR_DELAY_MS) }
+        } catch (_: SecurityException) {
+            // Background clipboard access may be denied by the operating system.
+        }
     }
 }

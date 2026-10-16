@@ -17,7 +17,6 @@ public:
 
 private:
     DWORD sequence_ = 0;
-    std::wstring copied_;
 };
 
 }  // namespace pg

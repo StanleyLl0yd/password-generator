@@ -118,7 +118,8 @@ final class MainWindowController: NSWindowController {
 
     @objc func showAbout(_ sender: Any?) {
         let alert = NSAlert()
-        alert.messageText = "Password Generator 1.6.0"
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+        alert.messageText = "Password Generator \(version)"
         alert.informativeText = Locale.preferredLanguages.first?.lowercased().hasPrefix("ru") == true
             ? "Приватный офлайн-генератор паролей. Пароли создаются только на устройстве и никогда не сохраняются.\n\nStanley Lloyd · PolyForm Noncommercial 1.0.0"
             : "A privacy-focused offline password generator. Passwords are generated locally and never stored.\n\nStanley Lloyd · PolyForm Noncommercial 1.0.0"
@@ -334,9 +335,7 @@ final class MainWindowController: NSWindowController {
         revealedField.isHidden = !value
         revealButton.title = value ? text.hide : text.show
 
-        if #available(macOS 10.5, *) {
-            window?.sharingType = value ? .none : .readOnly
-        }
+        window?.sharingType = value ? .none : .readOnly
     }
 
     private func updateStrength(_ score: Int) {

@@ -106,8 +106,8 @@ android {
         applicationId = "com.sl.passwordgenerator"
         minSdk = 26
         targetSdk = 36
-        versionCode = 19
-        versionName = "1.6.1"
+        versionCode = 20
+        versionName = "1.6.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -171,9 +171,30 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+val dependencyAuditFile = layout.buildDirectory.file("reports/dependencies/coordinates.txt")
+tasks.register("writeDependencyAudit") {
+    outputs.file(dependencyAuditFile)
+    doLast {
+        val audited = listOf(
+            "releaseRuntimeClasspath", "debugUnitTestRuntimeClasspath",
+            "debugAndroidTestRuntimeClasspath", "detekt"
+        ).map { configurations.getByName(it) } + rootProject.buildscript.configurations.getByName("classpath")
+        val coordinates = audited.flatMap { configuration ->
+            configuration.incoming.resolutionResult.allComponents.mapNotNull {
+                (it.id as? org.gradle.api.artifacts.component.ModuleComponentIdentifier)?.let { id ->
+                    "${id.group}:${id.module}:${id.version}"
+                }
+            }
+        }.toSortedSet()
+        dependencyAuditFile.get().asFile.apply {
+            parentFile.mkdirs()
+            writeText(coordinates.joinToString("\n", postfix = "\n"))
+        }
+    }
 }

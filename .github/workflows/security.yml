@@ -37,13 +37,13 @@ jobs:
       - name: Install Android 36 platform
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Prepare Gradle dependencies
-        run: ./gradlew :app:dependencies --stacktrace
+      - name: Prepare Gradle dependencies and generated resources
+        run: ./gradlew assembleDebug --stacktrace
 
       - name: Run Qodana
         uses: JetBrains/qodana-action@10be11607eb323a180e2b76b26c9c5cdceac3e77 # v2026.2.1
         with:
-          args: --within-docker,false,--print-problems
+          args: --within-docker false --print-problems
           pr-mode: false
           upload-result: true
           artifact-name: qodana-report

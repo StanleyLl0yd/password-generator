@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 
-project(PasswordGeneratorWindows VERSION 1.6.1 LANGUAGES CXX)
+project(PasswordGeneratorWindows VERSION 1.6.2 LANGUAGES CXX)
 
 if(NOT WIN32)
     message(FATAL_ERROR "The Windows application must be built on Windows.")
@@ -93,5 +93,12 @@ target_compile_definitions(password_generator_tests PRIVATE UNICODE _UNICODE WIN
 target_compile_options(password_generator_tests PRIVATE /W4 /WX /permissive- /EHsc /utf-8)
 target_link_libraries(password_generator_tests PRIVATE password_generator_core)
 add_test(NAME generator_contract COMMAND password_generator_tests)
+
+add_executable(clipboard_tests tests/clipboard_tests.cpp src/clipboard.cpp)
+target_include_directories(clipboard_tests PRIVATE src)
+target_compile_definitions(clipboard_tests PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
+target_compile_options(clipboard_tests PRIVATE /W4 /WX /permissive- /EHsc /utf-8)
+target_link_libraries(clipboard_tests PRIVATE user32)
+add_test(NAME clipboard_ownership COMMAND clipboard_tests)
 
 install(TARGETS PasswordGenerator RUNTIME DESTINATION .)

@@ -267,8 +267,10 @@ int MainWindow::Run() {
         if (accelerators_ != nullptr && TranslateAcceleratorW(hwnd_, accelerators_, &message) != 0) {
             continue;
         }
-        TranslateMessage(&message);
-        DispatchMessageW(&message);
+        if (!IsDialogMessageW(hwnd_, &message)) {
+            TranslateMessage(&message);
+            DispatchMessageW(&message);
+        }
     }
 
     if (accelerators_ != nullptr) DestroyAcceleratorTable(accelerators_);
@@ -436,7 +438,6 @@ LRESULT MainWindow::HandleMessage(UINT message, WPARAM wParam, LPARAM lParam) {
         case IdSymbol:
         case IdSimilar:
         case IdDuplicate:
-            UpdatePreferencesFromControls();
             SaveState();
             return 0;
         case IdAbout:

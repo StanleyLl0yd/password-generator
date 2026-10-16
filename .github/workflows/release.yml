@@ -1,6 +1,9 @@
 name: Unified Release
 
 on:
+  push:
+    branches: [main]
+    paths: [store-assets/google-play/release-candidate]
   workflow_dispatch:
     inputs:
       tag:
@@ -26,12 +29,14 @@ jobs:
       actions: read
       contents: read
 
+    outputs:
+      tag: ${{ steps.source.outputs.tag }}
     steps:
       - name: Require main and validate tag format
         run: |
           set -euo pipefail
           test "$GITHUB_REF" = "refs/heads/main"
-          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          if [[ -n "$RELEASE_TAG" ]]; then [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; fi
 
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -46,6 +51,7 @@ jobs:
         run: python3 scripts/verify_platform_contract.py
 
       - name: Validate release source and versions
+        id: source
         run: |
           set -euo pipefail
           git fetch --no-tags origin main
@@ -57,7 +63,12 @@ jobs:
           namespace="$(sed -n 's/^[[:space:]]*namespace = "\([^"]*\)".*/\1/p' app/build.gradle.kts | head -1)"
           application_id="$(sed -n 's/^[[:space:]]*applicationId = "\([^"]*\)".*/\1/p' app/build.gradle.kts | head -1)"
 
+          if [[ -z "$RELEASE_TAG" ]]; then
+            RELEASE_TAG="$(tr -d '[:space:]' < store-assets/google-play/release-candidate)"
+          fi
           test "$RELEASE_TAG" = "v$version"
+          echo "RELEASE_TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
+          echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
           test "$version_name" = "$version"
           [[ "$version_code" =~ ^[0-9]+$ ]]
           (( version_code > 0 ))
@@ -131,6 +142,7 @@ jobs:
       id-token: write
       attestations: write
     env:
+      RELEASE_TAG: ${{ needs.validate.outputs.tag }}
       EXPECTED_CERT_SHA256: f02571c40741e2cb071564f5b63fd3dc38a875d0eda11a8c42269ed635bc2a58
 
     steps:
@@ -153,26 +165,13 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: |
-          set -euo pipefail
-          test -n "$KEYSTORE_BASE64"
-          test -n "$KEYSTORE_PASSWORD"
-          test -n "$KEY_ALIAS"
-          test -n "$KEY_PASSWORD"
-          umask 077
-          keystore_path="$RUNNER_TEMP/password-generator-release.jks"
-          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$keystore_path"
-          test -s "$keystore_path"
-          {
-            echo "storeFile=$keystore_path"
-            echo "storePassword=$KEYSTORE_PASSWORD"
-            echo "keyAlias=$KEY_ALIAS"
-            echo "keyPassword=$KEY_PASSWORD"
-          } > key.properties
-          keytool -list -keystore "$keystore_path" -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" >/dev/null
+        run: python3 scripts/configure_android_signing.py
 
       - name: Test and build signed Android packages
         run: ./gradlew testDebugUnitTest lintDebug detekt assembleRelease bundleRelease --stacktrace
+
+      - name: Inspect compiled Android release packages
+        uses: ./.github/actions/verify-android-package
 
       - name: Verify and package Android release
         run: |
@@ -210,6 +209,8 @@ jobs:
           aab_name="password-generator-$version-android.aab"
           cp "$source_apk" "release/$apk_name"
           cp "$source_aab" "release/$aab_name"
+          cp app/build/outputs/mapping/release/mapping.txt "release/password-generator-$version-android-mapping.txt"
+          (cd release && sha256sum "password-generator-$version-android-mapping.txt" > "password-generator-$version-android-mapping.txt.sha256")
           (cd release && sha256sum "$apk_name" > "$apk_name.sha256" && sha256sum "$aab_name" > "$aab_name.sha256" && sha256sum --check "$apk_name.sha256" && sha256sum --check "$aab_name.sha256")
 
       - name: Attest Android packages
@@ -222,7 +223,7 @@ jobs:
       - name: Upload Android release payload
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: password-generator-android-${{ inputs.tag }}
+          name: password-generator-android-${{ env.RELEASE_TAG }}
           path: release/
           if-no-files-found: error
           retention-days: 30
@@ -235,6 +236,8 @@ jobs:
 
   windows:
     name: Windows executable
+    env:
+      RELEASE_TAG: ${{ needs.validate.outputs.tag }}
     needs: validate
     runs-on: windows-2025
     timeout-minutes: 30
@@ -281,13 +284,15 @@ jobs:
       - name: Upload Windows release payload
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: password-generator-windows-${{ inputs.tag }}
+          name: password-generator-windows-${{ env.RELEASE_TAG }}
           path: release/
           if-no-files-found: error
           retention-days: 30
 
   macos:
     name: macOS universal image
+    env:
+      RELEASE_TAG: ${{ needs.validate.outputs.tag }}
     needs: validate
     runs-on: macos-15
     timeout-minutes: 45
@@ -351,13 +356,14 @@ jobs:
       - name: Upload macOS release payload
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: password-generator-macos-${{ inputs.tag }}
+          name: password-generator-macos-${{ env.RELEASE_TAG }}
           path: release/
           if-no-files-found: error
           retention-days: 30
 
   publish:
     name: Publish unified verified release
+    if: github.event_name == 'workflow_dispatch'
     needs: [android, windows, macos]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
