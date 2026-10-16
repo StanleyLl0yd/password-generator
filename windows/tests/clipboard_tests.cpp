@@ -22,6 +22,9 @@ int main() {
     pg::SecureClipboard first;
     pg::SecureClipboard second;
     Require(first.Copy(owner, L"clipboard-test-fixture"), "initial copy");
+    const UINT excluded = RegisterClipboardFormatW(L"ExcludeClipboardContentFromMonitorProcessing");
+    Require(excluded != 0 && IsClipboardFormatAvailable(excluded) != FALSE,
+            "password excluded from Windows clipboard history and cloud clipboard");
     const DWORD initial = GetClipboardSequenceNumber();
     Require(second.Copy(owner, L"clipboard-test-fixture"), "replacement with same text");
     const DWORD replaced = GetClipboardSequenceNumber();

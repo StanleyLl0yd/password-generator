@@ -53,6 +53,13 @@ class PackageVerificationTests(unittest.TestCase):
         with self.assertRaises(DTDForbidden):
             package.verify_manifest(document, '1.6.2', 20)
 
+    def test_profile_installer_receiver_requires_signature_permission(self):
+        receiver = '<receiver android:name="androidx.profileinstaller.ProfileInstallReceiver" android:exported="true" android:permission="android.permission.DUMP"/>'
+        manifest = MANIFEST.replace('</application>', receiver + '</application>')
+        package.verify_manifest(manifest, '1.6.2', 20)
+        with self.assertRaises(ValueError):
+            package.verify_manifest(manifest.replace(' android:permission="android.permission.DUMP"', ''), '1.6.2', 20)
+
     def check_elf(self, data):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'fixture.aab'

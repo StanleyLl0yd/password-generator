@@ -29,6 +29,12 @@ bool SecureClipboard::Copy(HWND owner, const std::wstring& password) {
         return false;
     }
 
+    const UINT excluded = RegisterClipboardFormatW(L"ExcludeClipboardContentFromMonitorProcessing");
+    HGLOBAL marker = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(DWORD));
+    if (marker != nullptr && (excluded == 0 || SetClipboardData(excluded, marker) == nullptr)) {
+        GlobalFree(marker);
+    }
+
     Forget();
     CloseClipboard();
     sequence_ = GetClipboardSequenceNumber();

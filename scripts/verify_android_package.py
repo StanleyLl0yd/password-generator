@@ -38,9 +38,13 @@ def verify_manifest(text, version, version_code):
     for tag in ('activity', 'activity-alias', 'service', 'receiver', 'provider'):
         for node in app.findall(tag):
             if node.get(ANDROID + 'exported') == 'true':
-                require(tag == 'activity' and node.get(ANDROID + 'name') in {
-                    '.MainActivity', PACKAGE + '.MainActivity'
-                }, 'Unexpected exported component')
+                name = node.get(ANDROID + 'name')
+                launcher = tag == 'activity' and name in {'.MainActivity', PACKAGE + '.MainActivity'}
+                profile_receiver = (
+                    tag == 'receiver' and name == 'androidx.profileinstaller.ProfileInstallReceiver'
+                    and node.get(ANDROID + 'permission') == 'android.permission.DUMP'
+                )
+                require(launcher or profile_receiver, f'Unexpected exported component: {tag} {name}')
 
 
 def verify_native_libraries(archive):

@@ -38,6 +38,8 @@ When the user copies a password, it is placed in the operating system clipboard.
 
 Where the platform supports the relevant mechanism, Password Generator treats the value as sensitive and schedules cleanup after 60 seconds. Cleanup is conditional: the application clears only its own still-current copied value and does not erase clipboard content that has subsequently been replaced by the user or another application.
 
+On Windows, the application requests exclusion of its clipboard value from Windows clipboard history and Cloud Clipboard using the native exclusion marker.
+
 Clipboard behavior is also subject to operating-system policies and other software with clipboard access.
 
 ## Local preferences
