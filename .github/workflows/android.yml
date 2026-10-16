@@ -79,6 +79,7 @@ jobs:
             app/build/reports/dependencies/
             app/build/reports/detekt/
             app/build/reports/tests/testDebugUnitTest/
+            app/build/outputs/apk/release/app-release.apk
             app/build/outputs/apk/debug/app-debug.apk
             app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
           if-no-files-found: ignore
@@ -115,6 +116,11 @@ jobs:
           path: verification
       - name: Set up Android build environment
         uses: ./.github/actions/android-gradle-setup
+      - name: Install verified parser for release smoke checks
+        run: |
+          python3 -m venv "$RUNNER_TEMP/release-verification-python"
+          "$RUNNER_TEMP/release-verification-python/bin/python" -m pip install --require-hashes --only-binary=:all: -r scripts/requirements-ci.txt
+          echo "$RUNNER_TEMP/release-verification-python/bin" >> "$GITHUB_PATH"
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules

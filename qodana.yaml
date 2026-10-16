@@ -30,20 +30,6 @@ exclude:
   - name: AndroidLintNewerVersionAvailable
     paths:
       - gradle/libs.versions.toml
-  - name: AndroidLintIconDuplicates
-    paths:
-      - app/src/main/res/mipmap-mdpi
-      - app/src/main/res/mipmap-hdpi
-      - app/src/main/res/mipmap-xhdpi
-      - app/src/main/res/mipmap-xxhdpi
-      - app/src/main/res/mipmap-xxxhdpi
-  - name: AndroidLintIconLauncherShape
-    paths:
-      - app/src/main/res/mipmap-mdpi
-      - app/src/main/res/mipmap-hdpi
-      - app/src/main/res/mipmap-xhdpi
-      - app/src/main/res/mipmap-xxhdpi
-      - app/src/main/res/mipmap-xxxhdpi
   - name: AndroidLintMonochromeLauncherIcon
     paths:
       - app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
