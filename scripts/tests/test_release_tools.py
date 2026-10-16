@@ -27,7 +27,7 @@ MANIFEST = '''<manifest xmlns:android="http://schemas.android.com/apk/res/androi
 package="com.sl.passwordgenerator" android:versionName="1.6.2" android:versionCode="20">
 <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="36"/>
 <uses-permission android:name="android.permission.VIBRATE"/>
-<application android:allowBackup="false"><activity android:name=".MainActivity" android:exported="true"/></application>
+<application android:allowBackup="false" android:usesCleartextTraffic="false"><activity android:name=".MainActivity" android:exported="true"/></application>
 </manifest>'''
 
 
@@ -39,6 +39,8 @@ class PackageVerificationTests(unittest.TestCase):
         for original, changed in [
             ('android.permission.VIBRATE', 'android.permission.INTERNET'),
             ('allowBackup="false"', 'allowBackup="true"'),
+            ('usesCleartextTraffic="false"', 'usesCleartextTraffic="true"'),
+            (' android:usesCleartextTraffic="false"', ''),
             ('<application ', '<application android:debuggable="true" '),
             ('targetSdkVersion="36"', 'targetSdkVersion="35"'),
             ('versionCode="20"', 'versionCode="19"'),
