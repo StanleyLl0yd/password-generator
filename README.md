@@ -132,7 +132,7 @@ The interface follows the device language automatically.
 
 ## Google Play preparation
 
-The 1.6.2 source is prepared as a release candidate. See [submission kit](store-assets/google-play/submission-checklist.ru.md) for signed AAB preparation, store text/media, Data safety, Play App Signing compatibility and device acceptance. A candidate build uploads protected artifacts without publishing a public release or sending anything to Google Play.
+Version 1.6.2 is released on [GitHub](https://github.com/StanleyLl0yd/password-generator/releases/tag/v1.6.2). Google Play publication remains separate. See [submission kit](store-assets/google-play/submission-checklist.ru.md) for signed AAB preparation, store text/media, Data safety, Play App Signing compatibility and device acceptance. A candidate build uploads protected artifacts without publishing a public release or sending anything to Google Play.
 
 CI runs instrumentation tests on API 26 and 36, captures current masked screenshots, checks the compiled APK/AAB manifest, validates the bundle and verifies 16 KB ELF/ZIP alignment. [Repository audit](docs/audit/2026-10-16.md) records coverage and verification limits.
 

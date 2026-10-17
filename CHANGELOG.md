@@ -7,12 +7,13 @@ All notable changes to this project are documented here.
 
 ---
 
-## [1.6.2] - Prepared, not yet published
+## [1.6.2] - 2026-10-17
 
 - Patch vulnerable build-tool dependencies, upgrade Gradle to 8.14.6, Kotlin to 2.4.20 and R8 to 9.1.29, and preserve strict dependency verification.
 - Exclude copied passwords from Windows clipboard history and Cloud Clipboard.
 - Make revealed 64-character passwords fully readable in narrow layouts and restore macOS Escape handling.
 - Mask replacement passwords synchronously before their first Android frame; prevent outgoing animation content from being revealed again.
+- Explicitly disable Android cleartext traffic and require the setting in compiled APK/AAB checks.
 - Keep About scrollable with larger fonts and small displays.
 - Remove redundant desktop clipboard secret copies; check Windows clipboard ownership under the clipboard lock and restore keyboard navigation between controls.
 - Read the macOS About version from the installed bundle; remove a compatibility branch below the minimum supported macOS version.
@@ -22,7 +23,7 @@ All notable changes to this project are documented here.
 - Escape signing properties correctly, including backslashes, whitespace and Unicode.
 - Restore Qodana's generated icon resource discovery by building resources before scanning.
 - Add English/Russian Google Play text, feature graphics, Data safety/signing/testing instructions and repository audit coverage.
-- Prepare versionCode 20 across the unified native 1.6.2 candidate; candidate builds do not publish a GitHub/Google Play release.
+- Release the unified native version 1.6.2 with Android versionCode 20 on GitHub. Google Play publication and device/internal-track acceptance remain separate owner actions.
 
 ## [1.6.1] - 2026-09-18
 
