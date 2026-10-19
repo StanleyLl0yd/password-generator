@@ -12,10 +12,10 @@ composeBom = "2025.12.01"
 datastore = "1.2.0"
 javapoet = "1.13.0"
 r8 = "9.1.29"
-netty = "4.1.139.Final"
+netty = "4.2.19.Final"
 commonsCompress = "1.28.0"
-jose4j = "0.9.6"
-bouncyCastle = "1.85"
+jose4j = "0.9.7"
+bouncyCastle = "1.86"
 jdom = "2.0.6.1"
 
 [libraries]
