@@ -71,7 +71,7 @@ jobs:
 
       - name: Upload verification reports
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: android-verification-${{ github.sha }}
           path: |
@@ -110,7 +110,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Download tested application and instrumentation APKs
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           name: android-verification-${{ github.sha }}
           path: verification
@@ -127,7 +127,7 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
       - name: Run Android integration and privacy tests
-        uses: reactivecircus/android-emulator-runner@69c8581131285561115a2e413eb0037446bdc2d6 # v2.35.0
+        uses: reactivecircus/android-emulator-runner@b530d96654c385303d652368551fb075bc2f0b6b # v2.35.0
         with:
           api-level: ${{ matrix.api }}
           arch: x86_64
@@ -137,7 +137,7 @@ jobs:
           script: bash scripts/android_device_tests.sh
       - name: Upload current masked store screenshots
         if: matrix.api == 36
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: google-play-screenshots-${{ github.sha }}
           path: build/store-screenshots/
@@ -183,7 +183,7 @@ jobs:
 
       - name: Upload Windows UI preview
         if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: password-generator-windows-ui-preview-${{ github.sha }}
           path: build/windows/Release/PasswordGenerator.exe
